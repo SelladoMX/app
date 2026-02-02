@@ -18,15 +18,15 @@ jobs:
           - os: ubuntu-latest
             platform: linux
             artifact_name: SelladoMX-Linux
-            artifact_path: dist/SelladoMX
+            artifact_file: SelladoMX-Linux-x86_64.AppImage
           - os: windows-latest
             platform: windows
             artifact_name: SelladoMX-Windows
-            artifact_path: dist/SelladoMX
+            artifact_file: SelladoMX-Windows.zip
           - os: macos-latest
             platform: macos
             artifact_name: SelladoMX-macOS
-            artifact_path: dist/SelladoMX.app
+            artifact_file: SelladoMX-macOS.dmg
 
     steps:
       - name: Checkout code
@@ -44,6 +44,12 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
 
+      - name: Add Poetry to PATH (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          echo "$env:APPDATA\Python\Scripts" >> $env:GITHUB_PATH
+
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -60,15 +66,31 @@ jobs:
         run: |
           poetry run pyinstaller selladomx.spec
 
-      - name: Create archive (Linux/Windows)
-        if: matrix.platform != 'macos'
+      - name: Install AppImage tools (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+          chmod +x linuxdeploy*.AppImage
+
+      - name: Build AppImage (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          ./scripts/build-appimage.sh
+        env:
+          ARCH: x86_64
+
+      - name: Add README to Windows build
+        if: matrix.platform == 'windows'
+        run: |
+          copy assets\README-Windows.txt dist\SelladoMX\README.txt
+        shell: cmd
+
+      - name: Create archive (Windows)
+        if: matrix.platform == 'windows'
         run: |
           cd dist
-          if [ "${{ matrix.platform }}" = "windows" ]; then
-            7z a -tzip ${{ matrix.artifact_name }}.zip SelladoMX
-          else
-            tar -czf ${{ matrix.artifact_name }}.tar.gz SelladoMX
-          fi
+          7z a -tzip ${{ matrix.artifact_name }}.zip SelladoMX
         shell: bash
 
       - name: Create DMG (macOS)
@@ -87,13 +109,13 @@ jobs:
             --icon "SelladoMX.app" 200 190 \
             --hide-extension "SelladoMX.app" \
             --app-drop-link 600 185 \
-            "dist/${{ matrix.artifact_name }}.dmg" \
+            "dist/${{ matrix.artifact_file }}" \
             "dist/SelladoMX.app" \
             || true  # create-dmg can fail but still create the dmg
 
           # If create-dmg failed, create a simple dmg
-          if [ ! -f "dist/${{ matrix.artifact_name }}.dmg" ]; then
-            hdiutil create -volname "SelladoMX" -srcfolder "dist/SelladoMX.app" -ov -format UDZO "dist/${{ matrix.artifact_name }}.dmg"
+          if [ ! -f "dist/${{ matrix.artifact_file }}" ]; then
+            hdiutil create -volname "SelladoMX" -srcfolder "dist/SelladoMX.app" -ov -format UDZO "dist/${{ matrix.artifact_file }}"
           fi
 
       - name: Upload artifact (Linux)
@@ -101,21 +123,21 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: dist/${{ matrix.artifact_name }}.tar.gz
+          path: dist/${{ matrix.artifact_file }}
 
       - name: Upload artifact (Windows)
         if: matrix.platform == 'windows'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: dist/${{ matrix.artifact_name }}.zip
+          path: dist/${{ matrix.artifact_file }}
 
       - name: Upload artifact (macOS)
         if: matrix.platform == 'macos'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: dist/${{ matrix.artifact_name }}.dmg
+          path: dist/${{ matrix.artifact_file }}
 
       - name: Upload to Release
         if: startsWith(github.ref, 'refs/tags/')
@@ -123,7 +145,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
-            dist/${{ matrix.artifact_name }}.*
+            dist/${{ matrix.artifact_file }}
           draft: false
           prerelease: false
           generate_release_notes: true

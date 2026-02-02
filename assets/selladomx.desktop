@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=SelladoMX
+Comment=PDF signing application for Mexico
+Exec=SelladoMX
+Icon=selladomx
+Categories=Office;Utility;
+Terminal=false
+StartupWMClass=selladomx
