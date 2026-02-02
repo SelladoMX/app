@@ -37,18 +37,23 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Poetry
+      - name: Install Poetry (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          pip install poetry
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
+          echo "Poetry installed via pip"
+          poetry --version
+
+      - name: Install Poetry (Unix)
+        if: runner.os != 'Windows'
         uses: snok/install-poetry@v1
         with:
           version: latest
           virtualenvs-create: true
           virtualenvs-in-project: true
-
-      - name: Add Poetry to PATH (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          echo "$env:APPDATA\Python\Scripts" >> $env:GITHUB_PATH
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -70,7 +75,6 @@ jobs:
         if: matrix.platform == 'linux'
         run: |
           wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-          wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
           chmod +x linuxdeploy*.AppImage
 
       - name: Build AppImage (Linux)

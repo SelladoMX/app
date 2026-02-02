@@ -42,14 +42,14 @@ export QMAKE=/usr/bin/qmake6  # Fallback, plugin will try to detect Qt6
 
 echo "Running linuxdeploy to create AppImage..."
 
-# Run linuxdeploy with Qt plugin
-# The plugin will automatically find Qt libraries from the PyInstaller bundle
+# Run linuxdeploy WITHOUT Qt plugin
+# PyInstaller has already bundled all Qt libraries in _internal/
+# We just need linuxdeploy to package everything into an AppImage
 ./linuxdeploy-x86_64.AppImage \
     --appdir "$APPDIR" \
     --executable "$APPDIR/usr/bin/SelladoMX" \
     --desktop-file "$APPDIR/selladomx.desktop" \
     --icon-file "assets/selladomx.png" \
-    --plugin qt \
     --output appimage
 
 # Find the generated AppImage (linuxdeploy generates with a random-ish name)
