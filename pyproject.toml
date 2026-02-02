@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "selladomx"
+version = "0.1.0"
+description = "Firma digital de PDFs con certificados e.firma del SAT"
+authors = ["SelladoMX Team"]
+readme = "README.md"
+packages = [{include = "selladomx", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.14"
+PySide6 = "^6.8.0"
+pyhanko = "^0.21.0"
+pyhanko-certvalidator = "^0.26.0"
+cryptography = "^41.0.0"
+requests = "^2.31.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-qt = "^4.2.0"
+black = "^23.7.0"
+pyinstaller = "^6.18.0"
+
+[tool.poetry.scripts]
+selladomx = "selladomx.main:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

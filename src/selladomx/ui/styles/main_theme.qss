@@ -1,0 +1,373 @@
+/* SelladoMX Clean Theme - Apple/GNOME inspired */
+
+/* Global styles - clean and simple */
+QMainWindow, QDialog, QWidget {
+    background-color: #FFFFFF;
+    color: #1D1D1F;
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px;
+}
+
+/* Step Widget - clean with subtle border */
+StepWidget {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 6px 0;
+}
+
+StepWidget[state="pending"] {
+    border: 1px solid #E5E5E7;
+    background-color: #FAFAFA;
+}
+
+StepWidget[state="active"] {
+    border: 2px solid #007AFF;
+    background-color: white;
+}
+
+StepWidget[state="completed"] {
+    border: 2px solid #34C759;
+    background-color: white;
+}
+
+StepWidget[state="disabled"] {
+    border: 1px solid #E5E5E7;
+    background-color: #F5F5F7;
+    color: #C7C7CC;
+}
+
+/* Step number - simple circle */
+.step-number {
+    font-size: 28px;
+    font-weight: 600;
+    color: #C7C7CC;
+    background-color: #F5F5F7;
+    border-radius: 28px;
+    padding: 8px;
+}
+
+.step-number[state="active"] {
+    color: white;
+    background-color: #007AFF;
+}
+
+.step-number[state="completed"] {
+    color: white;
+    background-color: #34C759;
+}
+
+/* Step title and description */
+.step-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1D1D1F;
+}
+
+.step-description {
+    font-size: 13px;
+    color: #86868B;
+    line-height: 1.4;
+}
+
+/* Clean buttons - Apple style */
+QPushButton {
+    background-color: #007AFF;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    min-height: 28px;
+}
+
+QPushButton:hover {
+    background-color: #0051D5;
+}
+
+QPushButton:pressed {
+    background-color: #004BB8;
+}
+
+QPushButton:disabled {
+    background-color: #E5E5E7;
+    color: #C7C7CC;
+}
+
+/* Secondary button style */
+QPushButton[class="secondary"] {
+    background-color: white;
+    color: #1D1D1F;
+    border: 1px solid #D2D2D7;
+}
+
+QPushButton[class="secondary"]:hover {
+    background-color: #F5F5F7;
+}
+
+QPushButton[class="secondary"]:pressed {
+    background-color: #E5E5E7;
+}
+
+/* Success button (green) */
+QPushButton[class="success"] {
+    background-color: #34C759;
+    font-weight: 600;
+}
+
+QPushButton[class="success"]:hover {
+    background-color: #30B350;
+}
+
+QPushButton[class="success"]:pressed {
+    background-color: #2A9F47;
+}
+
+/* Danger button (red) */
+QPushButton[class="danger"] {
+    background-color: #FF3B30;
+}
+
+QPushButton[class="danger"]:hover {
+    background-color: #E5342A;
+}
+
+/* Clean input fields */
+QLineEdit {
+    background-color: white;
+    border: 1px solid #D2D2D7;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    color: #1D1D1F;
+    min-height: 28px;
+    selection-background-color: #007AFF;
+    selection-color: white;
+}
+
+QLineEdit:focus {
+    border-color: #007AFF;
+    outline: none;
+}
+
+QLineEdit:disabled {
+    background-color: #F5F5F7;
+    color: #86868B;
+    border-color: #E5E5E7;
+}
+
+QLineEdit[readOnly="true"] {
+    background-color: #FAFAFA;
+    color: #86868B;
+}
+
+/* Clean list widget */
+QListWidget {
+    background-color: white;
+    border: 1px solid #D2D2D7;
+    border-radius: 6px;
+    padding: 4px;
+    font-size: 13px;
+    outline: none;
+}
+
+QListWidget::item {
+    padding: 8px;
+    border-radius: 4px;
+    margin: 1px 0;
+}
+
+QListWidget::item:selected {
+    background-color: #007AFF;
+    color: white;
+}
+
+QListWidget::item:hover {
+    background-color: #F5F5F7;
+}
+
+QListWidget:focus {
+    border-color: #007AFF;
+}
+
+/* Clean progress bar */
+QProgressBar {
+    background-color: #E5E5E7;
+    border: none;
+    border-radius: 4px;
+    text-align: center;
+    height: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #1D1D1F;
+}
+
+QProgressBar::chunk {
+    background-color: #007AFF;
+    border-radius: 4px;
+}
+
+/* Text Edit (Log) */
+QTextEdit {
+    background-color: #FAFAFA;
+    border: 1px solid #D2D2D7;
+    border-radius: 6px;
+    padding: 10px;
+    font-family: "Menlo", "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 11px;
+    color: #1D1D1F;
+    line-height: 1.5;
+}
+
+QTextEdit:focus {
+    border-color: #007AFF;
+}
+
+/* Labels - clean typography */
+QLabel {
+    color: #1D1D1F;
+    font-size: 13px;
+}
+
+QLabel[class="secondary"] {
+    color: #86868B;
+}
+
+QLabel[class="success"] {
+    color: #34C759;
+    font-weight: 500;
+}
+
+QLabel[class="error"] {
+    color: #FF3B30;
+    font-weight: 500;
+}
+
+QLabel[class="title"] {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1D1D1F;
+}
+
+/* Group Box */
+QGroupBox {
+    background-color: white;
+    border: 1px solid #D2D2D7;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1D1D1F;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 8px;
+    color: #1D1D1F;
+}
+
+/* Simple scroll bars */
+QScrollBar:vertical {
+    background: #F5F5F7;
+    width: 10px;
+    border-radius: 5px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background: #C7C7CC;
+    border-radius: 5px;
+    min-height: 20px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #86868B;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+QScrollBar:horizontal {
+    background: #F5F5F7;
+    height: 10px;
+    border-radius: 5px;
+    margin: 0;
+}
+
+QScrollBar::handle:horizontal {
+    background: #C7C7CC;
+    border-radius: 5px;
+    min-width: 20px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #86868B;
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0px;
+}
+
+/* Onboarding Dialog - clean and simple */
+QDialog {
+    background-color: white;
+}
+
+/* Status indicator - simple dot */
+.status-indicator {
+    border-radius: 7px;
+    min-width: 14px;
+    min-height: 14px;
+    max-width: 14px;
+    max-height: 14px;
+}
+
+.status-indicator[state="pending"] {
+    background-color: #C7C7CC;
+}
+
+.status-indicator[state="active"] {
+    background-color: #007AFF;
+}
+
+.status-indicator[state="completed"] {
+    background-color: #34C759;
+}
+
+.status-indicator[state="disabled"] {
+    background-color: #E5E5E7;
+}
+
+.status-indicator[state="error"] {
+    background-color: #FF3B30;
+}
+
+/* Scroll Area - no border */
+QScrollArea {
+    border: none;
+    background-color: transparent;
+}
+
+/* Message Box */
+QMessageBox {
+    background-color: white;
+}
+
+QMessageBox QLabel {
+    color: #1D1D1F;
+    font-size: 13px;
+}
+
+/* Tooltips */
+QToolTip {
+    background-color: #1D1D1F;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 12px;
+}
