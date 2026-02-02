@@ -46,7 +46,7 @@ SYSTEM REQUIREMENTS:
 
 NEED HELP?
 ----------
-- Report issues: https://github.com/SelladoMX/client/issues
+- Report issues: https://github.com/SelladoMX/app/issues
 - Open source: Licensed under MIT
 - Documentation: See README.md in the GitHub repository
 
@@ -60,5 +60,5 @@ TECHNICAL DETAILS:
 ================================================================================
 Version: 0.2.0
 License: MIT License
-Website: https://github.com/SelladoMX/client
+Website: https://github.com/SelladoMX/app
 ================================================================================
