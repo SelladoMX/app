@@ -4,6 +4,9 @@
 
 set -e
 
+# Change to project root directory
+cd "$(dirname "$0")/.."
+
 echo "=========================================="
 echo "Building SelladoMX for $(uname -s)"
 echo "=========================================="
@@ -47,7 +50,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     echo "Location: dist/SelladoMX.app"
     echo ""
     echo "To run: open dist/SelladoMX.app"
-    echo "To create DMG: ./create-dmg.sh"
+    echo "To create DMG: make dmg (or ./scripts/create-dmg.sh)"
 
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     echo ""

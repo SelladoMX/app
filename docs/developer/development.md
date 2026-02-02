@@ -43,15 +43,6 @@ poetry run pytest -v
 poetry run pytest tests/test_certificate_validator.py -v
 ```
 
-### Tests standalone
-
-```bash
-# Test del onboarding
-poetry run python test_onboarding.py
-
-# Test de la UI rediseñada
-poetry run python test_redesigned_ui.py
-```
 
 ## Formateo de Código
 
@@ -86,7 +77,10 @@ El onboarding solo aparece en la primera ejecución. Para testearlo:
 ### Método 1: Script Rápido
 
 ```bash
-poetry run python reset_onboarding.py
+make reset-onboarding
+poetry run selladomx
+# O también:
+poetry run python scripts/reset_onboarding.py
 poetry run selladomx
 ```
 
@@ -116,7 +110,9 @@ rm ~/.config/SelladoMX/SelladoMX.conf
 
 ```bash
 # Compilar aplicación (limpia automáticamente)
-./build.sh
+make build
+# O también:
+./scripts/build.sh
 ```
 
 Resultado:
@@ -127,7 +123,9 @@ Resultado:
 ### Crear DMG para macOS
 
 ```bash
-./create-dmg.sh
+make dmg
+# O también:
+./scripts/create-dmg.sh
 ```
 
 Genera: `dist/SelladoMX-macOS.dmg`
@@ -137,11 +135,14 @@ Genera: `dist/SelladoMX-macOS.dmg`
 Si el build no refleja tus cambios:
 
 ```bash
-./clean.sh    # Limpia todos los caches
-./build.sh    # Construye desde cero
+make clean    # Limpia todos los caches
+make build    # Construye desde cero
+# O también:
+./scripts/clean.sh
+./scripts/build.sh
 ```
 
-El script `clean.sh` elimina:
+El script `scripts/clean.sh` elimina:
 - Directorios `build/` y `dist/`
 - Cache de Python (`__pycache__`, `*.pyc`)
 - Cache de PyInstaller (`~/.pyinstaller_cache`)
@@ -186,16 +187,29 @@ dist/
 HKEY_CURRENT_USER\Software\SelladoMX\SelladoMX   # Windows
 ```
 
+## Comandos Útiles
+
+Usa el Makefile para comandos comunes:
+
+```bash
+make help              # Ver todos los comandos disponibles
+make install           # Instalar dependencias con Poetry
+make run               # Ejecutar la aplicación
+make test              # Ejecutar tests con pytest
+make clean             # Limpiar builds y cache
+make build             # Compilar ejecutable
+make dmg               # Crear DMG (solo macOS)
+make reset-onboarding  # Resetear estado de onboarding
+```
+
 ## Scripts Útiles
 
-| Script | Propósito | Uso |
-|--------|-----------|-----|
-| `reset_onboarding.py` | Resetear onboarding | `poetry run python reset_onboarding.py` |
-| `clean.sh` | Limpiar caches y builds | `./clean.sh` |
-| `build.sh` | Construir ejecutable | `./build.sh` |
-| `create-dmg.sh` | Crear instalador DMG | `./create-dmg.sh` |
-| `test_onboarding.py` | Test standalone onboarding | `poetry run python test_onboarding.py` |
-| `test_redesigned_ui.py` | Test standalone UI | `poetry run python test_redesigned_ui.py` |
+| Script | Propósito | Comando |
+|--------|-----------|---------|
+| `scripts/reset_onboarding.py` | Resetear onboarding | `make reset-onboarding` |
+| `scripts/clean.sh` | Limpiar caches y builds | `make clean` |
+| `scripts/build.sh` | Construir ejecutable | `make build` |
+| `scripts/create-dmg.sh` | Crear instalador DMG | `make dmg` |
 
 ## Flujo de Desarrollo Recomendado
 
@@ -207,10 +221,10 @@ vim src/selladomx/ui/...
 poetry run selladomx
 
 # 3. Ejecutar tests
-poetry run pytest -v
+make test
 
 # 4. Si todo bien, construir
-./build.sh
+make build
 
 # 5. Probar el build
 open dist/SelladoMX.app    # macOS
@@ -222,19 +236,19 @@ dist\SelladoMX\SelladoMX.exe # Windows
 
 ```bash
 # Desarrollo rápido
-poetry run selladomx
+make run
 
 # Test rápido
-poetry run pytest -v
+make test
 
 # Reset onboarding rápido
-poetry run python reset_onboarding.py
+make reset-onboarding
 
 # Build fresco
-./clean.sh && ./build.sh
+make clean && make build
 
 # Todo en uno: limpiar, test, build
-./clean.sh && poetry run pytest -v && ./build.sh
+make clean && make test && make build
 ```
 
 ## Troubleshooting
@@ -243,14 +257,14 @@ poetry run python reset_onboarding.py
 
 ```bash
 # Limpieza profunda
-./clean.sh
+make clean
 
 # Reinstala dependencias (solo si es necesario)
 rm -rf .venv
 poetry install
 
 # Build desde cero
-./build.sh
+make build
 
 # Verifica la fecha del ejecutable
 ls -la dist/SelladoMX.app/Contents/MacOS/SelladoMX

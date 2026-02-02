@@ -3,8 +3,8 @@
 import sys
 from pathlib import Path
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent / "src"))
+# Add src to path (go up one level since we're in scripts/)
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from selladomx.utils.settings_manager import SettingsManager
 

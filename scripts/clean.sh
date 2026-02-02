@@ -4,6 +4,9 @@
 
 set -e
 
+# Change to project root directory
+cd "$(dirname "$0")/.."
+
 echo "=========================================="
 echo "Cleaning SelladoMX build artifacts"
 echo "=========================================="
@@ -35,5 +38,5 @@ find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
 echo ""
 echo "✓ All build artifacts and caches cleaned!"
 echo ""
-echo "Now you can run: ./build.sh"
+echo "Now you can run: make build (or ./scripts/build.sh)"
 echo "=========================================="

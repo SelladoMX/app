@@ -4,13 +4,16 @@
 
 set -e
 
+# Change to project root directory
+cd "$(dirname "$0")/.."
+
 if [[ "$OSTYPE" != "darwin"* ]]; then
     echo "Error: This script only works on macOS"
     exit 1
 fi
 
 if [ ! -d "dist/SelladoMX.app" ]; then
-    echo "Error: SelladoMX.app not found. Run ./build.sh first"
+    echo "Error: SelladoMX.app not found. Run 'make build' first"
     exit 1
 fi
 

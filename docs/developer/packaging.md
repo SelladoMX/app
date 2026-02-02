@@ -8,10 +8,12 @@ Esta guía explica cómo crear ejecutables de SelladoMX para macOS, Windows y Li
 
 ```bash
 # Compilar
-./build.sh
+make build
+# O también: ./scripts/build.sh
 
 # Crear DMG instalador
-./create-dmg.sh
+make dmg
+# O también: ./scripts/create-dmg.sh
 
 # Probar
 open dist/SelladoMX.app
@@ -46,7 +48,8 @@ sudo apt-get install -y \
     libxcb-shape0
 
 # Compilar
-./build.sh
+make build
+# O también: ./scripts/build.sh
 
 # Crear tarball
 tar -czf SelladoMX-Linux.tar.gz -C dist SelladoMX
@@ -100,7 +103,7 @@ GitHub Actions compilará automáticamente y creará un Release con:
 
 ### Proceso de Build
 
-El script `build.sh` realiza automáticamente:
+El script `scripts/build.sh` (o `make build`) realiza automáticamente:
 
 1. Instalación de dependencias con Poetry
 2. Limpieza de builds anteriores
