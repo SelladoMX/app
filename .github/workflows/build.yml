@@ -183,7 +183,7 @@ jobs:
           # Create DMG
           create-dmg \
             --volname "SelladoMX" \
-            --volicon "dist/SelladoMX.app/Contents/Resources/icon.icns" \
+            --volicon "dist/SelladoMX.app/Contents/Resources/selladomx.icns" \
             --window-pos 200 120 \
             --window-size 800 400 \
             --icon-size 100 \

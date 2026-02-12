@@ -127,8 +127,11 @@ def main():
     context.setContextProperty("mainViewModel", view_model)
     context.setContextProperty("settingsBridge", settings_bridge)
 
-    # Expose app icon path for QML
-    icon_file = Path(__file__).parent.parent.parent / "assets" / "icon.png"
+    # Expose app icon path for QML (works both in dev and packaged mode)
+    if getattr(sys, "frozen", False):
+        icon_file = Path(sys._MEIPASS) / "assets" / "selladomx.png"
+    else:
+        icon_file = Path(__file__).parent.parent.parent / "assets" / "selladomx.png"
     context.setContextProperty("appIconSource", QUrl.fromLocalFile(str(icon_file)))
 
     # Connect deep link handler to view model method

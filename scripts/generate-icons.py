@@ -1,110 +1,121 @@
 #!/usr/bin/env python3
 """
-Generate platform-specific icons from source PNG
-Requires: pip install pillow
+Generate platform-specific icons from source PNG.
+
+Source: assets/icon.png (any size, will be squared and resized)
+Output:
+  - assets/selladomx.png   (256x256, Linux AppImage + QML in-app icon)
+  - assets/selladomx.ico   (multi-size, Windows)
+  - assets/selladomx.icns  (multi-size, macOS — requires iconutil on macOS)
+
+Usage: python scripts/generate-icons.py
+Requires: pillow (pip install pillow)
 """
+
+import shutil
+import subprocess
 import sys
+import platform
 from pathlib import Path
+
 from PIL import Image
 
-def generate_icons():
-    """Generate .ico for Windows and .icns for macOS from PNG"""
 
-    source = Path("assets/icon.png")
-    if not source.exists():
-        print(f"❌ Source icon not found: {source}")
-        sys.exit(1)
+ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
+SOURCE = ASSETS_DIR / "icon.png"
 
-    print(f"📦 Loading source icon: {source}")
-    img = Image.open(source)
 
-    # Ensure RGBA mode
-    if img.mode != 'RGBA':
-        img = img.convert('RGBA')
+def make_square(img: Image.Image) -> Image.Image:
+    """Pad image with transparency to make it square."""
+    w, h = img.size
+    if w == h:
+        return img
+    side = max(w, h)
+    square = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+    offset_x = (side - w) // 2
+    offset_y = (side - h) // 2
+    square.paste(img, (offset_x, offset_y))
+    return square
 
-    print(f"   Size: {img.size}")
-    print(f"   Mode: {img.mode}")
 
-    # Generate Windows .ico (multi-size)
-    print("\n🪟 Generating Windows icon...")
-    ico_sizes = [(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
-    ico_images = []
-    for size in ico_sizes:
-        resized = img.resize(size, Image.Resampling.LANCZOS)
-        ico_images.append(resized)
+def generate_png(source_img: Image.Image) -> None:
+    """Generate 256x256 PNG for Linux and QML."""
+    resized = source_img.resize((256, 256), Image.Resampling.LANCZOS)
+    out = ASSETS_DIR / "selladomx.png"
+    resized.save(out, "PNG")
+    print(f"  Created: {out.relative_to(ASSETS_DIR.parent)}")
 
-    ico_path = Path("assets/icon.ico")
-    ico_images[0].save(
-        ico_path,
-        format='ICO',
-        sizes=ico_sizes,
-        append_images=ico_images[1:]
-    )
-    print(f"   ✅ Created: {ico_path}")
 
-    # Generate macOS .icns
-    print("\n🍎 Generating macOS icon...")
+def generate_ico(source_img: Image.Image) -> None:
+    """Generate multi-size .ico for Windows."""
+    sizes = [(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
+    out = ASSETS_DIR / "selladomx.ico"
+    source_img.save(out, format="ICO", sizes=sizes)
+    print(f"  Created: {out.relative_to(ASSETS_DIR.parent)}")
 
-    # Create iconset directory
-    iconset_dir = Path("assets/icon.iconset")
+
+def generate_icns(source_img: Image.Image) -> None:
+    """Generate .icns for macOS using iconutil."""
+    iconset_dir = ASSETS_DIR / "selladomx.iconset"
     iconset_dir.mkdir(exist_ok=True)
 
-    # macOS requires specific sizes
-    icns_sizes = [
-        (16, 16, "16x16"),
-        (32, 32, "16x16@2x"),
-        (32, 32, "32x32"),
-        (64, 64, "32x32@2x"),
-        (128, 128, "128x128"),
-        (256, 256, "128x128@2x"),
-        (256, 256, "256x256"),
-        (512, 512, "256x256@2x"),
-        (512, 512, "512x512"),
-        (1024, 1024, "512x512@2x"),
+    # macOS iconset requires these exact filenames
+    specs = [
+        (16, "icon_16x16.png"),
+        (32, "icon_16x16@2x.png"),
+        (32, "icon_32x32.png"),
+        (64, "icon_32x32@2x.png"),
+        (128, "icon_128x128.png"),
+        (256, "icon_128x128@2x.png"),
+        (256, "icon_256x256.png"),
+        (512, "icon_256x256@2x.png"),
+        (512, "icon_512x512.png"),
+        (1024, "icon_512x512@2x.png"),
     ]
 
-    for width, height, name in icns_sizes:
-        resized = img.resize((width, height), Image.Resampling.LANCZOS)
-        output_path = iconset_dir / f"icon_{name}.png"
-        resized.save(output_path, 'PNG')
+    for size, filename in specs:
+        resized = source_img.resize((size, size), Image.Resampling.LANCZOS)
+        resized.save(iconset_dir / filename, "PNG")
 
-    print(f"   📁 Created iconset: {iconset_dir}")
-
-    # Convert to .icns using iconutil (macOS only)
-    import subprocess
-    import platform
-
-    if platform.system() == 'Darwin':
-        print("   🔧 Converting to .icns with iconutil...")
-        result = subprocess.run(
-            ['iconutil', '-c', 'icns', str(iconset_dir), '-o', 'assets/icon.icns'],
-            capture_output=True,
-            text=True
+    if platform.system() != "Darwin":
+        print(f"  Not on macOS — iconset saved to {iconset_dir.name}/")
+        print(
+            f"  Run on macOS: iconutil -c icns {iconset_dir} -o assets/selladomx.icns"
         )
-        if result.returncode == 0:
-            print(f"   ✅ Created: assets/icon.icns")
-            # Clean up iconset directory
-            import shutil
-            shutil.rmtree(iconset_dir)
-            print(f"   🧹 Cleaned up: {iconset_dir}")
-        else:
-            print(f"   ⚠️  iconutil failed: {result.stderr}")
-            print(f"   💡 Keeping {iconset_dir} for manual conversion")
+        return
+
+    out = ASSETS_DIR / "selladomx.icns"
+    result = subprocess.run(
+        ["iconutil", "-c", "icns", str(iconset_dir), "-o", str(out)],
+        capture_output=True,
+        text=True,
+    )
+    shutil.rmtree(iconset_dir)
+
+    if result.returncode == 0:
+        print(f"  Created: {out.relative_to(ASSETS_DIR.parent)}")
     else:
-        print(f"   ⚠️  Not on macOS - keeping {iconset_dir} for manual conversion")
-        print(f"   💡 On macOS, run: iconutil -c icns {iconset_dir} -o assets/icon.icns")
+        print(f"  iconutil failed: {result.stderr}", file=sys.stderr)
+        sys.exit(1)
 
-    # Copy PNG for Linux
-    linux_icon = Path("assets/icon-linux.png")
-    img.save(linux_icon, 'PNG')
-    print(f"\n🐧 Linux icon: {linux_icon}")
 
-    print("\n✅ Icon generation complete!")
-    print("\nGenerated files:")
-    print(f"  - assets/icon.png (source)")
-    print(f"  - assets/icon.ico (Windows)")
-    print(f"  - assets/icon.icns (macOS)")
-    print(f"  - assets/icon-linux.png (Linux)")
+def main() -> None:
+    if not SOURCE.exists():
+        print(f"Source icon not found: {SOURCE}", file=sys.stderr)
+        sys.exit(1)
 
-if __name__ == '__main__':
-    generate_icons()
+    img = Image.open(SOURCE).convert("RGBA")
+    print(f"Source: {SOURCE.name} ({img.size[0]}x{img.size[1]})")
+
+    img = make_square(img)
+    print(f"Squared: {img.size[0]}x{img.size[1]}")
+
+    print("\nGenerating icons:")
+    generate_png(img)
+    generate_ico(img)
+    generate_icns(img)
+    print("\nDone.")
+
+
+if __name__ == "__main__":
+    main()

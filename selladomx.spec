@@ -68,7 +68,9 @@ a = Analysis(
     ['run.py'],
     pathex=['src'],  # Add src to path so selladomx can be imported
     binaries=[],
-    datas=pyhanko_datas + pyhanko_certvalidator_datas + qml_datas,  # Include QML files
+    datas=pyhanko_datas + pyhanko_certvalidator_datas + qml_datas + [
+        ('assets/selladomx.png', 'assets'),
+    ],
     hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},
@@ -105,7 +107,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='assets/icon.ico' if sys.platform == 'win32' else 'assets/icon.icns' if sys.platform == 'darwin' else 'assets/icon-linux.png',
+    icon='assets/selladomx.ico' if sys.platform == 'win32' else 'assets/selladomx.icns' if sys.platform == 'darwin' else 'assets/selladomx.png',
 )
 
 coll = COLLECT(
@@ -124,7 +126,7 @@ if sys.platform == 'darwin':
     app = BUNDLE(
         coll,
         name='SelladoMX.app',
-        icon='assets/icon.icns',
+        icon='assets/selladomx.icns',
         bundle_identifier='mx.sellado.client',
         info_plist={
             'NSPrincipalClass': 'NSApplication',
