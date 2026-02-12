@@ -68,7 +68,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: test  # Only build if tests pass
     permissions:
-      contents: write  # Required to create releases
+      contents: write       # Required to create releases
+      id-token: write       # Required for Sigstore OIDC (attestations)
+      attestations: write   # Required to persist attestations
     strategy:
       matrix:
         include:
@@ -219,6 +221,11 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: dist/${{ matrix.artifact_file }}
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/${{ matrix.artifact_file }}
 
       - name: Upload to Release
         if: startsWith(github.ref, 'refs/tags/')
