@@ -34,10 +34,27 @@ jobs:
           restore-keys: |
             test-${{ runner.os }}-poetry-
 
+      - name: Install system dependencies for Qt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1-mesa-glx \
+            libxkbcommon-x11-0 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-randr0 \
+            libxcb-render-util0 \
+            libxcb-xinerama0 \
+            libxcb-xfixes0 \
+            libegl1
+
       - name: Install dependencies
         run: poetry install --with dev
 
       - name: Run tests
+        env:
+          QT_QPA_PLATFORM: offscreen
         run: poetry run pytest -v --tb=short
 
       - name: Run linter (optional)
@@ -93,6 +110,22 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
 
+      - name: Install system dependencies for Qt (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1-mesa-glx \
+            libxkbcommon-x11-0 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-randr0 \
+            libxcb-render-util0 \
+            libxcb-xinerama0 \
+            libxcb-xfixes0 \
+            libegl1
+
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -106,6 +139,8 @@ jobs:
           poetry install --with dev
 
       - name: Build with PyInstaller
+        env:
+          QT_QPA_PLATFORM: offscreen
         run: |
           poetry run pyinstaller selladomx.spec
 

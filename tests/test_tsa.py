@@ -11,13 +11,13 @@ class TestTSAClient:
     def test_initialization(self):
         """Test inicialización básica"""
         client = TSAClient()
-        assert client.tsa_url == TSA_URL
+        assert client.primary_url == TSA_URL
 
     def test_custom_url(self):
         """Test con URL personalizada"""
         custom_url = "https://example.com/tsa"
         client = TSAClient(tsa_url=custom_url)
-        assert client.tsa_url == custom_url
+        assert client.primary_url == custom_url
 
     def test_get_timestamper(self):
         """Test obtención de timestamper"""
