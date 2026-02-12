@@ -15,7 +15,7 @@ from .ui.qml_bridge.signing_coordinator import SigningCoordinator
 from .ui.qml_bridge.settings_bridge import SettingsBridge
 from .utils.settings_manager import SettingsManager
 from .utils.deep_link_handler import DeepLinkHandler
-from .config import ONBOARDING_VERSION
+from .config import ONBOARDING_VERSION, COLOR_SUCCESS, COLOR_ERROR
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ def _handle_deep_link_token(token: str, settings_manager: SettingsManager, view_
         # Show success message via status log
         view_model._append_status_log(
             f"✅ Token configurado exitosamente - {balance_response['credits_remaining']} créditos disponibles",
-            "#10B981"
+            COLOR_SUCCESS
         )
 
         logger.info("Token configured successfully via deep link")
@@ -68,7 +68,7 @@ def _handle_deep_link_token(token: str, settings_manager: SettingsManager, view_
     except APIError as e:
         view_model._append_status_log(
             f"❌ Error al configurar token: {e.message}",
-            "#EF4444"
+            COLOR_ERROR
         )
         logger.error(f"Failed to configure token via deep link: {e}")
 
@@ -126,6 +126,10 @@ def main():
     context = engine.rootContext()
     context.setContextProperty("mainViewModel", view_model)
     context.setContextProperty("settingsBridge", settings_bridge)
+
+    # Expose app icon path for QML
+    icon_file = Path(__file__).parent.parent.parent / "assets" / "icon.png"
+    context.setContextProperty("appIconSource", QUrl.fromLocalFile(str(icon_file)))
 
     # Connect deep link handler to view model method
     deep_link_handler.token_received.connect(

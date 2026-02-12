@@ -16,7 +16,7 @@ Dialog {
     closePolicy: Popup.NoAutoClose
 
     width: 700
-    height: 500
+    height: 520
 
     anchors.centerIn: parent
 
@@ -45,11 +45,17 @@ Dialog {
                     width: parent.width - 100
                     spacing: DesignTokens.lg
 
-                    Item { Layout.preferredHeight: DesignTokens.xxl }
+                    Item { Layout.preferredHeight: DesignTokens.xl }
 
-                    Text {
-                        text: "🔐"
-                        font.pixelSize: 56
+                    // App icon
+                    Image {
+                        source: appIconSource
+                        Layout.preferredWidth: 72
+                        Layout.preferredHeight: 72
+                        sourceSize.width: 72
+                        sourceSize.height: 72
+                        smooth: true
+                        mipmap: true
                         Layout.alignment: Qt.AlignHCenter
                     }
 
@@ -64,17 +70,17 @@ Dialog {
                     }
 
                     Text {
-                        text: "Firma digital 100% local"
+                        text: "Firma tus PDFs sin subir archivos a la nube"
                         font.pixelSize: DesignTokens.fontLg
                         color: DesignTokens.textSecondary
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                     }
 
-                    Item { Layout.preferredHeight: DesignTokens.xxl }
+                    Item { Layout.preferredHeight: DesignTokens.xl }
 
                     Text {
-                        text: "Firma tus documentos PDF con certificados digitales sin enviar datos a servidores externos.\n\nTodo el procesamiento ocurre localmente en tu computadora."
+                        text: "Firma tus documentos PDF con certificados digitales de forma segura.\n\nLa firma se aplica localmente en tu computadora. Tus documentos nunca se envían a servidores externos."
                         font.pixelSize: DesignTokens.fontMd
                         color: DesignTokens.textPrimary
                         lineHeight: 1.5
@@ -150,66 +156,67 @@ Dialog {
                 }
             }
 
-            // Slide 3: Professional TSA
+            // Slide 3: Choose protection level
             Item {
                 ColumnLayout {
                     anchors.centerIn: parent
-                    width: parent.width - 100
-                    spacing: DesignTokens.lg
-
-                    Item { Layout.preferredHeight: DesignTokens.sm }
+                    width: parent.width - 80
+                    spacing: DesignTokens.md
 
                     Text {
-                        text: "⚖️"
-                        font.pixelSize: 72
-                        Layout.alignment: Qt.AlignHCenter
-                    }
-
-                    Text {
-                        text: "¿Necesitas Validez Legal?"
-                        font.pixelSize: DesignTokens.font4xl
+                        text: "Elige tu nivel de protección"
+                        font.pixelSize: DesignTokens.font3xl
                         font.weight: DesignTokens.weightBold
                         color: DesignTokens.textPrimary
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.WordWrap
-                        lineHeight: 1.2
                     }
 
-                    Item { Layout.preferredHeight: DesignTokens.xl }
+                    Text {
+                        text: "Ambas opciones firman tus documentos. La diferencia es el respaldo legal."
+                        font.pixelSize: DesignTokens.fontMd
+                        color: DesignTokens.textSecondary
+                        Layout.fillWidth: true
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WordWrap
+                    }
+
+                    Item { Layout.preferredHeight: DesignTokens.sm }
 
                     // Comparison boxes
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: DesignTokens.lg
+                        spacing: DesignTokens.md
 
                         // Professional TSA
                         Rectangle {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: proContent.implicitHeight + DesignTokens.lg * 2
+                            Layout.preferredHeight: proContent.implicitHeight + DesignTokens.md * 2
                             radius: DesignTokens.radiusLg
-                            color: DesignTokens.successLight
+                            color: DesignTokens.accentLight
                             border.width: 2
-                            border.color: DesignTokens.primary
+                            border.color: DesignTokens.accent
 
                             ColumnLayout {
                                 id: proContent
                                 anchors.fill: parent
-                                anchors.margins: DesignTokens.lg
-                                spacing: DesignTokens.sm
+                                anchors.margins: DesignTokens.md
+                                spacing: DesignTokens.xs
 
                                 Text {
                                     text: "TSA Profesional"
-                                    font.pixelSize: DesignTokens.fontLg
+                                    font.pixelSize: DesignTokens.fontBase
                                     font.weight: DesignTokens.weightBold
-                                    color: DesignTokens.primary
+                                    color: DesignTokens.accent
                                 }
 
                                 Repeater {
                                     model: [
-                                        "✓ Certificación oficial RFC 3161",
+                                        "✓ Máxima validez legal",
+                                        "✓ Cumple NOM-151 y eIDAS",
                                         "✓ Evidencia admisible en juicios",
-                                        "✓ Cumplimiento NOM-151-SCFI-2016",
+                                        "✓ Proveedor europeo certificado",
                                         "✓ Solo $2 MXN por documento"
                                     ]
 
@@ -224,34 +231,35 @@ Dialog {
                             }
                         }
 
-                        // Free TSA
+                        // Basic TSA
                         Rectangle {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: freeContent.implicitHeight + DesignTokens.lg * 2
+                            Layout.preferredHeight: freeContent.implicitHeight + DesignTokens.md * 2
                             radius: DesignTokens.radiusLg
                             color: DesignTokens.bgSecondary
-                            border.width: 2
+                            border.width: 1
                             border.color: DesignTokens.borderDefault
 
                             ColumnLayout {
                                 id: freeContent
                                 anchors.fill: parent
-                                anchors.margins: DesignTokens.lg
-                                spacing: DesignTokens.sm
+                                anchors.margins: DesignTokens.md
+                                spacing: DesignTokens.xs
 
                                 Text {
-                                    text: "TSA Gratuito (Limitado)"
-                                    font.pixelSize: DesignTokens.fontLg
+                                    text: "TSA Básico"
+                                    font.pixelSize: DesignTokens.fontBase
                                     font.weight: DesignTokens.weightBold
-                                    color: DesignTokens.textTertiary
+                                    color: DesignTokens.textSecondary
                                 }
 
                                 Repeater {
                                     model: [
-                                        "• Solo para uso personal e informal",
-                                        "• ⚠️ Sin garantía de validez legal",
-                                        "• ❌ No aceptado en procesos legales",
-                                        "• No recomendado para negocios"
+                                        "• Validez legal básica",
+                                        "• Sello de tiempo de proveedor público",
+                                        "• Adecuado para uso personal",
+                                        "• Aceptación limitada en procesos formales",
+                                        "• Gratis"
                                     ]
 
                                     Text {
@@ -266,17 +274,17 @@ Dialog {
                         }
                     }
 
+                    Item { Layout.preferredHeight: DesignTokens.xs }
+
                     Text {
-                        text: "💡 Recomendación: Usa TSA Profesional para documentos importantes como contratos, facturas o trámites oficiales"
-                        font.pixelSize: DesignTokens.fontMd
+                        text: "💡 Recomendamos TSA Profesional para contratos, facturas y trámites oficiales"
+                        font.pixelSize: DesignTokens.fontSm
                         font.weight: DesignTokens.weightMedium
                         color: DesignTokens.primary
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.WordWrap
                     }
-
-                    Item { Layout.fillHeight: true }
                 }
             }
 

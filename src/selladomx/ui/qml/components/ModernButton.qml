@@ -70,7 +70,7 @@ Button {
         color: getBackgroundColor()
 
         border.width: variant === "secondary" ? 2 : 0
-        border.color: DesignTokens.borderDefault
+        border.color: variant === "secondary" ? DesignTokens.primary : DesignTokens.borderDefault
 
         // Gradient for primary/success/danger variants
         gradient: Gradient {
@@ -107,8 +107,6 @@ Button {
             opacity: control.enabled ? 0 : 0.6
         }
 
-        // Drop shadow (simplified - Qt 6 compatible)
-        layer.enabled: false
     }
 
     // ========================================================================

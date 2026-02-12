@@ -32,12 +32,11 @@ if qml_src.exists():
 
 # Hidden imports that PyInstaller might miss
 hidden_imports = [
-    # Qt Widgets (legacy UI)
+    # Qt Core
     'PySide6.QtCore',
     'PySide6.QtGui',
-    'PySide6.QtWidgets',
 
-    # Qt Quick/QML (new UI)
+    # Qt Quick/QML
     'PySide6.QtQml',
     'PySide6.QtQuick',
     'PySide6.QtQuickControls2',
@@ -132,8 +131,8 @@ if sys.platform == 'darwin':
             'NSHighResolutionCapable': 'True',
             'CFBundleName': 'SelladoMX',
             'CFBundleDisplayName': 'SelladoMX',
-            'CFBundleVersion': '0.1.0',
-            'CFBundleShortVersionString': '0.1.0',
+            'CFBundleVersion': '0.2.0',
+            'CFBundleShortVersionString': '0.2.0',
             'LSMinimumSystemVersion': '10.13',
             'NSRequiresAquaSystemAppearance': 'False',
             # URL scheme handler for magic links

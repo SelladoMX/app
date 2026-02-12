@@ -57,8 +57,8 @@ StepIndicator {
                     text: {
                         var path = mainViewModel.certPath
                         if (!path) return ""
-                        var parts = path.split("/")
-                        return parts[parts.length - 1]
+                        var lastSlash = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"))
+                        return lastSlash >= 0 ? path.substring(lastSlash + 1) : path
                     }
 
                     Text {
@@ -114,8 +114,8 @@ StepIndicator {
                     text: {
                         var path = mainViewModel.keyPath
                         if (!path) return ""
-                        var parts = path.split("/")
-                        return parts[parts.length - 1]
+                        var lastSlash = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"))
+                        return lastSlash >= 0 ? path.substring(lastSlash + 1) : path
                     }
 
                     Text {

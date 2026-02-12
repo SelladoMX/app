@@ -8,6 +8,7 @@ from PySide6.QtCore import QObject, Signal, Slot, Property, QUrl, Qt
 from ...signing.certificate_validator import CertificateValidator
 from ...errors import CertificateError, CertificateExpiredError, CertificateRevokedError
 from ...utils.settings_manager import SettingsManager
+from ...config import COLOR_SUCCESS, COLOR_ERROR, COLOR_WARNING, COLOR_INFO, COLOR_MUTED, COLOR_MUTED_LIGHT
 from .signing_coordinator import SigningCoordinator
 
 logger = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ class MainViewModel(QObject):
         self._cert_path = ""
         self._key_path = ""
         self._cert_status = "No se ha cargado certificado"
-        self._cert_status_color = "#9CA3AF"  # Gray
+        self._cert_status_color = COLOR_MUTED_LIGHT
         self._signing_progress = 0
         self._current_progress = 0
         self._is_signing = False
@@ -131,7 +132,7 @@ class MainViewModel(QObject):
 
         self._append_status_log(
             f"✓ {len(file_urls)} archivo(s) agregado(s)",
-            "#10B981"  # Success green
+            COLOR_SUCCESS
         )
 
     @Slot()
@@ -142,7 +143,7 @@ class MainViewModel(QObject):
         self.pdfFilesChanged.emit()
         self.step1CompleteChanged.emit()
 
-        self._append_status_log("Lista de PDFs limpiada", "#6B7280")
+        self._append_status_log("Lista de PDFs limpiada", COLOR_MUTED)
 
     @Slot(int)
     def removePdfAt(self, index: int):
@@ -193,7 +194,7 @@ class MainViewModel(QObject):
         if self._cert_path and self._key_path:
             self._append_status_log(
                 "Certificado seleccionado. Ingresa la contraseña para validar.",
-                "#3B82F6"  # Info blue
+                COLOR_INFO
             )
 
     @Slot(str)
@@ -212,7 +213,7 @@ class MainViewModel(QObject):
         if self._cert_path and self._key_path:
             self._append_status_log(
                 "Llave privada seleccionada. Ingresa la contraseña para validar.",
-                "#3B82F6"  # Info blue
+                COLOR_INFO
             )
 
     @Slot(str, str, str)
@@ -239,7 +240,7 @@ class MainViewModel(QObject):
 
             self._step2_complete = True
             self._cert_status = f"✓ Certificado válido: {self.signer_cn}"
-            self._cert_status_color = "#10B981"  # Success green
+            self._cert_status_color = COLOR_SUCCESS
 
             self.step2CompleteChanged.emit()
             self.certStatusChanged.emit()
@@ -247,19 +248,19 @@ class MainViewModel(QObject):
 
             self._append_status_log(
                 f"✓ Certificado válido: {self.signer_cn}",
-                "#10B981"
+                COLOR_SUCCESS
             )
 
             logger.info(f"Certificate validated: {self.signer_cn}")
 
         except CertificateExpiredError as e:
-            self._handle_cert_error(f"✗ Certificado expirado: {e}", "#F59E0B")
+            self._handle_cert_error(f"✗ Certificado expirado: {e}", COLOR_WARNING)
         except CertificateRevokedError as e:
-            self._handle_cert_error(f"✗ Certificado revocado: {e}", "#EF4444")
+            self._handle_cert_error(f"✗ Certificado revocado: {e}", COLOR_ERROR)
         except CertificateError as e:
-            self._handle_cert_error(f"✗ Error de certificado: {e}", "#EF4444")
+            self._handle_cert_error(f"✗ Error de certificado: {e}", COLOR_ERROR)
         except Exception as e:
-            self._handle_cert_error(f"✗ Error inesperado: {e}", "#EF4444")
+            self._handle_cert_error(f"✗ Error inesperado: {e}", COLOR_ERROR)
 
     def _handle_cert_error(self, message: str, color: str):
         """Handle certificate validation error.
@@ -315,7 +316,7 @@ class MainViewModel(QObject):
         if not self._step1_complete or not self._step2_complete:
             self._append_status_log(
                 "✗ Completa los pasos anteriores primero",
-                "#EF4444"
+                COLOR_ERROR
             )
             return
 
@@ -337,7 +338,7 @@ class MainViewModel(QObject):
             if not api_key:
                 self._append_status_log(
                     "✗ No se encontró token para TSA Profesional",
-                    "#EF4444"
+                    COLOR_ERROR
                 )
                 self._is_signing = False
                 self.isSigningChanged.emit()
@@ -348,7 +349,7 @@ class MainViewModel(QObject):
 
         self._append_status_log(
             f"Iniciando firma de {len(pdf_paths)} documento(s)...",
-            "#3B82F6"
+            COLOR_INFO
         )
 
         # Start signing
@@ -376,7 +377,7 @@ class MainViewModel(QObject):
 
         self._append_status_log(
             f"Progreso: {current}/{total}",
-            "#3B82F6"
+            COLOR_INFO
         )
 
     def _on_file_completed(
@@ -394,7 +395,7 @@ class MainViewModel(QObject):
             message: Status message
             verification_url: Verification URL (if professional TSA)
         """
-        color = "#10B981" if success else "#EF4444"
+        color = COLOR_SUCCESS if success else COLOR_ERROR
         self._append_status_log(message, color)
 
         # Emit signal for QML to handle (e.g., show link button)
@@ -415,12 +416,12 @@ class MainViewModel(QObject):
         if errors:
             self._append_status_log(
                 f"✗ Firmado completado con {len(errors)} error(es)",
-                "#F59E0B"
+                COLOR_WARNING
             )
         else:
             self._append_status_log(
                 "✓ Todos los documentos firmados exitosamente",
-                "#10B981"
+                COLOR_SUCCESS
             )
 
         # Emit completion signal for QML to show appropriate dialog
@@ -598,5 +599,5 @@ class MainViewModel(QObject):
         # For now, just log it
         self._append_status_log(
             "Deep link recibido - procesando...",
-            "#3B82F6"
+            COLOR_INFO
         )

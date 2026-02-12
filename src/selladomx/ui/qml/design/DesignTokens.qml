@@ -21,12 +21,12 @@ QtObject {
     readonly property color surfaceRaised: "#FAFAFA"
     readonly property color surfaceOverlay: "#F5F5F5"
 
-    // Primary Accent (Professional Teal) - Main brand color
-    readonly property color primary: "#14B8A6"           // Teal-500
-    readonly property color primaryHover: "#0D9488"      // Teal-600
-    readonly property color primaryActive: "#0F766E"     // Teal-700
-    readonly property color primaryLight: "#0D9488"      // Teal-600
-    readonly property color primarySubtle: "#F0FDFA"     // Teal-50
+    // Primary (Navy Blue) - Main brand color aligned with selladomx.com
+    readonly property color primary: "#0f2a44"           // Navy
+    readonly property color primaryHover: "#1a3d5c"      // Navy hover
+    readonly property color primaryActive: "#0a1f33"     // Navy dark
+    readonly property color primaryLight: "#1a3d5c"      // Navy light
+    readonly property color primarySubtle: "#f0f6fb"     // Navy subtle
 
     // Text Colors
     readonly property color textPrimary: "#111827"       // Gray-900
@@ -39,11 +39,17 @@ QtObject {
     readonly property color borderStrong: "#D1D5DB"      // Gray-300
     readonly property color borderSubtle: "#F3F4F6"      // Gray-100
 
+    // Accent (Green) - CTAs and success, aligned with selladomx.com
+    readonly property color accent: "#2e7d32"            // Green accent
+    readonly property color accentHover: "#4caf50"       // Green accent hover
+    readonly property color accentActive: "#1b5e20"      // Green accent active
+    readonly property color accentLight: "#e8f5e9"       // Green accent light
+
     // Semantic Colors
-    readonly property color success: "#10B981"           // Green-500
-    readonly property color successLight: "#F0FDF4"      // Green-50
-    readonly property color successHover: "#059669"      // Green-600
-    readonly property color successActive: "#047857"     // Green-700
+    readonly property color success: "#2e7d32"           // Green (aligned with site)
+    readonly property color successLight: "#e8f5e9"      // Green light
+    readonly property color successHover: "#4caf50"      // Green hover
+    readonly property color successActive: "#1b5e20"     // Green active
 
     readonly property color warning: "#F59E0B"           // Amber-500
     readonly property color warningLight: "#FEF3C7"      // Amber-50
@@ -65,12 +71,12 @@ QtObject {
     readonly property color stepPendingBorder: "#E5E7EB"
     readonly property color stepPendingText: "#9CA3AF"
 
-    readonly property color stepActiveBg: "#F0FDFA"      // Teal-50
-    readonly property color stepActiveBorder: "#14B8A6"  // Teal-500
+    readonly property color stepActiveBg: "#f0f6fb"      // Navy subtle
+    readonly property color stepActiveBorder: "#0f2a44"  // Navy
     readonly property color stepActiveText: "#111827"
 
-    readonly property color stepCompletedBg: "#F0FDF4"   // Green-50
-    readonly property color stepCompletedBorder: "#10B981" // Green-500
+    readonly property color stepCompletedBg: "#e8f5e9"   // Green light
+    readonly property color stepCompletedBorder: "#2e7d32" // Green
     readonly property color stepCompletedText: "#111827"
 
     readonly property color stepDisabledBg: "#FAFAFA"
@@ -185,5 +191,6 @@ QtObject {
     // FONT FAMILIES
     // ========================================================================
 
-    readonly property string fontFamilyMono: "Monaco, Courier New, monospace"
+    readonly property string fontFamily: "SF Pro Display, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    readonly property string fontFamilyMono: "SF Mono, Menlo, Monaco, Consolas, monospace"
 }

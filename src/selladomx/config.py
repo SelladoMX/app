@@ -88,3 +88,14 @@ WINDOW_ICONS: Final[dict[str, str]] = {
 ONBOARDING_VERSION: Final[int] = 1
 WINDOW_WIDTH: Final[int] = 900
 WINDOW_HEIGHT: Final[int] = 700
+
+# ============================================================================
+# COLORS - Must stay in sync with design/DesignTokens.qml
+# ============================================================================
+
+COLOR_SUCCESS: Final[str] = "#2e7d32"       # Green (accent/success)
+COLOR_ERROR: Final[str] = "#EF4444"         # Red
+COLOR_WARNING: Final[str] = "#F59E0B"       # Amber
+COLOR_INFO: Final[str] = "#3B82F6"          # Blue
+COLOR_MUTED: Final[str] = "#6B7280"         # Gray-500
+COLOR_MUTED_LIGHT: Final[str] = "#9CA3AF"   # Gray-400

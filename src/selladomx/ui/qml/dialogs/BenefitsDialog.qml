@@ -8,13 +8,11 @@ import "../components"
 Dialog {
     id: benefitsDialog
 
-    title: "Mejora tu Seguridad Legal"
+    title: ""
     modal: true
 
-    width: 600
+    width: 680
     height: 650
-
-    anchors.centerIn: parent
 
     background: Rectangle {
         color: DesignTokens.bgPrimary
@@ -29,7 +27,7 @@ Dialog {
 
         // Header
         Text {
-            text: "🔒 TSA Profesional - Máxima Seguridad Legal"
+            text: "🔒 Protege tus documentos con validez legal"
             font.pixelSize: DesignTokens.font3xl
             font.weight: DesignTokens.weightBold
             color: DesignTokens.primary
@@ -37,136 +35,117 @@ Dialog {
             wrapMode: Text.WordWrap
         }
 
-        Text {
-            text: "¿Por qué necesitas TSA Profesional?"
-            font.pixelSize: DesignTokens.fontLg
-            font.weight: DesignTokens.weightSemiBold
-            color: DesignTokens.textPrimary
+        // Professional TSA section
+        Rectangle {
             Layout.fillWidth: true
-        }
-
-        // Comparison table
-        ScrollView {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            clip: true
+            Layout.preferredHeight: proContent.implicitHeight + DesignTokens.lg * 2
+            radius: DesignTokens.radiusLg
+            color: DesignTokens.accentLight
+            border.width: 2
+            border.color: DesignTokens.accent
 
             ColumnLayout {
-                width: parent.width
-                spacing: DesignTokens.md
+                id: proContent
+                anchors.fill: parent
+                anchors.margins: DesignTokens.lg
+                spacing: DesignTokens.sm
 
-                // Professional TSA section
-                Rectangle {
+                Text {
+                    text: "✓ TSA Profesional"
+                    font.pixelSize: DesignTokens.fontLg
+                    font.weight: DesignTokens.weightBold
+                    color: DesignTokens.accent
                     Layout.fillWidth: true
-                    Layout.preferredHeight: proContent.implicitHeight + DesignTokens.lg * 2
-                    radius: DesignTokens.radiusLg
-                    color: DesignTokens.successLight
-                    border.width: 2
-                    border.color: DesignTokens.success
-
-                    ColumnLayout {
-                        id: proContent
-                        anchors.fill: parent
-                        anchors.margins: DesignTokens.lg
-                        spacing: DesignTokens.sm
-
-                        Text {
-                            text: "✓ TSA Profesional"
-                            font.pixelSize: DesignTokens.fontLg
-                            font.weight: DesignTokens.weightBold
-                            color: DesignTokens.success
-                            Layout.fillWidth: true
-                        }
-
-                        Text {
-                            text: "• Validez legal garantizada por DigitalSign\n" +
-                                  "• Certificación oficial RFC 3161\n" +
-                                  "• Hash registrado y verificable en selladomx.com\n" +
-                                  "• Fecha y hora certificada por terceros\n" +
-                                  "• Evidencia admisible en juicios\n" +
-                                  "• Cumplimiento NOM-151-SCFI-2016"
-                            font.pixelSize: DesignTokens.fontSm
-                            color: DesignTokens.textSecondary
-                            lineHeight: 1.6
-                            Layout.fillWidth: true
-                            wrapMode: Text.WordWrap
-                        }
-                    }
                 }
 
-                // Free TSA section
-                Rectangle {
+                Text {
+                    text: "• Validez legal respaldada por proveedor europeo certificado\n" +
+                          "• Hash registrado y verificable en selladomx.com\n" +
+                          "• Fecha y hora certificada por terceros\n" +
+                          "• Evidencia admisible en juicios\n" +
+                          "• Cumple NOM-151-SCFI-2016 y normas europeas eIDAS"
+                    font.pixelSize: DesignTokens.fontSm
+                    color: DesignTokens.textSecondary
+                    lineHeight: 1.6
                     Layout.fillWidth: true
-                    Layout.preferredHeight: freeContent.implicitHeight + DesignTokens.lg * 2
-                    radius: DesignTokens.radiusLg
-                    color: DesignTokens.errorLight
-                    border.width: 2
-                    border.color: DesignTokens.error
-
-                    ColumnLayout {
-                        id: freeContent
-                        anchors.fill: parent
-                        anchors.margins: DesignTokens.lg
-                        spacing: DesignTokens.sm
-
-                        Text {
-                            text: "⚠️ TSA Gratuito"
-                            font.pixelSize: DesignTokens.fontLg
-                            font.weight: DesignTokens.weightBold
-                            color: DesignTokens.error
-                            Layout.fillWidth: true
-                        }
-
-                        Text {
-                            text: "• ⚠️ Sin registro de hash\n" +
-                                  "• ⚠️ Validez limitada (sin garantía)\n" +
-                                  "• ❌ No certificado por terceros\n" +
-                                  "• ❌ Fecha no verificable por terceros\n" +
-                                  "• ⚠️ Aceptación limitada en procesos legales\n" +
-                                  "• Recomendado para documentos internos"
-                            font.pixelSize: DesignTokens.fontSm
-                            color: DesignTokens.textSecondary
-                            lineHeight: 1.6
-                            Layout.fillWidth: true
-                            wrapMode: Text.WordWrap
-                        }
-                    }
-                }
-
-                // Pricing highlight
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: priceContent.implicitHeight + DesignTokens.lg * 2
-                    radius: DesignTokens.radiusLg
-                    color: DesignTokens.primarySubtle
-                    border.width: 2
-                    border.color: DesignTokens.primary
-
-                    ColumnLayout {
-                        id: priceContent
-                        anchors.fill: parent
-                        anchors.margins: DesignTokens.lg
-                        spacing: DesignTokens.xs
-
-                        Text {
-                            text: "💰 Solo $2 MXN por documento"
-                            font.pixelSize: DesignTokens.fontXl
-                            font.weight: DesignTokens.weightBold
-                            color: DesignTokens.primary
-                            Layout.fillWidth: true
-                        }
-
-                        Text {
-                            text: "Protege tu patrimonio y negocios con la máxima seguridad."
-                            font.pixelSize: DesignTokens.fontSm
-                            color: DesignTokens.textSecondary
-                            Layout.fillWidth: true
-                            wrapMode: Text.WordWrap
-                        }
-                    }
+                    wrapMode: Text.WordWrap
                 }
             }
         }
+
+        // Free TSA section
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: freeContent.implicitHeight + DesignTokens.lg * 2
+            radius: DesignTokens.radiusLg
+            color: DesignTokens.errorLight
+            border.width: 2
+            border.color: DesignTokens.error
+
+            ColumnLayout {
+                id: freeContent
+                anchors.fill: parent
+                anchors.margins: DesignTokens.lg
+                spacing: DesignTokens.sm
+
+                Text {
+                    text: "⚠️ TSA Básico"
+                    font.pixelSize: DesignTokens.fontLg
+                    font.weight: DesignTokens.weightBold
+                    color: DesignTokens.error
+                    Layout.fillWidth: true
+                }
+
+                Text {
+                    text: "• Validez legal básica, sin certificación de terceros\n" +
+                          "• Sin registro de hash verificable\n" +
+                          "• Aceptación limitada en procesos legales formales\n" +
+                          "• Adecuado para documentos internos o de bajo riesgo"
+                    font.pixelSize: DesignTokens.fontSm
+                    color: DesignTokens.textSecondary
+                    lineHeight: 1.6
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                }
+            }
+        }
+
+        // Pricing highlight
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: priceContent.implicitHeight + DesignTokens.xl * 2
+            radius: DesignTokens.radiusLg
+            color: DesignTokens.primarySubtle
+            border.width: 2
+            border.color: DesignTokens.primary
+
+            ColumnLayout {
+                id: priceContent
+                anchors.fill: parent
+                anchors.margins: DesignTokens.xl
+                spacing: DesignTokens.sm
+
+                Text {
+                    text: "$2 MXN por documento"
+                    font.pixelSize: DesignTokens.font2xl
+                    font.weight: DesignTokens.weightBold
+                    color: DesignTokens.primary
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                }
+
+                Text {
+                    text: "Protege tu patrimonio y negocios con validez legal garantizada."
+                    font.pixelSize: DesignTokens.fontBase
+                    color: DesignTokens.textSecondary
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
+                }
+            }
+        }
+
+        Item { Layout.fillHeight: true }
 
         // Buttons
         RowLayout {

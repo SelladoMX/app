@@ -67,8 +67,8 @@ StepIndicator {
                             Layout.fillWidth: true
                             text: {
                                 var path = modelData
-                                var parts = path.split("/")
-                                return parts[parts.length - 1]
+                                var lastSlash = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"))
+                                return lastSlash >= 0 ? path.substring(lastSlash + 1) : path
                             }
                             color: DesignTokens.textPrimary
                             elide: Text.ElideMiddle

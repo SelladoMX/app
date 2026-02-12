@@ -53,7 +53,7 @@ StepIndicator {
                     }
 
                     Text {
-                        text: "TSA Profesional te da validez legal certificada por solo $2 MXN."
+                        text: "Obtén validez legal certificada por solo $2 MXN por documento."
                         font.pixelSize: DesignTokens.fontSm
                         color: DesignTokens.textSecondary
                         wrapMode: Text.WordWrap
@@ -65,7 +65,7 @@ StepIndicator {
                     visible: !mainViewModel.hasProfessionalTSA
                     text: "Configurar"
                     variant: "primary"
-                    onClicked: tokenConfigDialog.open()
+                    onClicked: mainWindow.showTokenConfigDialog()
                 }
             }
         }
@@ -235,7 +235,7 @@ StepIndicator {
                     background: null
 
                     font.pixelSize: DesignTokens.fontSm
-                    font.family: "Monaco, Courier, monospace"
+                    font.family: DesignTokens.fontFamilyMono
 
                     // Auto-scroll to bottom
                     onTextChanged: {
@@ -254,36 +254,6 @@ StepIndicator {
             loading: mainViewModel.isSigning
             enabled: !mainViewModel.isSigning && mainViewModel.step2Complete
             onClicked: mainViewModel.startSigning()
-
-            // Custom gradient for success button
-            background: Rectangle {
-                radius: DesignTokens.radiusLg
-
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: DesignTokens.success }
-                    GradientStop { position: 1.0; color: DesignTokens.successActive }
-                }
-
-                // Hover overlay
-                Rectangle {
-                    anchors.fill: parent
-                    radius: parent.radius
-                    color: Qt.rgba(0, 0, 0, 1)
-                    opacity: parent.parent.hovered && parent.parent.enabled ? 0.1 : 0
-
-                    Behavior on opacity {
-                        NumberAnimation { duration: DesignTokens.durationFast }
-                    }
-                }
-
-                // Disabled overlay
-                Rectangle {
-                    anchors.fill: parent
-                    radius: parent.radius
-                    color: DesignTokens.bgPrimary
-                    opacity: parent.parent.enabled ? 0 : 0.6
-                }
-            }
         }
 
         // Info text
@@ -293,7 +263,7 @@ StepIndicator {
                 if (mainViewModel.useProfessionalTSA) {
                     return "✨ Los documentos serán firmados con TSA Profesional (validez legal garantizada)"
                 } else {
-                    return "ℹ️ Los documentos serán firmados con TSA gratuito"
+                    return "ℹ️ Los documentos serán firmados con TSA Básico"
                 }
             }
             font.pixelSize: DesignTokens.fontSm
@@ -310,7 +280,6 @@ StepIndicator {
             // Could show individual file success/error indicators here
             if (verificationUrl) {
                 console.log("Verification URL for", filename, ":", verificationUrl)
-                // Could add a button to open the verification URL
             }
         }
 
@@ -323,13 +292,8 @@ StepIndicator {
         }
     }
 
-    // Signing success dialog
+    // Signing success dialog (kept here since it needs signing-specific data)
     SigningSuccessDialog {
         id: signingSuccessDialog
-    }
-
-    // Token configuration dialog
-    TokenConfigDialog {
-        id: tokenConfigDialog
     }
 }

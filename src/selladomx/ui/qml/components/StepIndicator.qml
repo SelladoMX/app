@@ -35,9 +35,6 @@ Rectangle {
         ColorAnimation { duration: DesignTokens.durationNormal }
     }
 
-    // Drop shadow (simplified - Qt 6 compatible)
-    layer.enabled: false
-
     // Main layout
     ColumnLayout {
         id: mainLayout

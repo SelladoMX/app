@@ -26,6 +26,15 @@ Window {
         onboardingLoader.active = true
     }
 
+    // Global dialog functions (called from child components)
+    function showBenefitsDialog() {
+        benefitsDialog.open()
+    }
+
+    function showTokenConfigDialog() {
+        tokenConfigDialog.open()
+    }
+
     // Main layout
     ColumnLayout {
         anchors.fill: parent
@@ -85,6 +94,7 @@ Window {
     Loader {
         id: onboardingLoader
         active: false
+        anchors.fill: parent
         sourceComponent: OnboardingDialog {
             anchors.centerIn: parent
             onAccepted: {
@@ -102,5 +112,16 @@ Window {
         onLoaded: {
             item.open()
         }
+    }
+
+    // Centralized dialogs (shared across all components)
+    BenefitsDialog {
+        id: benefitsDialog
+        anchors.centerIn: parent
+    }
+
+    TokenConfigDialog {
+        id: tokenConfigDialog
+        anchors.centerIn: parent
     }
 }

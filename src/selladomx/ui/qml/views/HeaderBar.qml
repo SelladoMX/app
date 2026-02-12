@@ -4,7 +4,6 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import "../design"
 import "../components"
-import "../dialogs"
 
 Rectangle {
     id: header
@@ -20,23 +19,15 @@ Rectangle {
         RowLayout {
             spacing: DesignTokens.md
 
-            // Logo placeholder
-            Rectangle {
+            // App icon
+            Image {
+                source: appIconSource
                 width: 40
                 height: 40
-                radius: DesignTokens.radiusLg
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: DesignTokens.primary }
-                    GradientStop { position: 1.0; color: DesignTokens.primaryActive }
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "S"
-                    font.pixelSize: DesignTokens.font3xl
-                    font.weight: DesignTokens.weightBold
-                    color: DesignTokens.bgPrimary
-                }
+                sourceSize.width: 40
+                sourceSize.height: 40
+                smooth: true
+                mipmap: true
             }
 
             ColumnLayout {
@@ -69,7 +60,7 @@ Rectangle {
             visible: !mainViewModel.hasProfessionalTSA
 
             contentItem: Text {
-                text: "Usando TSA Gratuito • Mejorar validez legal →"
+                text: "Usando TSA Básico • Mejorar validez legal →"
                 font.pixelSize: DesignTokens.fontSm
                 color: DesignTokens.textPrimary
                 font.underline: true
@@ -77,7 +68,7 @@ Rectangle {
 
             background: Item {}
 
-            onClicked: benefitsDialog.open()
+            onClicked: mainWindow.showBenefitsDialog()
 
             MouseArea {
                 anchors.fill: parent
@@ -167,7 +158,7 @@ Rectangle {
             visible: !mainViewModel.hasProfessionalTSA
             text: "Configurar Token"
             variant: "secondary"
-            onClicked: tokenConfigDialog.open()
+            onClicked: mainWindow.showTokenConfigDialog()
         }
 
         // Settings button (if has token)
@@ -189,7 +180,7 @@ Rectangle {
 
                 MenuItem {
                     text: "Configurar token"
-                    onTriggered: tokenConfigDialog.open()
+                    onTriggered: mainWindow.showTokenConfigDialog()
                 }
 
                 MenuSeparator {}
@@ -200,15 +191,5 @@ Rectangle {
                 }
             }
         }
-    }
-
-    // Token configuration dialog
-    TokenConfigDialog {
-        id: tokenConfigDialog
-    }
-
-    // Benefits comparison dialog
-    BenefitsDialog {
-        id: benefitsDialog
     }
 }

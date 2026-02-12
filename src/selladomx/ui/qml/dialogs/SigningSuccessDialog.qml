@@ -56,8 +56,8 @@ Dialog {
 
             Text {
                 text: "• ✓ Hash registrado y verificable en selladomx.com\n" +
-                      "• ✓ Sello de tiempo certificado RFC 3161\n" +
-                      "• ✓ Fecha verificable por terceros confiables\n" +
+                      "• ✓ Sello de tiempo certificado\n" +
+                      "• ✓ Fecha verificable por terceros\n" +
                       "• ✓ Evidencia admisible en procesos legales"
                 font.pixelSize: DesignTokens.fontBase
                 color: DesignTokens.textPrimary
@@ -103,7 +103,7 @@ Dialog {
             }
 
             Text {
-                text: "⚠️ Documentos firmados con TSA Gratuito (validez limitada, sin registro de hash)."
+                text: "Documentos firmados con TSA Básico (validez legal básica)."
                 font.pixelSize: DesignTokens.fontBase
                 font.weight: DesignTokens.weightMedium
                 color: DesignTokens.warning
@@ -126,7 +126,7 @@ Dialog {
                     spacing: DesignTokens.sm
 
                     Text {
-                        text: "💡 ¿Necesitas validez legal garantizada?"
+                        text: "¿Necesitas validez legal?"
                         font.pixelSize: DesignTokens.fontLg
                         font.weight: DesignTokens.weightSemiBold
                         color: DesignTokens.warningDark
@@ -134,19 +134,10 @@ Dialog {
                     }
 
                     Text {
-                        text: "TSA Profesional te da registro de hash verificable, certificación oficial RFC 3161 y fecha verificable por terceros por solo $2 MXN por documento."
+                        text: "Con TSA Profesional obtienes hash verificable, fecha certificada por terceros y evidencia admisible en juicios por solo $2 MXN por documento."
                         font.pixelSize: DesignTokens.fontBase
                         color: DesignTokens.warningDark
                         lineHeight: 1.6
-                        Layout.fillWidth: true
-                        wrapMode: Text.WordWrap
-                    }
-
-                    Text {
-                        text: "<b>Ideal para:</b> Contratos, facturas, actas, y cualquier documento legal o empresarial."
-                        textFormat: Text.RichText
-                        font.pixelSize: DesignTokens.fontBase
-                        color: DesignTokens.warningDark
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
                     }
@@ -186,14 +177,9 @@ Dialog {
                 Layout.fillWidth: true
                 onClicked: {
                     successDialog.accept()
-                    benefitsDialog.open()
+                    mainWindow.showBenefitsDialog()
                 }
             }
         }
-    }
-
-    // Benefits dialog (for upsell)
-    BenefitsDialog {
-        id: benefitsDialog
     }
 }
