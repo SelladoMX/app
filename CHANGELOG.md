@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-02-11
+
 ### Added
 - Certificate path persistence - certificate and key paths are now remembered between sessions
 - Environment-based API configuration via `.env` file support
@@ -20,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI/CD test job that runs before build
 
 ### Changed
+- **Migrated UI from QtWidgets to QML/Qt Quick** for better performance and modern UI capabilities
 - Refactored `SigningWorker` to dedicated module (`signing/worker.py`)
 - Improved design token consistency across all UI components
 - Updated README with environment configuration documentation
@@ -32,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Hardcoded API URLs replaced with environment variables
 - All hardcoded hex colors replaced with design tokens
+- Fixed Qt library dependencies for Linux CI/CD builds
+- Updated test suite to work with new TSA client architecture
 
 ## [0.1.0] - TBD
 
