@@ -13,7 +13,9 @@ from PySide6.QtWidgets import (
 
 from .welcome_slide import WelcomeSlide
 from .security_slide import SecuritySlide
+from .professional_tsa_slide import ProfessionalTSASlide
 from .howto_slide import HowToSlide
+from ..design_tokens import Colors, Typography, Spacing, BorderRadius
 
 
 class OnboardingDialog(QDialog):
@@ -39,41 +41,42 @@ class OnboardingDialog(QDialog):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Slides stack
+        # Slides stack (4 slides now: Welcome, Security, Professional TSA, How To)
         self.slides_stack = QStackedWidget()
         self.slides_stack.addWidget(WelcomeSlide())
         self.slides_stack.addWidget(SecuritySlide())
+        self.slides_stack.addWidget(ProfessionalTSASlide())  # New conversion slide
         self.slides_stack.addWidget(HowToSlide())
         layout.addWidget(self.slides_stack)
 
         # Navigation buttons - Apple style
         nav_widget = QWidget()
         nav_widget.setStyleSheet(
-            """
-            QWidget {
-                background-color: #FAFAFA;
-                border-top: 1px solid #D2D2D7;
-            }
+            f"""
+            QWidget {{
+                background-color: {Colors.BG_SECONDARY};
+                border-top: 1px solid {Colors.BORDER_DEFAULT};
+            }}
             """
         )
         nav_layout = QHBoxLayout(nav_widget)
-        nav_layout.setContentsMargins(20, 16, 20, 16)
-        nav_layout.setSpacing(12)
+        nav_layout.setContentsMargins(Spacing.XL, Spacing.LG, Spacing.XL, Spacing.LG)
+        nav_layout.setSpacing(Spacing.MD)
 
         # Skip button
         self.skip_button = QPushButton("Omitir")
         self.skip_button.setStyleSheet(
-            """
-            QPushButton {
+            f"""
+            QPushButton {{
                 background-color: transparent;
-                color: #86868B;
+                color: {Colors.TEXT_TERTIARY};
                 border: none;
-                padding: 8px 16px;
-                font-size: 13px;
-            }
-            QPushButton:hover {
-                color: #007AFF;
-            }
+                padding: {Spacing.SM}px {Spacing.LG}px;
+                font-size: {Typography.FONT_BASE}px;
+            }}
+            QPushButton:hover {{
+                color: {Colors.PRIMARY};
+            }}
             """
         )
         nav_layout.addWidget(self.skip_button)
@@ -86,23 +89,23 @@ class OnboardingDialog(QDialog):
         self.prev_button.setMinimumWidth(100)
         self.prev_button.setMinimumHeight(36)
         self.prev_button.setStyleSheet(
-            """
-            QPushButton {
-                background-color: white;
-                color: #1D1D1F;
-                border: 1px solid #D2D2D7;
-                border-radius: 8px;
-                padding: 0 16px;
-                font-size: 13px;
-            }
-            QPushButton:hover {
-                background-color: #F5F5F7;
-            }
-            QPushButton:disabled {
-                background-color: #FAFAFA;
-                color: #C7C7CC;
-                border-color: #E5E5E7;
-            }
+            f"""
+            QPushButton {{
+                background-color: {Colors.SURFACE_DEFAULT};
+                color: {Colors.TEXT_PRIMARY};
+                border: 1px solid {Colors.BORDER_DEFAULT};
+                border-radius: {BorderRadius.LG}px;
+                padding: 0 {Spacing.LG}px;
+                font-size: {Typography.FONT_BASE}px;
+            }}
+            QPushButton:hover {{
+                background-color: {Colors.BG_HOVER};
+            }}
+            QPushButton:disabled {{
+                background-color: {Colors.BG_SECONDARY};
+                color: {Colors.TEXT_DISABLED};
+                border-color: {Colors.BORDER_SUBTLE};
+            }}
             """
         )
         nav_layout.addWidget(self.prev_button)
@@ -112,22 +115,22 @@ class OnboardingDialog(QDialog):
         self.next_button.setMinimumWidth(100)
         self.next_button.setMinimumHeight(36)
         self.next_button.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #007AFF;
-                color: white;
+            f"""
+            QPushButton {{
+                background-color: {Colors.PRIMARY};
+                color: {Colors.TEXT_PRIMARY};
                 border: none;
-                border-radius: 8px;
-                padding: 0 16px;
-                font-size: 13px;
-                font-weight: 500;
-            }
-            QPushButton:hover {
-                background-color: #0051D5;
-            }
-            QPushButton:pressed {
-                background-color: #004BB8;
-            }
+                border-radius: {BorderRadius.LG}px;
+                padding: 0 {Spacing.LG}px;
+                font-size: {Typography.FONT_BASE}px;
+                font-weight: {Typography.WEIGHT_MEDIUM};
+            }}
+            QPushButton:hover {{
+                background-color: {Colors.PRIMARY_HOVER};
+            }}
+            QPushButton:pressed {{
+                background-color: {Colors.PRIMARY_ACTIVE};
+            }}
             """
         )
         nav_layout.addWidget(self.next_button)
@@ -176,44 +179,44 @@ class OnboardingDialog(QDialog):
         if current_index == total_slides - 1:
             self.next_button.setText("Comenzar")
             self.next_button.setStyleSheet(
-                """
-                QPushButton {
-                    background-color: #34C759;
-                    color: white;
+                f"""
+                QPushButton {{
+                    background-color: {Colors.SUCCESS};
+                    color: {Colors.TEXT_PRIMARY};
                     border: none;
-                    border-radius: 8px;
-                    padding: 0 16px;
-                    font-size: 13px;
-                    font-weight: 600;
+                    border-radius: {BorderRadius.LG}px;
+                    padding: 0 {Spacing.LG}px;
+                    font-size: {Typography.FONT_BASE}px;
+                    font-weight: {Typography.WEIGHT_SEMIBOLD};
                     min-width: 110px;
-                }
-                QPushButton:hover {
-                    background-color: #30B350;
-                }
-                QPushButton:pressed {
-                    background-color: #2A9F47;
-                }
+                }}
+                QPushButton:hover {{
+                    background-color: {Colors.PRIMARY_HOVER};
+                }}
+                QPushButton:pressed {{
+                    background-color: {Colors.PRIMARY_ACTIVE};
+                }}
                 """
             )
         else:
             self.next_button.setText("Siguiente")
             self.next_button.setStyleSheet(
-                """
-                QPushButton {
-                    background-color: #007AFF;
-                    color: white;
+                f"""
+                QPushButton {{
+                    background-color: {Colors.PRIMARY};
+                    color: {Colors.TEXT_PRIMARY};
                     border: none;
-                    border-radius: 8px;
-                    padding: 0 16px;
-                    font-size: 13px;
-                    font-weight: 500;
-                }
-                QPushButton:hover {
-                    background-color: #0051D5;
-                }
-                QPushButton:pressed {
-                    background-color: #004BB8;
-                }
+                    border-radius: {BorderRadius.LG}px;
+                    padding: 0 {Spacing.LG}px;
+                    font-size: {Typography.FONT_BASE}px;
+                    font-weight: {Typography.WEIGHT_MEDIUM};
+                }}
+                QPushButton:hover {{
+                    background-color: {Colors.PRIMARY_HOVER};
+                }}
+                QPushButton:pressed {{
+                    background-color: {Colors.PRIMARY_ACTIVE};
+                }}
                 """
             )
 

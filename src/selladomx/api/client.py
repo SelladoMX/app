@@ -10,7 +10,11 @@ from .exceptions import (
     APIError,
     AuthenticationError,
     InsufficientCreditsError,
+    InvalidTokenFormatError,
     NetworkError,
+    PrimaryTokenRequiredError,
+    TokenExpiredError,
+    TokenRevokedError,
 )
 
 logger = logging.getLogger(__name__)
@@ -87,12 +91,20 @@ class SelladoMXAPIClient:
 
             # Handle errors
             if response.status_code == 401:
-                raise AuthenticationError(
-                    "API key inválido o expirado",
-                    status_code=401
-                )
+                error_data = response.json() if response.content else {}
+                error_type = error_data.get("error", "")
+
+                if error_type == "token_expired":
+                    raise TokenExpiredError("Token has expired")
+                elif error_type == "token_revoked":
+                    raise TokenRevokedError("Token has been revoked")
+                else:
+                    raise AuthenticationError(
+                        "API key inválido o expirado",
+                        status_code=401
+                    )
             elif response.status_code == 403:
-                # Check if it's insufficient credits
+                # Check if it's insufficient credits or primary token required
                 try:
                     error_data = response.json()
                     if error_data.get("error") == "insufficient_credits":
@@ -100,6 +112,8 @@ class SelladoMXAPIClient:
                             error_data.get("message", "Sin créditos disponibles"),
                             available_credits=error_data.get("available_credits", 0)
                         )
+                    elif "primary token" in error_data.get("error", "").lower():
+                        raise PrimaryTokenRequiredError("Se requiere token primario")
                 except ValueError:
                     pass  # Not JSON response
 
@@ -129,20 +143,30 @@ class SelladoMXAPIClient:
             logger.error(f"Request error: {e}")
             raise NetworkError(f"Error de red: {e}")
 
-    def get_balance(self) -> int:
-        """Get available credits balance.
+    def get_balance(self) -> dict:
+        """Get available credits balance with token info.
 
         Returns:
-            Number of available credits
+            dict: {
+                "credits_remaining": 150,
+                "email": "user@example.com",
+                "plan": "individual",
+                "token_info": {
+                    "is_primary": true,
+                    "alias": null,
+                    "expires_at": null,
+                    "is_active": true
+                }
+            }
 
         Raises:
             AuthenticationError: If API key is invalid
             NetworkError: If connection fails
         """
-        response = self._request("GET", "/api/v1/user/balance")
-        credits = response.get("available_credits", 0)
+        response = self._request("GET", "/api/v1/balance")
+        credits = response.get("credits_remaining", 0)
         logger.info(f"Current balance: {credits} credits")
-        return credits
+        return response  # Return full dict instead of just credits
 
     def request_timestamp(
         self,
@@ -230,6 +254,74 @@ class SelladoMXAPIClient:
             if e.status_code == 404:
                 return None
             raise
+
+    def list_tokens(self) -> dict:
+        """List all tokens (primary + derived) for the current user.
+
+        Returns:
+            dict: {
+                "primary": {...},
+                "derived": [...]
+            }
+
+        Raises:
+            AuthenticationError: If API key is invalid
+            NetworkError: If connection fails
+        """
+        return self._request("GET", "/api/v1/tokens/list")
+
+    def derive_token(self, alias: str, expires_in_days: Optional[int] = None) -> dict:
+        """Create a derived token from the primary token.
+
+        Args:
+            alias: User-friendly name for the token (1-50 chars)
+            expires_in_days: Optional expiration in days
+
+        Returns:
+            dict: {
+                "token": "smx_xxxxx...",  # Full token (only shown once!)
+                "alias": "Laptop Juan",
+                "expires_at": "2025-01-20T10:00:00Z"
+            }
+
+        Raises:
+            PrimaryTokenRequiredError: If current token is not primary
+            AuthenticationError: If API key is invalid
+            NetworkError: If connection fails
+        """
+        json_data = {"alias": alias}
+        if expires_in_days is not None:
+            json_data["expires_in_days"] = expires_in_days
+        return self._request("POST", "/api/v1/tokens/derive", json_data=json_data)
+
+    def revoke_token(self, token_id: str) -> dict:
+        """Revoke a token by ID.
+
+        Args:
+            token_id: UUID of the token to revoke
+
+        Returns:
+            dict: {"message": "Token revoked successfully"}
+
+        Raises:
+            AuthenticationError: If API key is invalid
+            NetworkError: If connection fails
+            APIError: If token cannot be revoked
+        """
+        return self._request("DELETE", f"/api/v1/tokens/{token_id}")
+
+    @staticmethod
+    def validate_token_format(token: str) -> bool:
+        """Validate token format (smx_xxxxx...).
+
+        Args:
+            token: Token string to validate
+
+        Returns:
+            bool: True if valid smx_ format
+        """
+        import re
+        return bool(re.match(r"^smx_[0-9a-f]{5,}$", token))
 
     def is_configured(self) -> bool:
         """Check if API client is configured with a valid API key.

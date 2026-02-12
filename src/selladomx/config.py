@@ -1,19 +1,58 @@
 """Configuración centralizada"""
+import os
+import sys
+import logging
 from pathlib import Path
 from typing import Final
 
+logger = logging.getLogger(__name__)
+
+# ============================================================================
+# ENVIRONMENT-BASED CONFIGURATION
+# ============================================================================
+
+# API Configuration - can be overridden via environment variable
+# Set SELLADOMX_API_URL to point to a different API endpoint (e.g., local dev)
+API_BASE_URL: str = os.environ.get(
+    "SELLADOMX_API_URL",
+    "https://api.selladomx.com"  # Production default
+)
+
+# Log which API is being used (for debugging)
+logger.info(f"Using API base URL: {API_BASE_URL}")
+
+# ============================================================================
+# TSA CONFIGURATION
+# ============================================================================
+
 # TSA - Free Tier (Multi-provider with fallback)
+# Override with SELLADOMX_FREE_TSA_URL environment variable
+_DEFAULT_FREE_TSA = "http://timestamp.digicert.com"
 TSA_FREE_PROVIDERS: Final[list[str]] = [
-    "http://timestamp.digicert.com",  # Primary: DigiCert (most reliable)
+    os.environ.get("SELLADOMX_FREE_TSA_URL", _DEFAULT_FREE_TSA),
     "http://timestamp.sectigo.com",   # Backup: Sectigo
     "https://freetsa.org/tsr",        # Fallback: FreeTSA
 ]
-TSA_URL: Final[str] = TSA_FREE_PROVIDERS[0]  # Default to DigiCert
+TSA_URL: Final[str] = TSA_FREE_PROVIDERS[0]  # Default to first provider
 TSA_TIMEOUT: Final[int] = 30
 
 # TSA - Paid Tier (Professional)
-API_BASE_URL: Final[str] = "https://api.selladomx.com"
-PAID_TSA_PROVIDER: Final[str] = "certum"  # Certum eIDAS
+# Override with SELLADOMX_PROFESSIONAL_TSA_PROVIDER environment variable
+PAID_TSA_PROVIDER: Final[str] = os.environ.get(
+    "SELLADOMX_PROFESSIONAL_TSA_PROVIDER",
+    "certum"  # Certum eIDAS (default)
+)
+BUY_CREDITS_URL: Final[str] = "https://selladomx.com/buy-credits"
+
+# ============================================================================
+# PRICING CONFIGURATION
+# ============================================================================
+
+# Pricing
+# TODO: Consider fetching from API endpoint in the future to avoid hardcoding
+# For now, update these values when prices change (requires rebuild)
+CREDIT_PRICE_MXN: Final[int] = 2  # Price per document signature in MXN
+CREDIT_PRICE_DISPLAY: Final[str] = f"${CREDIT_PRICE_MXN} MXN"  # Display format
 
 # Validación
 OCSP_TIMEOUT: Final[int] = 10
@@ -25,6 +64,25 @@ SIGNED_SUFFIX: Final[str] = "_firmado"
 
 # Seguridad
 LOG_SENSITIVE_DATA: Final[bool] = False
+
+# Platform Detection
+IS_MACOS: Final[bool] = sys.platform == "darwin"
+IS_WINDOWS: Final[bool] = sys.platform == "win32"
+IS_LINUX: Final[bool] = sys.platform == "linux"
+
+# Platform-Specific Design Tokens
+# Windows needs more padding and sharper corners
+BUTTON_HEIGHT: Final[int] = 32 if IS_WINDOWS else 28
+DIALOG_PADDING: Final[int] = 24 if IS_WINDOWS else 20
+BORDER_RADIUS: Final[int] = 4 if IS_WINDOWS else 6  # Windows: sharper corners
+
+# Window Icons per Platform
+WINDOW_ICONS: Final[dict[str, str]] = {
+    "minimize": "⊖" if IS_WINDOWS else "－",
+    "maximize": "⊡" if IS_WINDOWS else "□",
+    "close": "✕" if IS_WINDOWS else "×",
+    "settings": "⚙" if IS_WINDOWS else "⚙️",
+}
 
 # UI
 ONBOARDING_VERSION: Final[int] = 1

@@ -1,0 +1,636 @@
+/* SelladoMX Clean Theme - Brand Aligned */
+
+/* Global styles - clean and simple with platform-specific fonts */
+QMainWindow, QDialog, QWidget {
+    background-color: #FFFFFF;
+    color: #1F2937;
+    /* Platform-specific font stack:
+       - macOS: -apple-system, BlinkMacSystemFont (San Francisco)
+       - Windows: Segoe UI
+       - Linux: Ubuntu, Noto Sans
+       - Universal fallback: system-ui, sans-serif */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Ubuntu", "Noto Sans", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+/* Step Widget - clean with subtle border and generous padding */
+StepWidget {
+    background-color: white;
+    border-radius: 16px;
+    padding: 32px;
+    margin: 10px 0;
+}
+
+StepWidget[state="pending"] {
+    border: 2px solid #E5E7EB;
+    background-color: #F9FAFB;
+}
+
+StepWidget[state="active"] {
+    border: 3px solid #0D9488;
+    background-color: #F0FDFA;
+}
+
+StepWidget[state="completed"] {
+    border: 3px solid #10B981;
+    background-color: #F0FDF4;
+}
+
+StepWidget[state="disabled"] {
+    border: 2px solid #E5E7EB;
+    background-color: #F9FAFB;
+    color: #9CA3AF;
+}
+
+/* Step number - simple circle with better size and contrast */
+.step-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: #9CA3AF;
+    background-color: #E5E7EB;
+    border-radius: 32px;
+    padding: 12px;
+    min-width: 56px;
+    min-height: 56px;
+}
+
+.step-number[state="active"] {
+    color: white;
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 #0D9488,
+        stop:1 #0F766E
+    );
+}
+
+.step-number[state="completed"] {
+    color: white;
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 #10B981,
+        stop:1 #059669
+    );
+}
+
+/* Step title and description - increased for better hierarchy */
+.step-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1F2937;
+    margin-bottom: 8px;
+}
+
+.step-description {
+    font-size: 15px;
+    color: #6B7280;
+    line-height: 1.7;
+}
+
+/* Clean buttons - Brand teal primary with generous padding */
+QPushButton {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 #0D9488,
+        stop:1 #0F766E
+    );
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    min-height: 44px;
+}
+
+QPushButton:hover {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 #0F766E,
+        stop:1 #115E59
+    );
+}
+
+QPushButton:pressed {
+    background-color: #115E59;
+}
+
+QPushButton:disabled {
+    background-color: #E5E5E7;
+    color: #C7C7CC;
+}
+
+/* Secondary button style - clearer borders */
+QPushButton[class="secondary"] {
+    background-color: white;
+    color: #1F2937;
+    border: 2px solid #E5E7EB;
+    font-weight: 500;
+}
+
+QPushButton[class="secondary"]:hover {
+    background-color: #F9FAFB;
+    border-color: #D1D5DB;
+}
+
+QPushButton[class="secondary"]:pressed {
+    background-color: #F3F4F6;
+    border-color: #9CA3AF;
+}
+
+/* Success button (green) with gradient */
+QPushButton[class="success"] {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 #10B981,
+        stop:1 #0EA472
+    );
+    font-weight: 600;
+}
+
+QPushButton[class="success"]:hover {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 #0EA472,
+        stop:1 #0D9468
+    );
+}
+
+QPushButton[class="success"]:pressed {
+    background-color: #0D9468;
+}
+
+/* Danger button (red) */
+QPushButton[class="danger"] {
+    background-color: #EF4444;
+}
+
+QPushButton[class="danger"]:hover {
+    background-color: #DC2626;
+}
+
+/* Clean input fields with better padding */
+QLineEdit {
+    background-color: white;
+    border: 2px solid #E5E7EB;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 15px;
+    color: #1F2937;
+    min-height: 44px;
+    selection-background-color: #0D9488;
+    selection-color: white;
+}
+
+QLineEdit:focus {
+    border-color: #0D9488;
+    outline: none;
+    background-color: #F9FAFB;
+}
+
+QLineEdit:disabled {
+    background-color: #F9FAFB;
+    color: #6B7280;
+    border-color: #E5E5E7;
+}
+
+QLineEdit[readOnly="true"] {
+    background-color: #F9FAFB;
+    color: #6B7280;
+}
+
+/* Clean list widget with better spacing */
+QListWidget {
+    background-color: white;
+    border: 2px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 8px;
+    font-size: 15px;
+    outline: none;
+}
+
+QListWidget::item {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 2px 0;
+}
+
+QListWidget::item:selected {
+    background-color: #0F766E;
+    color: white;
+}
+
+QListWidget::item:hover {
+    background-color: #F9FAFB;
+}
+
+QListWidget:focus {
+    border-color: #0D9488;
+}
+
+/* Clean progress bar */
+QProgressBar {
+    background-color: #E5E5E7;
+    border: none;
+    border-radius: 4px;
+    text-align: center;
+    height: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #1F2937;
+}
+
+QProgressBar::chunk {
+    background-color: #0F766E;
+    border-radius: 4px;
+}
+
+/* Text Edit (Log) - improved readability */
+QTextEdit {
+    background-color: #F9FAFB;
+    border: 2px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 16px;
+    font-family: "Menlo", "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 13px;
+    color: #1F2937;
+    line-height: 1.6;
+}
+
+QTextEdit:focus {
+    border-color: #0D9488;
+    background-color: #FFFFFF;
+}
+
+/* Labels - clean typography with better base size */
+QLabel {
+    color: #1F2937;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+QLabel[class="secondary"] {
+    color: #6B7280;
+}
+
+QLabel[class="success"] {
+    color: #10B981;
+    font-weight: 500;
+}
+
+QLabel[class="error"] {
+    color: #EF4444;
+    font-weight: 500;
+}
+
+QLabel[class="title"] {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1F2937;
+    line-height: 1.3;
+}
+
+/* Group Box - more generous spacing */
+QGroupBox {
+    background-color: white;
+    border: 2px solid #E5E7EB;
+    border-radius: 16px;
+    padding: 24px;
+    margin-top: 12px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1F2937;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 8px;
+    color: #1F2937;
+}
+
+/* Simple scroll bars */
+QScrollBar:vertical {
+    background: #F9FAFB;
+    width: 10px;
+    border-radius: 5px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background: #C7C7CC;
+    border-radius: 5px;
+    min-height: 20px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #6B7280;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+QScrollBar:horizontal {
+    background: #F9FAFB;
+    height: 10px;
+    border-radius: 5px;
+    margin: 0;
+}
+
+QScrollBar::handle:horizontal {
+    background: #C7C7CC;
+    border-radius: 5px;
+    min-width: 20px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #6B7280;
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0px;
+}
+
+/* Onboarding Dialog - clean and simple */
+QDialog {
+    background-color: white;
+}
+
+/* Status indicator - simple dot */
+.status-indicator {
+    border-radius: 7px;
+    min-width: 14px;
+    min-height: 14px;
+    max-width: 14px;
+    max-height: 14px;
+}
+
+.status-indicator[state="pending"] {
+    background-color: #C7C7CC;
+}
+
+.status-indicator[state="active"] {
+    background-color: #0F766E;
+}
+
+.status-indicator[state="completed"] {
+    background-color: #10B981;
+}
+
+.status-indicator[state="disabled"] {
+    background-color: #E5E5E7;
+}
+
+.status-indicator[state="error"] {
+    background-color: #EF4444;
+}
+
+/* Scroll Area - no border */
+QScrollArea {
+    border: none;
+    background-color: transparent;
+}
+
+/* Message Box */
+QMessageBox {
+    background-color: white;
+}
+
+QMessageBox QLabel {
+    color: #1F2937;
+    font-size: 13px;
+}
+
+/* Checkbox - Brand teal */
+QCheckBox {
+    spacing: 8px;
+    font-size: 13px;
+    color: #1F2937;
+}
+
+QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+    border: 1px solid #D1D5DB;
+    border-radius: 4px;
+    background-color: white;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #0F766E;
+    border-color: #0F766E;
+    image: none;
+}
+
+QCheckBox::indicator:hover {
+    border-color: #0F766E;
+}
+
+QCheckBox::indicator:disabled {
+    background-color: #F5F5F7;
+    border-color: #E5E5E7;
+}
+
+QCheckBox:disabled {
+    color: #C7C7CC;
+}
+
+/* Text Browser (Log with clickable links) */
+QTextBrowser {
+    background-color: #F9FAFB;
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    padding: 10px;
+    font-family: "Menlo", "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 11px;
+    color: #1F2937;
+    line-height: 1.5;
+}
+
+QTextBrowser:focus {
+    border-color: #0F766E;
+}
+
+/* Tooltips */
+QToolTip {
+    background-color: #1F2937;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+/* Reusable button classes for consistent styling */
+
+/* Link-style button in brand teal */
+QPushButton[class="link-teal"] {
+    background-color: transparent;
+    color: #0F766E;
+    border: none;
+    padding: 4px 8px;
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+QPushButton[class="link-teal"]:hover {
+    color: #0F766E;
+}
+
+/* Header button style */
+QPushButton[class="header"] {
+    background-color: transparent;
+    color: #6B7280;
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    min-height: 32px;
+}
+
+QPushButton[class="header"]:hover {
+    background-color: #F9FAFB;
+    color: #1F2937;
+}
+
+/* Primary dialog button */
+QPushButton[class="dialog-primary"] {
+    background-color: #0F766E;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    min-height: 40px;
+}
+
+QPushButton[class="dialog-primary"]:hover {
+    background-color: #0F766E;
+}
+
+/* Info banner styles */
+QWidget[class="info-banner"] {
+    background-color: #F0FDFA;
+    border: 1px solid #99F6E4;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+QWidget[class="warning-banner"] {
+    background-color: #FEF3C7;
+    border: 1px solid #FDE68A;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+QWidget[class="success-banner"] {
+    background-color: #D1FAE5;
+    border: 1px solid #A7F3D0;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+/* Typography Scale - Aligned with selladomx.com */
+
+/* Text Size Classes */
+QLabel[class="text-7xl"] {
+    font-size: 72px;
+    line-height: 1;
+}
+
+QLabel[class="text-5xl"] {
+    font-size: 48px;
+    line-height: 1;
+}
+
+QLabel[class="text-4xl"] {
+    font-size: 36px;
+    line-height: 1.1;
+}
+
+QLabel[class="text-2xl"] {
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+QLabel[class="text-xl"] {
+    font-size: 20px;
+    line-height: 1.4;
+}
+
+QLabel[class="text-base"] {
+    font-size: 16px;
+    line-height: 1.7;
+}
+
+QLabel[class="text-sm"] {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+QLabel[class="text-xs"] {
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* Font Weight Classes */
+QLabel[class~="font-bold"], QPushButton[class~="font-bold"] {
+    font-weight: 700;
+}
+
+QLabel[class~="font-semibold"], QPushButton[class~="font-semibold"] {
+    font-weight: 600;
+}
+
+QLabel[class~="font-medium"], QPushButton[class~="font-medium"] {
+    font-weight: 500;
+}
+
+QLabel[class~="font-normal"], QPushButton[class~="font-normal"] {
+    font-weight: 400;
+}
+
+/* Combined typography classes for common use cases */
+QLabel[class="heading-1"] {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1F2937;
+    line-height: 1.1;
+}
+
+QLabel[class="heading-2"] {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1F2937;
+    line-height: 1.2;
+}
+
+QLabel[class="heading-3"] {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1F2937;
+    line-height: 1.4;
+}
+
+QLabel[class="body-large"] {
+    font-size: 16px;
+    font-weight: 400;
+    color: #1F2937;
+    line-height: 1.7;
+}
+
+QLabel[class="body"] {
+    font-size: 14px;
+    font-weight: 400;
+    color: #6B7280;
+    line-height: 1.6;
+}
+
+QLabel[class="caption"] {
+    font-size: 12px;
+    font-weight: 400;
+    color: #6B7280;
+    line-height: 1.4;
+}

@@ -1,9 +1,10 @@
 [Desktop Entry]
 Type=Application
 Name=SelladoMX
-Comment=PDF signing application for Mexico
-Exec=SelladoMX
-Icon=selladomx
-Categories=Office;Utility;
+Comment=Firma digital de documentos PDF con e.firma
+Exec=selladomx %u
+Icon=icon-linux
 Terminal=false
+Categories=Office;
+MimeType=x-scheme-handler/selladomx;
 StartupWMClass=selladomx

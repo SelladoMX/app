@@ -77,7 +77,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    # Platform-specific icons will be set by build scripts
+    icon='assets/icon.ico' if sys.platform == 'win32' else 'assets/icon.icns' if sys.platform == 'darwin' else 'assets/icon-linux.png',
 )
 
 coll = COLLECT(
@@ -96,7 +96,7 @@ if sys.platform == 'darwin':
     app = BUNDLE(
         coll,
         name='SelladoMX.app',
-        icon=None,  # Add 'assets/icon.icns' when available
+        icon='assets/icon.icns',
         bundle_identifier='mx.sellado.client',
         info_plist={
             'NSPrincipalClass': 'NSApplication',
@@ -107,5 +107,12 @@ if sys.platform == 'darwin':
             'CFBundleShortVersionString': '0.1.0',
             'LSMinimumSystemVersion': '10.13',
             'NSRequiresAquaSystemAppearance': 'False',
+            # URL scheme handler for magic links
+            'CFBundleURLTypes': [
+                {
+                    'CFBundleURLName': 'mx.sellado.client',
+                    'CFBundleURLSchemes': ['selladomx'],
+                }
+            ],
         },
     )

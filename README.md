@@ -1,117 +1,107 @@
 # SelladoMX
 
-Aplicación de escritorio para firmar PDFs con certificados e.firma del SAT.
+Firma documentos PDF con tu e.firma del SAT directamente desde tu computadora.
 
-## Características Principales
+## Características
 
-- Firma PAdES compatible con Adobe Reader
-- Sellado de tiempo (TSA)
-- Procesamiento 100% local (sin custodia)
-- Validación completa de certificados (OCSP/CRL)
-- Interfaz moderna con flujo guiado
-- Firma por lotes
+- **Firma PAdES** compatible con Adobe Reader y validadores oficiales
+- **Sellado de tiempo (TSA)** gratuito o profesional con validez legal
+- **100% local** - tus documentos nunca salen de tu equipo
+- **Validación completa** de certificados (OCSP/CRL)
+- **Firma por lotes** - procesa múltiples PDFs a la vez
+- **Token management** - comparte acceso con tu equipo
 
-## Seguridad y Privacidad
+## Seguridad
 
-- Los archivos PDF nunca salen de tu computadora
-- No se almacenan contraseñas ni certificados
-- No hay conexiones a servidores externos (excepto TSA y validación OCSP/CRL)
-- Limpieza automática de datos sensibles en memoria
+No guardamos tus documentos, certificados ni contraseñas. Todo el proceso de firma ocurre en tu computadora. Solo nos conectamos a servidores externos para:
 
-## Quick Start
+- Validación de certificados (OCSP/CRL estándar)
+- Sellado de tiempo TSA (opcional)
+- Gestión de créditos (solo si usas TSA profesional)
 
-### Para Usuarios
+## Instalación
 
-Descarga el ejecutable para tu plataforma: [Releases](releases)
+Descarga el ejecutable para tu sistema operativo desde [Releases](https://github.com/selladomx/client/releases).
 
-### Para Desarrolladores
+- **Windows**: `SelladoMX.exe` (portable, no requiere instalación)
+- **macOS**: `SelladoMX.app` (arrastra a Aplicaciones)
+- **Linux**: `SelladoMX.AppImage` (dale permisos de ejecución)
+
+## Uso Rápido
+
+1. **Selecciona PDFs** - arrastra o busca los documentos a firmar
+2. **Carga tu certificado** - archivo `.cer` y `.key` de tu e.firma
+3. **Firma** - elige TSA gratuito o profesional y procesa
+
+Los archivos firmados se guardan con el sufijo `_firmado.pdf`.
+
+## TSA Profesional
+
+El TSA gratuito funciona bien para uso personal. Si necesitas validez legal garantizada para trámites oficiales o juicios, usa TSA Profesional:
+
+- ✓ Certificación oficial RFC 3161
+- ✓ Cumplimiento NOM-151-SCFI-2016
+- ✓ Evidencia admisible en procesos legales
+- ✓ Desde $2 MXN por documento
+
+Configura tu token desde **Configuración** o usa un magic link desde tu email.
+
+## Para Desarrolladores
 
 ```bash
-# Instalar dependencias
+# Clonar e instalar
+git clone https://github.com/selladomx/client.git
+cd client
 poetry install
 
-# Ejecutar
-poetry run selladomx
+# Ejecutar en desarrollo
+poetry run python run.py
+
+# Construir ejecutables
+./scripts/build.sh
 ```
 
-## Documentación
+Requiere Python 3.11+ y Poetry.
 
-### Usuario
-- [Instalación y Uso](docs/user/installation.md)
-- [Guía de Certificados](docs/user/certificates.md)
-- [Troubleshooting](docs/user/troubleshooting.md)
+### Configuración de Entorno
 
-### Desarrollador
-- [Desarrollo](docs/developer/development.md)
-- [Packaging](docs/developer/packaging.md)
-- [Arquitectura](docs/developer/architecture.md)
+**Desarrollo local (por defecto):**
+```bash
+poetry run python run.py
+```
+Usa automáticamente `.env.development` → `http://localhost:8000`
+
+**Para override personalizado:**
+```bash
+# Crea tu propio .env (opcional)
+echo "SELLADOMX_API_URL=http://localhost:3000" > .env
+```
+
+**Builds/Producción:**
+Los ejecutables usan los valores hardcodeados → `https://api.selladomx.com`
+
+**Variables disponibles:**
+- `SELLADOMX_API_URL` - URL de la API
+- `SELLADOMX_DEBUG` - Logging detallado (0 o 1)
 
 ## Tecnologías
 
-**Runtime**: Python 3.11+
+- **UI**: PySide6 (Qt 6)
+- **Firma PDF**: pyhanko
+- **Criptografía**: cryptography
+- **Validación**: pyhanko-certvalidator
+- **TSA gratuito**: DigiCert/Sectigo/FreeTSA
+- **TSA profesional**: Certum eIDAS
 
-**UI**: PySide6 (Qt 6)
+## Documentación
 
-**Firma**: pyhanko · pyhanko-certvalidator
-
-**Criptografía**: cryptography
-
-**TSA**: FreeTSA
-
-## Arquitectura
-
-```
-┌─────────────────────────────────────────┐
-│      UI Layer (PySide6)                 │
-│   - redesigned_main_view.py (3 pasos)  │
-│   - onboarding (3 slides)               │
-│   - widgets (step_widget)               │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│  Application Controller (main.py)       │
-│  - Settings Manager (QSettings)         │
-│  - Theme Loader (QSS)                   │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────▼──────────────────────────┐
-│   Business Logic                         │
-│   - CertificateValidator                 │
-│   - PDFSigner (pyhanko)                  │
-│   - TSAClient                            │
-└─────────────────────────────────────────┘
-```
-
-## Estructura del Proyecto
-
-```
-client/
-├── src/selladomx/
-│   ├── main.py              # Entry point
-│   ├── config.py            # Configuración
-│   ├── errors.py            # Excepciones
-│   ├── ui/
-│   │   ├── redesigned_main_view.py  # Vista principal (3 pasos)
-│   │   ├── onboarding/              # Pantallas de bienvenida
-│   │   ├── widgets/                 # Componentes personalizados
-│   │   └── styles/                  # Temas y estilos
-│   ├── utils/
-│   │   └── settings_manager.py      # Persistencia con QSettings
-│   └── signing/
-│       ├── certificate_validator.py  # Validación de certificados
-│       ├── pdf_signer.py             # Firma de PDFs
-│       └── tsa.py                    # Cliente TSA
-├── tests/
-├── pyproject.toml
-└── README.md
-```
+- [URL Scheme Registration](docs/URL_SCHEME_REGISTRATION.md) - Deep links y magic links
+- [Implementation Summary](IMPLEMENTATION_SUMMARY.md) - Detalles de implementación
 
 ## Licencia
 
-MIT
+MIT - usa, modifica y distribuye libremente.
 
-## Filosofía del Proyecto
+---
 
-> "La confianza del usuario está en que el documento nunca sale de su computadora."
-
-SelladoMX está diseñado con seguridad y privacidad como prioridades. Nunca enviamos tus documentos o certificados a ningún servidor externo (excepto para validación OCSP/CRL y timestamp, que son servicios estándar).
+**¿Dudas?** Abre un issue o escribe a soporte@selladomx.com

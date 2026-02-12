@@ -1,0 +1,13 @@
+# Exclude all certificate files (security precaution)
+*.cer
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+
+# Allow test/dummy certificates if explicitly committed
+!dummy_*.cer
+!dummy_*.key
+!test_*.cer
+!test_*.key

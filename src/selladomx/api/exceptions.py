@@ -40,3 +40,27 @@ class NetworkError(APIError):
     """Raised when network/connection issues occur."""
 
     pass
+
+
+class TokenExpiredError(AuthenticationError):
+    """Raised when token has expired."""
+
+    pass
+
+
+class TokenRevokedError(AuthenticationError):
+    """Raised when token has been revoked."""
+
+    pass
+
+
+class InvalidTokenFormatError(APIError):
+    """Raised when token format is invalid."""
+
+    pass
+
+
+class PrimaryTokenRequiredError(APIError):
+    """Raised when operation requires primary token but derived token was used."""
+
+    pass

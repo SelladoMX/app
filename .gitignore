@@ -47,3 +47,6 @@ htmlcov/
 
 # Application
 *.log
+
+# Environment variables (local config only)
+.env
