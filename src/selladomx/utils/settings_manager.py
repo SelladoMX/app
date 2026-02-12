@@ -127,7 +127,7 @@ class SettingsManager:
         if self.settings.contains("api/key"):
             self.settings.remove("api/key")
         self.settings.sync()
-        logger.info(f"Token saved: {token[:8]}...")
+        logger.info("Token saved")
 
     def get_token_info(self) -> dict:
         """Get stored token metadata.
