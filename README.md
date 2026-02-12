@@ -1,11 +1,15 @@
 # SelladoMX
 
+[![Build](https://github.com/SelladoMX/app/actions/workflows/build.yml/badge.svg)](https://github.com/SelladoMX/app/actions/workflows/build.yml)
+[![CodeQL](https://github.com/SelladoMX/app/actions/workflows/codeql.yml/badge.svg)](https://github.com/SelladoMX/app/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Firma documentos PDF con tu e.firma del SAT directamente desde tu computadora.
 
 ## Características
 
 - **Firma PAdES** compatible con Adobe Reader y validadores oficiales
-- **Sellado de tiempo (TSA)** gratuito o profesional con validez legal
+- **Sellado de tiempo (TSA)** básico o profesional con validez legal
 - **100% local** - tus documentos nunca salen de tu equipo
 - **Validación completa** de certificados (OCSP/CRL)
 - **Firma por lotes** - procesa múltiples PDFs a la vez
@@ -19,30 +23,45 @@ No guardamos tus documentos, certificados ni contraseñas. Todo el proceso de fi
 - Sellado de tiempo TSA (opcional)
 - Gestión de créditos (solo si usas TSA profesional)
 
+Para reportar vulnerabilidades, consulta [SECURITY.md](SECURITY.md).
+
 ## Instalación
 
-Descarga el ejecutable para tu sistema operativo desde [Releases](https://github.com/selladomx/client/releases).
+Descarga el ejecutable para tu sistema operativo desde [Releases](https://github.com/SelladoMX/app/releases).
 
-- **Windows**: `SelladoMX.exe` (portable, no requiere instalación)
-- **macOS**: `SelladoMX.app` (arrastra a Aplicaciones)
-- **Linux**: `SelladoMX.AppImage` (dale permisos de ejecución)
+- **Windows**: `SelladoMX-Windows.zip` (portable, no requiere instalación)
+- **macOS**: `SelladoMX-macOS.dmg` (arrastra a Aplicaciones)
+- **Linux**: `SelladoMX-Linux-x86_64.AppImage` (dale permisos de ejecución)
+
+### Verificación de descargas
+
+Cada release incluye un archivo `SHA256SUMS.txt` y attestations de GitHub para verificar la integridad de tu descarga:
+
+```bash
+# Verificar checksum
+sha256sum -c SHA256SUMS.txt
+
+# Verificar procedencia del build (requiere GitHub CLI)
+gh attestation verify <archivo-descargado> --repo SelladoMX/app
+```
 
 ## Uso Rápido
 
 1. **Selecciona PDFs** - arrastra o busca los documentos a firmar
 2. **Carga tu certificado** - archivo `.cer` y `.key` de tu e.firma
-3. **Firma** - elige TSA gratuito o profesional y procesa
+3. **Firma** - elige TSA básico o profesional y procesa
 
 Los archivos firmados se guardan con el sufijo `_firmado.pdf`.
 
 ## TSA Profesional
 
-El TSA gratuito funciona bien para uso personal. Si necesitas validez legal garantizada para trámites oficiales o juicios, usa TSA Profesional:
+El TSA básico funciona bien para uso personal. Si necesitas validez legal certificada para trámites oficiales o juicios, usa TSA Profesional:
 
-- ✓ Certificación oficial RFC 3161
-- ✓ Cumplimiento NOM-151-SCFI-2016
-- ✓ Evidencia admisible en procesos legales
-- ✓ Desde $2 MXN por documento
+- Certificación oficial RFC 3161
+- Cumplimiento NOM-151-SCFI-2016 y normas europeas eIDAS
+- Proveedor europeo certificado
+- Evidencia admisible en procesos legales
+- Desde $2 MXN por documento
 
 Configura tu token desde **Configuración** o usa un magic link desde tu email.
 
@@ -50,12 +69,15 @@ Configura tu token desde **Configuración** o usa un magic link desde tu email.
 
 ```bash
 # Clonar e instalar
-git clone https://github.com/selladomx/client.git
-cd client
+git clone https://github.com/SelladoMX/app.git
+cd app
 poetry install
 
 # Ejecutar en desarrollo
 poetry run python run.py
+
+# Ejecutar tests
+poetry run pytest
 
 # Construir ejecutables
 ./scripts/build.sh
@@ -69,7 +91,7 @@ Requiere Python 3.11+ y Poetry.
 ```bash
 poetry run python run.py
 ```
-Usa automáticamente `.env.development` → `http://localhost:8000`
+Usa automáticamente `.env.development` con `http://localhost:8000`
 
 **Para override personalizado:**
 ```bash
@@ -78,7 +100,7 @@ echo "SELLADOMX_API_URL=http://localhost:3000" > .env
 ```
 
 **Builds/Producción:**
-Los ejecutables usan los valores hardcodeados → `https://api.selladomx.com`
+Los ejecutables usan los valores hardcodeados con `https://api.selladomx.com`
 
 **Variables disponibles:**
 - `SELLADOMX_API_URL` - URL de la API
@@ -86,11 +108,11 @@ Los ejecutables usan los valores hardcodeados → `https://api.selladomx.com`
 
 ## Tecnologías
 
-- **UI**: PySide6 (Qt 6)
+- **UI**: PySide6 (Qt 6) con QML
 - **Firma PDF**: pyhanko
 - **Criptografía**: cryptography
 - **Validación**: pyhanko-certvalidator
-- **TSA gratuito**: DigiCert/Sectigo/FreeTSA
+- **TSA básico**: DigiCert/Sectigo/FreeTSA
 - **TSA profesional**: Certum eIDAS
 
 ## Documentación
@@ -100,8 +122,8 @@ Los ejecutables usan los valores hardcodeados → `https://api.selladomx.com`
 
 ## Licencia
 
-MIT - usa, modifica y distribuye libremente.
+[MIT](LICENSE) - usa, modifica y distribuye libremente.
 
 ---
 
-**¿Dudas?** Abre un issue o escribe a soporte@selladomx.com
+**¿Dudas?** Abre un [issue](https://github.com/SelladoMX/app/issues) o escribe a soporte@selladomx.com
