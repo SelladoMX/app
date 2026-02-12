@@ -1,0 +1,26 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/qml">
+        <!-- Main window -->
+        <file>main.qml</file>
+
+        <!-- Design system -->
+        <file>design/DesignTokens.qml</file>
+        <file>design/qmldir</file>
+
+        <!-- Components -->
+        <file>components/ModernButton.qml</file>
+        <file>components/StepIndicator.qml</file>
+
+        <!-- Views -->
+        <file>views/HeaderBar.qml</file>
+        <file>views/Step1SelectFiles.qml</file>
+        <file>views/Step2LoadCertificate.qml</file>
+        <file>views/Step3Sign.qml</file>
+    </qresource>
+
+    <qresource prefix="/assets">
+        <!-- Icons and images can be added here -->
+        <file alias="icon.png">../../../../assets/icon.png</file>
+    </qresource>
+</RCC>

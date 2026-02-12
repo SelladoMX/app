@@ -13,11 +13,38 @@ block_cipher = None
 pyhanko_datas = collect_data_files('pyhanko')
 pyhanko_certvalidator_datas = collect_data_files('pyhanko_certvalidator')
 
+# Collect QML files (for QML UI mode)
+from pathlib import Path
+qml_src = Path('src/selladomx/ui/qml')
+qml_datas = []
+if qml_src.exists():
+    # Collect all QML files recursively
+    for qml_file in qml_src.rglob('*.qml'):
+        rel_path = qml_file.relative_to('src/selladomx/ui/qml')
+        dest_dir = f'selladomx/ui/qml/{rel_path.parent}'
+        qml_datas.append((str(qml_file), dest_dir))
+
+    # Also collect qmldir files
+    for qmldir_file in qml_src.rglob('qmldir'):
+        rel_path = qmldir_file.relative_to('src/selladomx/ui/qml')
+        dest_dir = f'selladomx/ui/qml/{rel_path.parent}'
+        qml_datas.append((str(qmldir_file), dest_dir))
+
 # Hidden imports that PyInstaller might miss
 hidden_imports = [
+    # Qt Widgets (legacy UI)
     'PySide6.QtCore',
     'PySide6.QtGui',
     'PySide6.QtWidgets',
+
+    # Qt Quick/QML (new UI)
+    'PySide6.QtQml',
+    'PySide6.QtQuick',
+    'PySide6.QtQuickControls2',
+    'PySide6.QtQuickLayouts',
+    'PySide6.QtQuickTemplates2',
+
+    # PDF signing
     'pyhanko',
     'pyhanko.pdf_utils',
     'pyhanko.sign',
@@ -26,6 +53,8 @@ hidden_imports = [
     'pyhanko.sign.timestamps',
     'pyhanko.sign.validation',
     'pyhanko_certvalidator',
+
+    # Other dependencies
     'cryptography',
     'requests',
     'qrcode',
@@ -40,7 +69,7 @@ a = Analysis(
     ['run.py'],
     pathex=['src'],  # Add src to path so selladomx can be imported
     binaries=[],
-    datas=pyhanko_datas + pyhanko_certvalidator_datas,
+    datas=pyhanko_datas + pyhanko_certvalidator_datas + qml_datas,  # Include QML files
     hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},

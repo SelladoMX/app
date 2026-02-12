@@ -28,7 +28,9 @@ class SettingsManager:
 
     def mark_onboarding_completed(self):
         """Mark onboarding as completed."""
+        from ..config import ONBOARDING_VERSION
         self.settings.setValue("onboarding/completed", True)
+        self.settings.setValue("onboarding/version", ONBOARDING_VERSION)
         self.settings.sync()
 
     def reset_onboarding(self):

@@ -1,23 +1,23 @@
-"""Punto de entrada de la aplicación SelladoMX"""
+"""Punto de entrada de la aplicación SelladoMX - QML UI"""
 import sys
+import os
 import logging
 from pathlib import Path
 
-# Load environment variables
-# Priority: .env (local) → .env.development (default for dev) → hardcoded (production)
 from dotenv import load_dotenv
-if not load_dotenv():  # Try .env first
-    load_dotenv(".env.development")  # Fallback to development defaults
 
-from PySide6.QtWidgets import QApplication, QDialog
-from PySide6.QtGui import QPalette, QColor
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QUrl
+from PySide6.QtGui import QGuiApplication
+from PySide6.QtQml import QQmlApplicationEngine
 
-from .ui.redesigned_main_view import RedesignedMainView
-from .ui.onboarding.onboarding_dialog import OnboardingDialog
+from .ui.qml_bridge.main_view_model import MainViewModel
+from .ui.qml_bridge.signing_coordinator import SigningCoordinator
+from .ui.qml_bridge.settings_bridge import SettingsBridge
 from .utils.settings_manager import SettingsManager
 from .utils.deep_link_handler import DeepLinkHandler
 from .config import ONBOARDING_VERSION
+
+logger = logging.getLogger(__name__)
 
 
 def setup_logging():
@@ -31,50 +31,14 @@ def setup_logging():
     )
 
 
-def setup_light_palette(app: QApplication):
-    """Configure light theme palette"""
-    palette = QPalette()
-
-    # Base colors (light background with dark text)
-    palette.setColor(QPalette.Window, QColor("#FFFFFF"))
-    palette.setColor(QPalette.WindowText, QColor("#1D1D1F"))
-    palette.setColor(QPalette.Base, QColor("#FFFFFF"))
-    palette.setColor(QPalette.AlternateBase, QColor("#F5F5F7"))
-    palette.setColor(QPalette.Text, QColor("#1D1D1F"))
-    palette.setColor(QPalette.Button, QColor("#FFFFFF"))
-    palette.setColor(QPalette.ButtonText, QColor("#1D1D1F"))
-
-    # Highlight colors (teal selection)
-    palette.setColor(QPalette.Highlight, QColor("#0D9488"))
-    palette.setColor(QPalette.HighlightedText, QColor("#FFFFFF"))
-
-    # Link colors (teal)
-    palette.setColor(QPalette.Link, QColor("#0D9488"))
-    palette.setColor(QPalette.LinkVisited, QColor("#0F766E"))
-
-    # Disabled state
-    palette.setColor(QPalette.Disabled, QPalette.WindowText, QColor("#C7C7CC"))
-    palette.setColor(QPalette.Disabled, QPalette.Text, QColor("#C7C7CC"))
-    palette.setColor(QPalette.Disabled, QPalette.ButtonText, QColor("#C7C7CC"))
-    palette.setColor(QPalette.Disabled, QPalette.Base, QColor("#F5F5F7"))
-    palette.setColor(QPalette.Disabled, QPalette.Button, QColor("#E5E5E7"))
-
-    # Tooltips
-    palette.setColor(QPalette.ToolTipBase, QColor("#1D1D1F"))
-    palette.setColor(QPalette.ToolTipText, QColor("#FFFFFF"))
-
-    app.setPalette(palette)
-
-
-def _handle_deep_link_token(token: str, settings_manager: SettingsManager, window):
+def _handle_deep_link_token(token: str, settings_manager: SettingsManager, view_model: MainViewModel):
     """Handle token received via deep link.
 
     Args:
         token: Token string from magic link
         settings_manager: Settings manager instance
-        window: Main window instance
+        view_model: Main view model instance
     """
-    from PySide6.QtWidgets import QMessageBox
     from .api.client import SelladoMXAPIClient
     from .api.exceptions import APIError
 
@@ -90,55 +54,42 @@ def _handle_deep_link_token(token: str, settings_manager: SettingsManager, windo
         settings_manager.set_token_info(balance_response["token_info"])
         settings_manager.set_last_credit_balance(balance_response["credits_remaining"])
 
-        # Refresh UI
-        window._update_credit_label()
-        window._update_tsa_credits_label()
-        window.chk_professional_tsa.setEnabled(True)
+        # Refresh view model
+        view_model._refresh_credit_balance()
 
-        # Show success message
-        QMessageBox.information(
-            window,
-            "Token configurado",
-            f"✅ Token configurado exitosamente\n\n"
-            f"Créditos disponibles: {balance_response['credits_remaining']}\n"
-            f"Email: {balance_response['email']}"
+        # Show success message via status log
+        view_model._append_status_log(
+            f"✅ Token configurado exitosamente - {balance_response['credits_remaining']} créditos disponibles",
+            "#10B981"
         )
 
         logger.info("Token configured successfully via deep link")
 
     except APIError as e:
-        QMessageBox.critical(
-            window,
-            "Error al configurar token",
-            f"No se pudo validar el token:\n{e.message}"
+        view_model._append_status_log(
+            f"❌ Error al configurar token: {e.message}",
+            "#EF4444"
         )
         logger.error(f"Failed to configure token via deep link: {e}")
 
 
 def main():
     """Función principal de la aplicación"""
-    setup_logging()
-    logger = logging.getLogger(__name__)
-    logger.info("Starting SelladoMX application")
+    # Load environment variables
+    if not load_dotenv():
+        load_dotenv(".env.development")
 
-    app = QApplication(sys.argv)
+    setup_logging()
+    logger.info("Starting SelladoMX with QML UI")
+
+    # Set QML style to avoid native style warnings (must be before QGuiApplication)
+    os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
+
+    # Create QGuiApplication (for QML, not QApplication)
+    app = QGuiApplication(sys.argv)
     app.setApplicationName("SelladoMX")
     app.setOrganizationName("SelladoMX")
-    app.setApplicationVersion("0.1.0")
-
-    # Setup light theme
-    app.setStyle("Fusion")
-    setup_light_palette(app)
-    logger.info("Light theme palette configured")
-
-    # Load light theme stylesheet
-    qss_path = Path(__file__).parent / "ui" / "styles" / "theme_light.qss"
-    try:
-        with open(qss_path, "r", encoding="utf-8") as f:
-            app.setStyleSheet(f.read())
-        logger.info("Theme loaded successfully")
-    except Exception as e:
-        logger.warning(f"Could not load theme: {e}")
+    app.setApplicationVersion("0.2.0")
 
     # Initialize settings manager
     settings_manager = SettingsManager()
@@ -152,10 +103,9 @@ def main():
             logger.info("URL scheme registered successfully")
         else:
             logger.warning("URL scheme registration failed (non-critical)")
-        # Mark as attempted regardless of success (don't spam logs on every launch)
         settings_manager.mark_url_scheme_registration_attempted()
 
-    # Create deep link handler BEFORE showing any windows
+    # Create deep link handler BEFORE creating engine
     deep_link_handler = DeepLinkHandler()
     deep_link_url = None
 
@@ -164,35 +114,66 @@ def main():
         deep_link_url = sys.argv[1]
         logger.info(f"Received deep link on startup: {deep_link_url}")
 
-    # Check if onboarding is needed
-    if not settings_manager.has_completed_onboarding():
-        logger.info("First run detected, showing onboarding")
-        onboarding = OnboardingDialog()
-        result = onboarding.exec()
+    # Initialize backend components
+    coordinator = SigningCoordinator()
+    view_model = MainViewModel(settings_manager, coordinator)
+    settings_bridge = SettingsBridge(settings_manager)
 
-        if result == QDialog.Accepted:
-            settings_manager.mark_onboarding_completed()
-            settings_manager.set_onboarding_version(ONBOARDING_VERSION)
-            logger.info("Onboarding completed")
-        else:
-            logger.info("Onboarding cancelled, exiting")
-            sys.exit(0)
+    # Create QML engine
+    engine = QQmlApplicationEngine()
 
-    # Show main window
-    window = RedesignedMainView()
+    # Expose ViewModels to QML as context properties
+    context = engine.rootContext()
+    context.setContextProperty("mainViewModel", view_model)
+    context.setContextProperty("settingsBridge", settings_bridge)
 
-    # Connect deep link handler to window method
+    # Connect deep link handler to view model method
     deep_link_handler.token_received.connect(
-        lambda token: _handle_deep_link_token(token, settings_manager, window)
+        lambda token: _handle_deep_link_token(token, settings_manager, view_model)
     )
+
+    # Load main QML file
+    qml_file = Path(__file__).parent / "ui" / "qml" / "main.qml"
+
+    if not qml_file.exists():
+        logger.error(f"QML file not found: {qml_file}")
+        sys.exit(-1)
+
+    engine.load(QUrl.fromLocalFile(str(qml_file)))
+
+    # Check if QML loaded successfully
+    if not engine.rootObjects():
+        logger.error("Failed to load QML - no root objects created")
+        sys.exit(-1)
+
+    logger.info("QML UI loaded successfully")
 
     # Process deep link if provided on startup
     if deep_link_url:
         deep_link_handler.handle_url(deep_link_url)
 
-    window.show()
+    # Show onboarding if needed (AFTER main window is loaded)
+    if not settings_manager.has_completed_onboarding():
+        logger.info("First run detected, showing onboarding")
 
-    logger.info("Application started successfully")
+        # Get the root window
+        root_objects = engine.rootObjects()
+        if root_objects:
+            root_window = root_objects[0]
+
+            # Call the showOnboarding method on the main QML window
+            from PySide6.QtCore import QMetaObject, Q_ARG, Qt
+            QMetaObject.invokeMethod(
+                root_window,
+                "showOnboarding",
+                Qt.QueuedConnection
+            )
+        else:
+            logger.warning("No root objects found, skipping onboarding")
+            settings_manager.mark_onboarding_completed()
+            settings_manager.set_onboarding_version(ONBOARDING_VERSION)
+
+    logger.info("Application started successfully with QML UI")
     exit_code = app.exec()
 
     logger.info(f"Application exiting with code {exit_code}")
