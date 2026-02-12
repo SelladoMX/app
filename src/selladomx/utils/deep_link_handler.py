@@ -23,10 +23,10 @@ class DeepLinkHandler(QObject):
         """
         token = self._extract_token(url)
         if token:
-            logger.info(f"Valid token received via deep link: {token[:8]}...")
+            logger.info("Valid token received via deep link")
             self.token_received.emit(token)
         else:
-            logger.warning(f"Invalid deep link URL: {url}")
+            logger.warning("Invalid deep link URL received")
 
     def _extract_token(self, url: str) -> Optional[str]:
         """Extract token from deep link URL.
@@ -63,7 +63,7 @@ class DeepLinkHandler(QObject):
             from selladomx.api.client import SelladoMXAPIClient
 
             if not SelladoMXAPIClient.validate_token_format(token):
-                logger.error(f"Invalid token format: {token[:8]}...")
+                logger.error("Invalid token format")
                 return None
 
             return token
