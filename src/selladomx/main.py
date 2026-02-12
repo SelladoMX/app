@@ -24,14 +24,14 @@ def setup_logging():
     """Configura el sistema de logging"""
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(sys.stdout)
-        ]
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[logging.StreamHandler(sys.stdout)],
     )
 
 
-def _handle_deep_link_token(token: str, settings_manager: SettingsManager, view_model: MainViewModel):
+def _handle_deep_link_token(
+    token: str, settings_manager: SettingsManager, view_model: MainViewModel
+):
     """Handle token received via deep link.
 
     Args:
@@ -60,15 +60,14 @@ def _handle_deep_link_token(token: str, settings_manager: SettingsManager, view_
         # Show success message via status log
         view_model._append_status_log(
             f"✅ Token configurado exitosamente - {balance_response['credits_remaining']} créditos disponibles",
-            COLOR_SUCCESS
+            COLOR_SUCCESS,
         )
 
         logger.info("Token configured successfully via deep link")
 
     except APIError as e:
         view_model._append_status_log(
-            f"❌ Error al configurar token: {e.message}",
-            COLOR_ERROR
+            f"❌ Error al configurar token: {e.message}", COLOR_ERROR
         )
         logger.error(f"Failed to configure token via deep link: {e}")
 
@@ -98,6 +97,7 @@ def main():
     if not settings_manager.has_attempted_url_scheme_registration():
         logger.info("First launch detected, registering URL scheme...")
         from .utils.platform_helpers import register_url_scheme
+
         success = register_url_scheme()
         if success:
             logger.info("URL scheme registered successfully")
@@ -166,12 +166,9 @@ def main():
             root_window = root_objects[0]
 
             # Call the showOnboarding method on the main QML window
-            from PySide6.QtCore import QMetaObject, Q_ARG, Qt
-            QMetaObject.invokeMethod(
-                root_window,
-                "showOnboarding",
-                Qt.QueuedConnection
-            )
+            from PySide6.QtCore import QMetaObject, Qt
+
+            QMetaObject.invokeMethod(root_window, "showOnboarding", Qt.QueuedConnection)
         else:
             logger.warning("No root objects found, skipping onboarding")
             settings_manager.mark_onboarding_completed()

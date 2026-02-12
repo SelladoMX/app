@@ -25,7 +25,9 @@ class AuthenticationError(APIError):
 class InsufficientCreditsError(APIError):
     """Raised when user doesn't have enough credits for the operation."""
 
-    def __init__(self, message: str = "Sin créditos disponibles", available_credits: int = 0):
+    def __init__(
+        self, message: str = "Sin créditos disponibles", available_credits: int = 0
+    ):
         """Initialize insufficient credits error.
 
         Args:

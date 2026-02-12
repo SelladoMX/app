@@ -1,6 +1,5 @@
 """SettingsBridge - Exposes SettingsManager to QML."""
 import logging
-from typing import Optional
 
 from PySide6.QtCore import QObject, Signal, Slot, Property
 

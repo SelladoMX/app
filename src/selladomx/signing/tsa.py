@@ -1,5 +1,4 @@
 """Cliente TSA para sellado de tiempo"""
-import hashlib
 import logging
 from typing import Optional
 
@@ -19,7 +18,7 @@ class TSAClient:
         self,
         tsa_url: Optional[str] = None,
         timeout: int = TSA_TIMEOUT,
-        enable_fallback: bool = True
+        enable_fallback: bool = True,
     ):
         """
         Inicializa el cliente TSA.
@@ -32,10 +31,14 @@ class TSAClient:
         self.primary_url = tsa_url or TSA_URL
         self.timeout = timeout
         self.enable_fallback = enable_fallback
-        self.fallback_providers = TSA_FREE_PROVIDERS if enable_fallback else [self.primary_url]
+        self.fallback_providers = (
+            TSA_FREE_PROVIDERS if enable_fallback else [self.primary_url]
+        )
         logger.info(f"TSA client initialized with primary URL: {self.primary_url}")
         if enable_fallback:
-            logger.info(f"Fallback enabled with {len(self.fallback_providers)} providers")
+            logger.info(
+                f"Fallback enabled with {len(self.fallback_providers)} providers"
+            )
 
     def get_timestamper(self) -> timestamps.HTTPTimeStamper:
         """
@@ -52,10 +55,7 @@ class TSAClient:
         for tsa_url in self.fallback_providers:
             try:
                 logger.info(f"Attempting to create timestamper with: {tsa_url}")
-                timestamper = timestamps.HTTPTimeStamper(
-                    tsa_url,
-                    timeout=self.timeout
-                )
+                timestamper = timestamps.HTTPTimeStamper(tsa_url, timeout=self.timeout)
                 logger.info(f"Successfully created timestamper with: {tsa_url}")
                 return timestamper
             except Exception as e:
@@ -84,15 +84,15 @@ class TSAClient:
         test_url = url or self.primary_url
         try:
             response = requests.head(
-                test_url,
-                timeout=self.timeout,
-                allow_redirects=True
+                test_url, timeout=self.timeout, allow_redirects=True
             )
             success = response.status_code < 500
             if success:
                 logger.info(f"TSA connection test successful for {test_url}")
             else:
-                logger.warning(f"TSA connection test failed for {test_url} with status {response.status_code}")
+                logger.warning(
+                    f"TSA connection test failed for {test_url} with status {response.status_code}"
+                )
             return success
         except requests.RequestException as e:
             logger.warning(f"TSA connection test failed for {test_url}: {e}")

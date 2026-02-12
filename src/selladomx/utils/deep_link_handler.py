@@ -61,6 +61,7 @@ class DeepLinkHandler(QObject):
 
             # Validate token format
             from selladomx.api.client import SelladoMXAPIClient
+
             if not SelladoMXAPIClient.validate_token_format(token):
                 logger.error(f"Invalid token format: {token[:8]}...")
                 return None

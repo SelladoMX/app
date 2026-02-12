@@ -28,7 +28,7 @@ class PDFSigner:
         self,
         cert: x509.Certificate,
         private_key: PrivateKey,
-        tsa_client: Optional[TSAClient] = None
+        tsa_client: Optional[TSAClient] = None,
     ):
         """
         Inicializa el firmador de PDFs.
@@ -43,11 +43,7 @@ class PDFSigner:
         self.tsa_client = tsa_client
         logger.info("PDF signer initialized")
 
-    def sign_pdf(
-        self,
-        pdf_path: Path,
-        output_path: Optional[Path] = None
-    ) -> Path:
+    def sign_pdf(self, pdf_path: Path, output_path: Optional[Path] = None) -> Path:
         """
         Firma un PDF con el certificado digital.
 
@@ -69,7 +65,9 @@ class PDFSigner:
 
         # Determinar ruta de salida
         if output_path is None:
-            output_path = pdf_path.parent / f"{pdf_path.stem}{SIGNED_SUFFIX}{pdf_path.suffix}"
+            output_path = (
+                pdf_path.parent / f"{pdf_path.stem}{SIGNED_SUFFIX}{pdf_path.suffix}"
+            )
         else:
             output_path = Path(output_path)
 
@@ -77,7 +75,7 @@ class PDFSigner:
 
         try:
             # Leer PDF en memoria
-            with open(pdf_path, 'rb') as f:
+            with open(pdf_path, "rb") as f:
                 pdf_data = BytesIO(f.read())
 
             # Crear writer incremental (preserva PDF original)
@@ -91,22 +89,20 @@ class PDFSigner:
             key_bytes = self.private_key.private_bytes(
                 encoding=serialization.Encoding.DER,
                 format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=serialization.NoEncryption()
+                encryption_algorithm=serialization.NoEncryption(),
             )
             asn1_key = asn1_keys.PrivateKeyInfo.load(key_bytes)
 
             # Crear signer con objetos asn1crypto
             signer = signers.SimpleSigner(
-                signing_cert=asn1_cert,
-                signing_key=asn1_key,
-                cert_registry=None
+                signing_cert=asn1_cert, signing_key=asn1_key, cert_registry=None
             )
 
             # Configurar metadata de la firma
             signature_meta = signers.PdfSignatureMetadata(
-                field_name='Signature1',
+                field_name="Signature1",
                 name=self._get_signer_name(),
-                location='México',
+                location="México",
             )
 
             # Agregar campo de firma invisible
@@ -114,8 +110,8 @@ class PDFSigner:
                 writer,
                 sig_field_spec=fields.SigFieldSpec(
                     sig_field_name=signature_meta.field_name,
-                    box=None  # Sin sello visual
-                )
+                    box=None,  # Sin sello visual
+                ),
             )
 
             # Obtener timestamper si está disponible
@@ -125,7 +121,9 @@ class PDFSigner:
                     timestamper = self.tsa_client.get_timestamper()
                     logger.info("Using TSA for timestamp")
                 except Exception as e:
-                    logger.warning(f"Could not get timestamper, continuing without it: {e}")
+                    logger.warning(
+                        f"Could not get timestamper, continuing without it: {e}"
+                    )
 
             # Firmar el PDF
             out = signers.sign_pdf(
@@ -133,11 +131,11 @@ class PDFSigner:
                 signature_meta=signature_meta,
                 signer=signer,
                 timestamper=timestamper,
-                in_place=True
+                in_place=True,
             )
 
             # Guardar PDF firmado
-            with open(output_path, 'wb') as f:
+            with open(output_path, "wb") as f:
                 f.write(out.getbuffer())
 
             logger.info(f"PDF signed successfully: {output_path.name}")
@@ -150,7 +148,9 @@ class PDFSigner:
     def _get_signer_name(self) -> str:
         """Extrae el nombre del firmante del certificado"""
         try:
-            cn_attrs = self.cert.subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)
+            cn_attrs = self.cert.subject.get_attributes_for_oid(
+                x509.NameOID.COMMON_NAME
+            )
             if cn_attrs:
                 return cn_attrs[0].value
         except Exception:
@@ -177,7 +177,7 @@ class PDFSigner:
             raise PDFError(f"Archivo PDF no encontrado: {pdf_path}")
 
         try:
-            with open(pdf_path, 'rb') as f:
+            with open(pdf_path, "rb") as f:
                 reader = PdfFileReader(f)
                 sig_fields = fields.enumerate_sig_fields(reader)
 
@@ -188,7 +188,9 @@ class PDFSigner:
 
                     embedded_sig = sig_field.sig_object
                     if embedded_sig is None:
-                        logger.warning(f"Signature field {sig_field.field_name} has no signature")
+                        logger.warning(
+                            f"Signature field {sig_field.field_name} has no signature"
+                        )
                         all_valid = False
                         continue
 
@@ -198,10 +200,14 @@ class PDFSigner:
                         if status.valid:
                             logger.info(f"Signature {sig_field.field_name} is valid")
                         else:
-                            logger.warning(f"Signature {sig_field.field_name} is invalid")
+                            logger.warning(
+                                f"Signature {sig_field.field_name} is invalid"
+                            )
                             all_valid = False
                     except Exception as e:
-                        logger.error(f"Error validating signature {sig_field.field_name}: {e}")
+                        logger.error(
+                            f"Error validating signature {sig_field.field_name}: {e}"
+                        )
                         all_valid = False
 
                 return all_valid

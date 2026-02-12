@@ -8,16 +8,15 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, ec
-from cryptography.x509.oid import ExtensionOID
 from pyhanko_certvalidator import ValidationContext
 from pyhanko_certvalidator.errors import PathValidationError, RevokedError
 
-from ..config import OCSP_TIMEOUT, CRL_TIMEOUT, ENABLE_CRL_FALLBACK, LOG_SENSITIVE_DATA
+from ..config import ENABLE_CRL_FALLBACK, LOG_SENSITIVE_DATA
 from ..errors import (
     CertificateError,
     CertificateExpiredError,
     CertificateRevokedError,
-    CertificateValidationError
+    CertificateValidationError,
 )
 
 logger = logging.getLogger(__name__)
@@ -80,10 +79,12 @@ class CertificateValidator:
     def _load_certificate(self) -> x509.Certificate:
         """Carga el certificado desde el archivo .cer (DER o PEM)"""
         if not self.cert_path.exists():
-            raise CertificateError(f"Archivo de certificado no encontrado: {self.cert_path}")
+            raise CertificateError(
+                f"Archivo de certificado no encontrado: {self.cert_path}"
+            )
 
         try:
-            with open(self.cert_path, 'rb') as f:
+            with open(self.cert_path, "rb") as f:
                 cert_data = f.read()
 
             # Intentar DER primero (formato común en e.firma)
@@ -100,10 +101,12 @@ class CertificateValidator:
     def _load_private_key(self) -> PrivateKey:
         """Carga la clave privada desde el archivo .key"""
         if not self.key_path.exists():
-            raise CertificateError(f"Archivo de clave privada no encontrado: {self.key_path}")
+            raise CertificateError(
+                f"Archivo de clave privada no encontrado: {self.key_path}"
+            )
 
         try:
-            with open(self.key_path, 'rb') as f:
+            with open(self.key_path, "rb") as f:
                 key_data = f.read()
 
             # Los archivos .key del SAT pueden estar en varios formatos
@@ -112,9 +115,7 @@ class CertificateValidator:
             # 1. Intentar DER (más común en e.firma)
             try:
                 return serialization.load_der_private_key(
-                    key_data,
-                    password=self.password,
-                    backend=default_backend()
+                    key_data, password=self.password, backend=default_backend()
                 )
             except Exception as der_error:
                 logger.debug(f"DER loading failed: {der_error}")
@@ -122,9 +123,7 @@ class CertificateValidator:
             # 2. Intentar PEM
             try:
                 return serialization.load_pem_private_key(
-                    key_data,
-                    password=self.password,
-                    backend=default_backend()
+                    key_data, password=self.password, backend=default_backend()
                 )
             except Exception as pem_error:
                 logger.debug(f"PEM loading failed: {pem_error}")
@@ -132,11 +131,10 @@ class CertificateValidator:
             # 3. Intentar con OpenSSL legacy para formatos antiguos
             try:
                 from cryptography.hazmat.primitives.serialization import pkcs12
+
                 # Algunos certificados del SAT usan PKCS#12
                 private_key, _, _ = pkcs12.load_key_and_certificates(
-                    key_data,
-                    self.password,
-                    backend=default_backend()
+                    key_data, self.password, backend=default_backend()
                 )
                 if private_key:
                     return private_key
@@ -154,7 +152,11 @@ class CertificateValidator:
         except CertificateError:
             raise
         except ValueError as e:
-            if "password" in str(e).lower() or "decrypt" in str(e).lower() or "incorrect" in str(e).lower():
+            if (
+                "password" in str(e).lower()
+                or "decrypt" in str(e).lower()
+                or "incorrect" in str(e).lower()
+            ):
                 raise CertificateError("Contraseña incorrecta")
             raise CertificateError(f"Error de formato en la clave privada: {e}")
         except Exception as e:
@@ -185,9 +187,7 @@ class CertificateValidator:
             )
 
         if now > not_after:
-            raise CertificateExpiredError(
-                f"El certificado expiró el: {not_after}"
-            )
+            raise CertificateExpiredError(f"El certificado expiró el: {not_after}")
 
         logger.info(f"Certificate validity OK (expires: {not_after})")
 
@@ -201,7 +201,7 @@ class CertificateValidator:
             # Crear contexto de validación
             context = ValidationContext(
                 allow_fetching=True,
-                revocation_mode='hard-fail' if not ENABLE_CRL_FALLBACK else 'soft-fail'
+                revocation_mode="hard-fail" if not ENABLE_CRL_FALLBACK else "soft-fail",
             )
 
             # Intentar validar
@@ -217,14 +217,18 @@ class CertificateValidator:
             raise CertificateRevokedError("El certificado ha sido revocado")
         except PathValidationError as e:
             logger.error(f"Certificate validation path error: {e}")
-            raise CertificateValidationError(f"Error en la validación del certificado: {e}")
+            raise CertificateValidationError(
+                f"Error en la validación del certificado: {e}"
+            )
         except Exception as e:
             logger.warning(f"Could not verify revocation status: {e}")
             if not ENABLE_CRL_FALLBACK:
                 raise CertificateValidationError(
                     f"No se pudo verificar el estado de revocación: {e}"
                 )
-            logger.info("Continuing with unverified revocation status (fallback enabled)")
+            logger.info(
+                "Continuing with unverified revocation status (fallback enabled)"
+            )
 
     def get_certificate_info(self, cert: x509.Certificate) -> dict:
         """
@@ -250,18 +254,18 @@ class CertificateValidator:
                 not_after = not_after.replace(tzinfo=timezone.utc)
 
         info = {
-            'subject': cert.subject.rfc4514_string(),
-            'issuer': cert.issuer.rfc4514_string(),
-            'serial_number': format(cert.serial_number, 'x'),
-            'not_before': not_before.isoformat(),
-            'not_after': not_after.isoformat(),
+            "subject": cert.subject.rfc4514_string(),
+            "issuer": cert.issuer.rfc4514_string(),
+            "serial_number": format(cert.serial_number, "x"),
+            "not_before": not_before.isoformat(),
+            "not_after": not_after.isoformat(),
         }
 
         # Extraer nombre común si existe
         try:
             cn_attrs = cert.subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)
             if cn_attrs:
-                info['common_name'] = cn_attrs[0].value
+                info["common_name"] = cn_attrs[0].value
         except Exception:
             pass
 

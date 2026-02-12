@@ -29,6 +29,7 @@ class SettingsManager:
     def mark_onboarding_completed(self):
         """Mark onboarding as completed."""
         from ..config import ONBOARDING_VERSION
+
         self.settings.setValue("onboarding/completed", True)
         self.settings.setValue("onboarding/version", ONBOARDING_VERSION)
         self.settings.sync()
@@ -152,7 +153,9 @@ class SettingsManager:
         Args:
             token_info: Token info dict from /api/v1/balance response
         """
-        self.settings.setValue("api/token_is_primary", token_info.get("is_primary", True))
+        self.settings.setValue(
+            "api/token_is_primary", token_info.get("is_primary", True)
+        )
         self.settings.setValue("api/token_alias", token_info.get("alias"))
         self.settings.setValue("api/token_expires_at", token_info.get("expires_at"))
         self.settings.setValue("api/token_is_active", token_info.get("is_active", True))
@@ -169,6 +172,7 @@ class SettingsManager:
             return False  # No expiration set
 
         from datetime import datetime
+
         try:
             expires_at = datetime.fromisoformat(expires_at_str.replace("Z", "+00:00"))
             return datetime.now(expires_at.tzinfo) >= expires_at

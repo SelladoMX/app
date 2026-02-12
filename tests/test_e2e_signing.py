@@ -38,13 +38,15 @@ def test_password():
 
 @pytest.mark.skipif(
     not (Path(__file__).parent / "fixtures" / "certs" / "test_cert.cer").exists(),
-    reason="Test certificate not available - run setup instructions in tests/fixtures/README.md"
+    reason="Test certificate not available - run setup instructions in tests/fixtures/README.md",
 )
 @pytest.mark.skipif(
     not (Path(__file__).parent / "fixtures" / "pdfs" / "sample.pdf").exists(),
-    reason="Test PDF not available - add sample.pdf to tests/fixtures/pdfs/"
+    reason="Test PDF not available - add sample.pdf to tests/fixtures/pdfs/",
 )
-def test_complete_signing_workflow(test_cert_path, test_key_path, test_pdf_path, test_password, tmp_path):
+def test_complete_signing_workflow(
+    test_cert_path, test_key_path, test_pdf_path, test_password, tmp_path
+):
     """Test complete signing workflow with free TSA.
 
     This test verifies:
@@ -75,9 +77,9 @@ def test_complete_signing_workflow(test_cert_path, test_key_path, test_pdf_path,
     assert result_path.stat().st_size > 0, "Signed PDF is empty"
 
     # Verify it's a valid PDF (check magic number)
-    with open(result_path, 'rb') as f:
+    with open(result_path, "rb") as f:
         header = f.read(4)
-        assert header == b'%PDF', "Output is not a valid PDF file"
+        assert header == b"%PDF", "Output is not a valid PDF file"
 
     # Verify file is larger than input (signature adds data)
     original_size = test_pdf_path.stat().st_size
@@ -87,9 +89,11 @@ def test_complete_signing_workflow(test_cert_path, test_key_path, test_pdf_path,
 
 @pytest.mark.skipif(
     not (Path(__file__).parent / "fixtures" / "certs" / "test_cert.cer").exists(),
-    reason="Test certificate not available"
+    reason="Test certificate not available",
 )
-def test_certificate_validator_loads_files(test_cert_path, test_key_path, test_password):
+def test_certificate_validator_loads_files(
+    test_cert_path, test_key_path, test_password
+):
     """Test that certificate validator can load certificate and key files."""
     validator = CertificateValidator(test_cert_path, test_key_path, test_password)
 
@@ -106,6 +110,7 @@ def test_tsa_client_initialization():
 
     # Verify free TSA URLs are configured
     from selladomx.config import TSA_FREE_PROVIDERS
+
     assert len(TSA_FREE_PROVIDERS) > 0, "No free TSA providers configured"
 
 
@@ -122,28 +127,25 @@ def test_pdf_signer_requires_certificate():
 
     # Generate a minimal self-signed cert for testing constructor
     private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048,
-        backend=default_backend()
+        public_exponent=65537, key_size=2048, backend=default_backend()
     )
 
-    subject = issuer = x509.Name([
-        x509.NameAttribute(x509.oid.NameOID.COMMON_NAME, "Test"),
-    ])
+    subject = issuer = x509.Name(
+        [
+            x509.NameAttribute(x509.oid.NameOID.COMMON_NAME, "Test"),
+        ]
+    )
 
-    cert = x509.CertificateBuilder().subject_name(
-        subject
-    ).issuer_name(
-        issuer
-    ).public_key(
-        private_key.public_key()
-    ).serial_number(
-        x509.random_serial_number()
-    ).not_valid_before(
-        datetime.now(UTC)
-    ).not_valid_after(
-        datetime.now(UTC) + timedelta(days=1)
-    ).sign(private_key, hashes.SHA256(), default_backend())
+    cert = (
+        x509.CertificateBuilder()
+        .subject_name(subject)
+        .issuer_name(issuer)
+        .public_key(private_key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(datetime.now(UTC))
+        .not_valid_after(datetime.now(UTC) + timedelta(days=1))
+        .sign(private_key, hashes.SHA256(), default_backend())
+    )
 
     tsa_client = TSAClient()
     signer = PDFSigner(cert, private_key, tsa_client)

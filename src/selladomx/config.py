@@ -2,7 +2,6 @@
 import os
 import sys
 import logging
-from pathlib import Path
 from typing import Final
 
 logger = logging.getLogger(__name__)
@@ -14,8 +13,7 @@ logger = logging.getLogger(__name__)
 # API Configuration - can be overridden via environment variable
 # Set SELLADOMX_API_URL to point to a different API endpoint (e.g., local dev)
 API_BASE_URL: str = os.environ.get(
-    "SELLADOMX_API_URL",
-    "https://api.selladomx.com"  # Production default
+    "SELLADOMX_API_URL", "https://api.selladomx.com"  # Production default
 )
 
 # Log which API is being used (for debugging)
@@ -30,8 +28,8 @@ logger.info(f"Using API base URL: {API_BASE_URL}")
 _DEFAULT_FREE_TSA = "http://timestamp.digicert.com"
 TSA_FREE_PROVIDERS: Final[list[str]] = [
     os.environ.get("SELLADOMX_FREE_TSA_URL", _DEFAULT_FREE_TSA),
-    "http://timestamp.sectigo.com",   # Backup: Sectigo
-    "https://freetsa.org/tsr",        # Fallback: FreeTSA
+    "http://timestamp.sectigo.com",  # Backup: Sectigo
+    "https://freetsa.org/tsr",  # Fallback: FreeTSA
 ]
 TSA_URL: Final[str] = TSA_FREE_PROVIDERS[0]  # Default to first provider
 TSA_TIMEOUT: Final[int] = 30
@@ -39,8 +37,7 @@ TSA_TIMEOUT: Final[int] = 30
 # TSA - Paid Tier (Professional)
 # Override with SELLADOMX_PROFESSIONAL_TSA_PROVIDER environment variable
 PAID_TSA_PROVIDER: Final[str] = os.environ.get(
-    "SELLADOMX_PROFESSIONAL_TSA_PROVIDER",
-    "certum"  # Certum eIDAS (default)
+    "SELLADOMX_PROFESSIONAL_TSA_PROVIDER", "certum"  # Certum eIDAS (default)
 )
 BUY_CREDITS_URL: Final[str] = "https://selladomx.com/buy-credits"
 
@@ -93,9 +90,9 @@ WINDOW_HEIGHT: Final[int] = 700
 # COLORS - Must stay in sync with design/DesignTokens.qml
 # ============================================================================
 
-COLOR_SUCCESS: Final[str] = "#2e7d32"       # Green (accent/success)
-COLOR_ERROR: Final[str] = "#EF4444"         # Red
-COLOR_WARNING: Final[str] = "#F59E0B"       # Amber
-COLOR_INFO: Final[str] = "#3B82F6"          # Blue
-COLOR_MUTED: Final[str] = "#6B7280"         # Gray-500
-COLOR_MUTED_LIGHT: Final[str] = "#9CA3AF"   # Gray-400
+COLOR_SUCCESS: Final[str] = "#2e7d32"  # Green (accent/success)
+COLOR_ERROR: Final[str] = "#EF4444"  # Red
+COLOR_WARNING: Final[str] = "#F59E0B"  # Amber
+COLOR_INFO: Final[str] = "#3B82F6"  # Blue
+COLOR_MUTED: Final[str] = "#6B7280"  # Gray-500
+COLOR_MUTED_LIGHT: Final[str] = "#9CA3AF"  # Gray-400

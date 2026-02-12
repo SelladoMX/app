@@ -23,7 +23,9 @@ class SigningWorker(QThread):
     """
 
     progress = Signal(int, int)  # current, total
-    file_completed = Signal(str, bool, str, str)  # filename, success, message, verification_url
+    file_completed = Signal(
+        str, bool, str, str
+    )  # filename, success, message, verification_url
     finished = Signal(list)  # List of error messages
 
     def __init__(
@@ -78,7 +80,10 @@ class SigningWorker(QThread):
             try:
                 # Calculate output_path if output directory was specified
                 if self.output_dir:
-                    output_path = self.output_dir / f"{pdf_path.stem}{SIGNED_SUFFIX}{pdf_path.suffix}"
+                    output_path = (
+                        self.output_dir
+                        / f"{pdf_path.stem}{SIGNED_SUFFIX}{pdf_path.suffix}"
+                    )
                 else:
                     output_path = None  # Use default (same folder as source)
 
@@ -103,9 +108,10 @@ class SigningWorker(QThread):
                         error_msg = f"Insufficient credits: {e.message}"
                         self.errors.append(f"{pdf_path.name}: {error_msg}")
                         self.file_completed.emit(
-                            pdf_path.name, True,
+                            pdf_path.name,
+                            True,
                             f"Signed (free TSA): {output_path.name} - {error_msg}",
-                            ""
+                            "",
                         )
                         logger.warning(f"Insufficient credits, stopping: {e}")
                         break

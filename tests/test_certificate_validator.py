@@ -7,7 +7,7 @@ from selladomx.signing.certificate_validator import CertificateValidator
 from selladomx.errors import (
     CertificateError,
     CertificateExpiredError,
-    CertificateValidationError
+    CertificateValidationError,
 )
 
 

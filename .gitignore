@@ -37,9 +37,6 @@ env/
 .DS_Store
 Thumbs.db
 
-# Poetry
-poetry.lock
-
 # Testing
 .pytest_cache/
 .coverage

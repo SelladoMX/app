@@ -97,11 +97,7 @@ class SigningCoordinator(QObject):
         self.progressChanged.emit(current, total)
 
     def _on_file_completed(
-        self,
-        filename: str,
-        success: bool,
-        message: str,
-        verification_url: str
+        self, filename: str, success: bool, message: str, verification_url: str
     ):
         """Handle file completion signal from worker.
 

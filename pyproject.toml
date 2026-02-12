@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "selladomx"
-version = "0.1.4"
+version = "0.2.0"
 description = "Firma digital de PDFs con certificados e.firma del SAT"
 authors = ["SelladoMX Team"]
 readme = "README.md"
@@ -27,3 +27,13 @@ selladomx = "selladomx.main:main"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "network: marks tests that require network access (deselect with '-m \"not network\"')",
+]

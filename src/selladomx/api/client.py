@@ -1,7 +1,6 @@
 """HTTP client for SelladoMX API."""
 import logging
 from typing import Optional
-from datetime import datetime
 
 import requests
 
@@ -10,7 +9,6 @@ from .exceptions import (
     APIError,
     AuthenticationError,
     InsufficientCreditsError,
-    InvalidTokenFormatError,
     NetworkError,
     PrimaryTokenRequiredError,
     TokenExpiredError,
@@ -40,15 +38,15 @@ class SelladoMXAPIClient:
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
         self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": "SelladoMX/1.0",
-            "Content-Type": "application/json",
-        })
+        self.session.headers.update(
+            {
+                "User-Agent": "SelladoMX/1.0",
+                "Content-Type": "application/json",
+            }
+        )
 
         if api_key:
-            self.session.headers.update({
-                "Authorization": f"Bearer {api_key}"
-            })
+            self.session.headers.update({"Authorization": f"Bearer {api_key}"})
 
         logger.info(f"API client initialized with base URL: {base_url}")
 
@@ -57,7 +55,7 @@ class SelladoMXAPIClient:
         method: str,
         endpoint: str,
         json_data: Optional[dict] = None,
-        require_auth: bool = True
+        require_auth: bool = True,
     ) -> dict:
         """Make HTTP request to API.
 
@@ -83,10 +81,7 @@ class SelladoMXAPIClient:
         try:
             logger.debug(f"Making {method} request to {url}")
             response = self.session.request(
-                method=method,
-                url=url,
-                json=json_data,
-                timeout=30
+                method=method, url=url, json=json_data, timeout=30
             )
 
             # Handle errors
@@ -100,8 +95,7 @@ class SelladoMXAPIClient:
                     raise TokenRevokedError("Token has been revoked")
                 else:
                     raise AuthenticationError(
-                        "API key inválido o expirado",
-                        status_code=401
+                        "API key inválido o expirado", status_code=401
                     )
             elif response.status_code == 403:
                 # Check if it's insufficient credits or primary token required
@@ -110,7 +104,7 @@ class SelladoMXAPIClient:
                     if error_data.get("error") == "insufficient_credits":
                         raise InsufficientCreditsError(
                             error_data.get("message", "Sin créditos disponibles"),
-                            available_credits=error_data.get("available_credits", 0)
+                            available_credits=error_data.get("available_credits", 0),
                         )
                     elif "primary token" in error_data.get("error", "").lower():
                         raise PrimaryTokenRequiredError("Se requiere token primario")
@@ -118,8 +112,7 @@ class SelladoMXAPIClient:
                     pass  # Not JSON response
 
                 raise APIError(
-                    "No tienes permisos para esta operación",
-                    status_code=403
+                    "No tienes permisos para esta operación", status_code=403
                 )
             elif response.status_code >= 400:
                 try:
@@ -174,7 +167,7 @@ class SelladoMXAPIClient:
         filename: str,
         size_bytes: int,
         signer_cn: str,
-        signer_serial: str
+        signer_serial: str,
     ) -> dict:
         """Request professional TSA timestamp (consumes 1 credit).
 
@@ -229,8 +222,7 @@ class SelladoMXAPIClient:
             NetworkError: If connection fails
         """
         response = self._request(
-            "GET",
-            f"/api/v1/timestamp/history?limit={limit}&offset={offset}"
+            "GET", f"/api/v1/timestamp/history?limit={limit}&offset={offset}"
         )
         return response.get("records", [])
 
@@ -247,7 +239,7 @@ class SelladoMXAPIClient:
             response = self._request(
                 "GET",
                 f"/api/v1/verify/by-hash?hash={document_hash}",
-                require_auth=False
+                require_auth=False,
             )
             return response
         except APIError as e:
@@ -321,6 +313,7 @@ class SelladoMXAPIClient:
             bool: True if valid smx_ format
         """
         import re
+
         return bool(re.match(r"^smx_[0-9a-f]{5,}$", token))
 
     def is_configured(self) -> bool:

@@ -20,7 +20,7 @@ def register_url_scheme_windows():
         import winreg
 
         # Get executable path
-        if getattr(sys, 'frozen', False):
+        if getattr(sys, "frozen", False):
             # Running as compiled executable
             exe_path = sys.executable
         else:
@@ -61,6 +61,7 @@ def is_url_scheme_registered_windows():
 
     try:
         import winreg
+
         key_path = r"Software\Classes\selladomx\shell\open\command"
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path) as key:
             value, _ = winreg.QueryValue(key, "")
@@ -85,7 +86,7 @@ def register_url_scheme_linux():
         appimage_path = os.environ.get("APPIMAGE")
         if not appimage_path:
             # Not running from AppImage, check if frozen
-            if getattr(sys, 'frozen', False):
+            if getattr(sys, "frozen", False):
                 appimage_path = sys.executable
             else:
                 # Development mode
@@ -116,12 +117,13 @@ StartupWMClass=selladomx
 
         # Update desktop database
         import subprocess
+
         try:
             result = subprocess.run(
                 ["update-desktop-database", str(apps_dir)],
                 capture_output=True,
                 timeout=5,
-                text=True
+                text=True,
             )
             if result.returncode == 0:
                 logger.info("Desktop database updated")
@@ -134,15 +136,24 @@ StartupWMClass=selladomx
 
         # Register MIME type
         try:
-            result = subprocess.run([
-                "xdg-mime", "default", "selladomx.desktop",
-                "x-scheme-handler/selladomx"
-            ], capture_output=True, timeout=5, text=True)
+            result = subprocess.run(
+                [
+                    "xdg-mime",
+                    "default",
+                    "selladomx.desktop",
+                    "x-scheme-handler/selladomx",
+                ],
+                capture_output=True,
+                timeout=5,
+                text=True,
+            )
 
             if result.returncode == 0:
                 logger.info("MIME type registered successfully")
             else:
-                logger.warning(f"xdg-mime returned {result.returncode}: {result.stderr}")
+                logger.warning(
+                    f"xdg-mime returned {result.returncode}: {result.stderr}"
+                )
         except FileNotFoundError:
             logger.warning("xdg-mime not found, skipping MIME registration")
         except Exception as e:
@@ -165,7 +176,9 @@ def is_url_scheme_registered_linux():
     if sys.platform != "linux":
         return False
 
-    desktop_file = Path.home() / ".local" / "share" / "applications" / "selladomx.desktop"
+    desktop_file = (
+        Path.home() / ".local" / "share" / "applications" / "selladomx.desktop"
+    )
     return desktop_file.exists()
 
 

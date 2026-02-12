@@ -1,14 +1,21 @@
 """MainViewModel - Central bridge between Python backend and QML UI."""
 import logging
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
-from PySide6.QtCore import QObject, Signal, Slot, Property, QUrl, Qt
+from PySide6.QtCore import QObject, Signal, Slot, Property, QUrl
 
 from ...signing.certificate_validator import CertificateValidator
 from ...errors import CertificateError, CertificateExpiredError, CertificateRevokedError
 from ...utils.settings_manager import SettingsManager
-from ...config import COLOR_SUCCESS, COLOR_ERROR, COLOR_WARNING, COLOR_INFO, COLOR_MUTED, COLOR_MUTED_LIGHT
+from ...config import (
+    COLOR_SUCCESS,
+    COLOR_ERROR,
+    COLOR_WARNING,
+    COLOR_INFO,
+    COLOR_MUTED,
+    COLOR_MUTED_LIGHT,
+)
 from .signing_coordinator import SigningCoordinator
 
 logger = logging.getLogger(__name__)
@@ -42,12 +49,12 @@ class MainViewModel(QObject):
     fileCompleted = Signal(str, bool, str, str)  # filename, success, message, url
     statusMessage = Signal(str, str)  # message, color
     tokenValidationResult = Signal(bool, str)  # success, message
-    signingCompleted = Signal(int, int, bool)  # success_count, total_count, used_professional_tsa
+    signingCompleted = Signal(
+        int, int, bool
+    )  # success_count, total_count, used_professional_tsa
 
     def __init__(
-        self,
-        settings_manager: SettingsManager,
-        signing_coordinator: SigningCoordinator
+        self, settings_manager: SettingsManager, signing_coordinator: SigningCoordinator
     ):
         """Initialize the MainViewModel.
 
@@ -131,8 +138,7 @@ class MainViewModel(QObject):
         self.step1CompleteChanged.emit()
 
         self._append_status_log(
-            f"✓ {len(file_urls)} archivo(s) agregado(s)",
-            COLOR_SUCCESS
+            f"✓ {len(file_urls)} archivo(s) agregado(s)", COLOR_SUCCESS
         )
 
     @Slot()
@@ -194,7 +200,7 @@ class MainViewModel(QObject):
         if self._cert_path and self._key_path:
             self._append_status_log(
                 "Certificado seleccionado. Ingresa la contraseña para validar.",
-                COLOR_INFO
+                COLOR_INFO,
             )
 
     @Slot(str)
@@ -213,7 +219,7 @@ class MainViewModel(QObject):
         if self._cert_path and self._key_path:
             self._append_status_log(
                 "Llave privada seleccionada. Ingresa la contraseña para validar.",
-                COLOR_INFO
+                COLOR_INFO,
             )
 
     @Slot(str, str, str)
@@ -247,8 +253,7 @@ class MainViewModel(QObject):
             self.certStatusColorChanged.emit()
 
             self._append_status_log(
-                f"✓ Certificado válido: {self.signer_cn}",
-                COLOR_SUCCESS
+                f"✓ Certificado válido: {self.signer_cn}", COLOR_SUCCESS
             )
 
             logger.info(f"Certificate validated: {self.signer_cn}")
@@ -315,8 +320,7 @@ class MainViewModel(QObject):
         """Start the signing process."""
         if not self._step1_complete or not self._step2_complete:
             self._append_status_log(
-                "✗ Completa los pasos anteriores primero",
-                COLOR_ERROR
+                "✗ Completa los pasos anteriores primero", COLOR_ERROR
             )
             return
 
@@ -337,8 +341,7 @@ class MainViewModel(QObject):
             api_key = self.settings.get_token()
             if not api_key:
                 self._append_status_log(
-                    "✗ No se encontró token para TSA Profesional",
-                    COLOR_ERROR
+                    "✗ No se encontró token para TSA Profesional", COLOR_ERROR
                 )
                 self._is_signing = False
                 self.isSigningChanged.emit()
@@ -348,8 +351,7 @@ class MainViewModel(QObject):
         pdf_paths = [Path(p) for p in self._pdf_files]
 
         self._append_status_log(
-            f"Iniciando firma de {len(pdf_paths)} documento(s)...",
-            COLOR_INFO
+            f"Iniciando firma de {len(pdf_paths)} documento(s)...", COLOR_INFO
         )
 
         # Start signing
@@ -375,17 +377,10 @@ class MainViewModel(QObject):
         self.currentProgressChanged.emit()
         self.signingProgressChanged.emit()
 
-        self._append_status_log(
-            f"Progreso: {current}/{total}",
-            COLOR_INFO
-        )
+        self._append_status_log(f"Progreso: {current}/{total}", COLOR_INFO)
 
     def _on_file_completed(
-        self,
-        filename: str,
-        success: bool,
-        message: str,
-        verification_url: str
+        self, filename: str, success: bool, message: str, verification_url: str
     ):
         """Handle file completion.
 
@@ -415,17 +410,17 @@ class MainViewModel(QObject):
 
         if errors:
             self._append_status_log(
-                f"✗ Firmado completado con {len(errors)} error(es)",
-                COLOR_WARNING
+                f"✗ Firmado completado con {len(errors)} error(es)", COLOR_WARNING
             )
         else:
             self._append_status_log(
-                "✓ Todos los documentos firmados exitosamente",
-                COLOR_SUCCESS
+                "✓ Todos los documentos firmados exitosamente", COLOR_SUCCESS
             )
 
         # Emit completion signal for QML to show appropriate dialog
-        self.signingCompleted.emit(success_count, total_count, self._use_professional_tsa)
+        self.signingCompleted.emit(
+            success_count, total_count, self._use_professional_tsa
+        )
 
         # Refresh credit balance if professional TSA was used
         if self._use_professional_tsa:
@@ -561,7 +556,9 @@ class MainViewModel(QObject):
             message = f"✅ Token configurado exitosamente\n{response['credits_remaining']} créditos disponibles"
             self.tokenValidationResult.emit(True, message)
 
-            logger.info(f"Token validated successfully, {response['credits_remaining']} credits available")
+            logger.info(
+                f"Token validated successfully, {response['credits_remaining']} credits available"
+            )
 
         except AuthenticationError as e:
             message = f"❌ Token inválido: {e.message}"
@@ -580,7 +577,6 @@ class MainViewModel(QObject):
             self.tokenValidationResult.emit(False, message)
             logger.error(f"Unexpected error during token validation: {e}")
 
-
     # ========================================================================
     # DEEP LINK HANDLING
     # ========================================================================
@@ -597,7 +593,4 @@ class MainViewModel(QObject):
         # Extract token from URL
         # This will be connected to DeepLinkHandler in main.py
         # For now, just log it
-        self._append_status_log(
-            "Deep link recibido - procesando...",
-            COLOR_INFO
-        )
+        self._append_status_log("Deep link recibido - procesando...", COLOR_INFO)
