@@ -4,8 +4,8 @@ set -e
 echo "Building AppImage for SelladoMX..."
 
 # Check required files exist
-if [ ! -d "dist/SelladoMX" ]; then
-    echo "Error: dist/SelladoMX directory not found. Run PyInstaller first."
+if [ ! -d "dist/selladomx" ]; then
+    echo "Error: dist/selladomx directory not found. Run PyInstaller first."
     exit 1
 fi
 
@@ -27,14 +27,14 @@ mkdir -p "$APPDIR/usr/lib"
 
 echo "Copying PyInstaller output to AppDir..."
 # Copy the entire PyInstaller bundle
-cp -r dist/SelladoMX/* "$APPDIR/usr/bin/"
+cp -r dist/selladomx/* "$APPDIR/usr/bin/"
 
 # Copy desktop file and icon
 cp assets/selladomx.desktop "$APPDIR/"
 cp assets/selladomx.png "$APPDIR/selladomx.png"
 
 # Make the executable actually executable
-chmod +x "$APPDIR/usr/bin/SelladoMX"
+chmod +x "$APPDIR/usr/bin/selladomx"
 
 # Set up environment variables for linuxdeploy Qt plugin
 export QML_SOURCES_PATHS="$(pwd)/src"
@@ -47,7 +47,7 @@ echo "Running linuxdeploy to create AppImage..."
 # We just need linuxdeploy to package everything into an AppImage
 ./linuxdeploy-x86_64.AppImage \
     --appdir "$APPDIR" \
-    --executable "$APPDIR/usr/bin/SelladoMX" \
+    --executable "$APPDIR/usr/bin/selladomx" \
     --desktop-file "$APPDIR/selladomx.desktop" \
     --icon-file "assets/selladomx.png" \
     --output appimage

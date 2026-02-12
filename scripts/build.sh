@@ -55,17 +55,17 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     echo ""
     echo "✓ Linux build complete!"
-    echo "Location: dist/SelladoMX/"
+    echo "Location: dist/selladomx/"
     echo ""
-    echo "To run: ./dist/SelladoMX/SelladoMX"
-    echo "To create archive: tar -czf SelladoMX-Linux.tar.gz -C dist SelladoMX"
+    echo "To run: ./dist/selladomx/selladomx"
+    echo "To create archive: tar -czf SelladoMX-Linux.tar.gz -C dist selladomx"
 
 elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
     echo ""
     echo "✓ Windows build complete!"
-    echo "Location: dist/SelladoMX/"
+    echo "Location: dist/selladomx/"
     echo ""
-    echo "To run: dist\\SelladoMX\\SelladoMX.exe"
+    echo "To run: dist\\selladomx\\selladomx.exe"
 fi
 
 echo ""

@@ -96,7 +96,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='SelladoMX',
+    name='selladomx',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -118,7 +118,7 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='SelladoMX',
+    name='selladomx',
 )
 
 # macOS app bundle

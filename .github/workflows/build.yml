@@ -164,14 +164,14 @@ jobs:
       - name: Add README to Windows build
         if: matrix.platform == 'windows'
         run: |
-          copy assets\README-Windows.txt dist\SelladoMX\README.txt
+          copy assets\README-Windows.txt dist\selladomx\README.txt
         shell: cmd
 
       - name: Create archive (Windows)
         if: matrix.platform == 'windows'
         run: |
           cd dist
-          7z a -tzip ${{ matrix.artifact_name }}.zip SelladoMX
+          7z a -tzip ${{ matrix.artifact_name }}.zip selladomx
         shell: bash
 
       - name: Create DMG (macOS)
