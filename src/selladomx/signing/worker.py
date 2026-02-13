@@ -7,7 +7,12 @@ from typing import List, Optional
 from PySide6.QtCore import QThread, Signal
 
 from ..api.client import SelladoMXAPIClient
-from ..api.exceptions import InsufficientCreditsError, NetworkError, APIError
+from ..api.exceptions import (
+    AuthenticationError,
+    InsufficientCreditsError,
+    NetworkError,
+    APIError,
+)
 from ..config import SIGNED_SUFFIX
 from .pdf_signer import PDFSigner
 from .tsa import TSAClient
@@ -104,22 +109,30 @@ class SigningWorker(QThread):
                         )
                         verification_url = response.get("verification_url", "")
                         logger.info(f"Professional TSA registered for {pdf_path.name}")
-                    except InsufficientCreditsError as e:
-                        error_msg = f"Insufficient credits: {e.message}"
+                    except InsufficientCreditsError:
+                        error_msg = "No tienes créditos suficientes. Compra más en selladomx.com/precios"
                         self.errors.append(f"{pdf_path.name}: {error_msg}")
                         self.file_completed.emit(
-                            pdf_path.name,
-                            True,
-                            f"Signed (free TSA): {output_path.name} - {error_msg}",
-                            "",
+                            pdf_path.name, False, error_msg, ""
                         )
-                        logger.warning(f"Insufficient credits, stopping: {e}")
+                        logger.error(f"Insufficient credits for {pdf_path.name}")
+                        break
+                    except AuthenticationError:
+                        error_msg = "Token inválido o expirado. Reconfigura tu token."
+                        self.errors.append(f"{pdf_path.name}: {error_msg}")
+                        self.file_completed.emit(
+                            pdf_path.name, False, error_msg, ""
+                        )
+                        logger.error(f"Auth error for {pdf_path.name}")
                         break
                     except (NetworkError, APIError) as e:
-                        logger.warning(
-                            f"Professional TSA not available for {pdf_path.name}: {e}. "
-                            "PDF signed with free TSA."
+                        error_msg = e.message if hasattr(e, 'message') and e.message else "Servicio no disponible. Intenta más tarde."
+                        self.errors.append(f"{pdf_path.name}: {error_msg}")
+                        self.file_completed.emit(
+                            pdf_path.name, False, error_msg, ""
                         )
+                        logger.error(f"TSA service error for {pdf_path.name}: {error_msg}")
+                        break
 
                 self.file_completed.emit(
                     pdf_path.name,

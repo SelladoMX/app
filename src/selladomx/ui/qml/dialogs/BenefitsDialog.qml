@@ -126,7 +126,7 @@ Dialog {
                 spacing: DesignTokens.sm
 
                 Text {
-                    text: "$2 MXN por documento"
+                    text: creditPriceDisplay + " por documento"
                     font.pixelSize: DesignTokens.font2xl
                     font.weight: DesignTokens.weightBold
                     color: DesignTokens.primary
@@ -164,7 +164,7 @@ Dialog {
                 variant: "primary"
                 Layout.fillWidth: true
                 onClicked: {
-                    Qt.openUrlExternally("https://selladomx.com/buy-credits")
+                    Qt.openUrlExternally(buyCreditsUrl)
                     benefitsDialog.accept()
                 }
             }

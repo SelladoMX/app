@@ -35,6 +35,10 @@ Window {
         tokenConfigDialog.open()
     }
 
+    function showTokenManagementDialog() {
+        tokenManagementDialog.open()
+    }
+
     // Main layout
     ColumnLayout {
         anchors.fill: parent
@@ -88,6 +92,60 @@ Window {
             // Could show a toast notification here
             console.log("[Status]", message)
         }
+
+        function onTokenConfiguredViaDeepLink() {
+            deepLinkBanner.show()
+        }
+    }
+
+    // Deep link token configured notification banner
+    Rectangle {
+        id: deepLinkBanner
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: DesignTokens.lg
+        width: bannerText.implicitWidth + DesignTokens.xl * 2
+        height: bannerText.implicitHeight + DesignTokens.md * 2
+        radius: DesignTokens.radiusLg
+        color: DesignTokens.success
+        opacity: 0
+        visible: opacity > 0
+        z: 1000
+
+        function show() {
+            showAnim.start()
+        }
+
+        Text {
+            id: bannerText
+            anchors.centerIn: parent
+            text: "Token configurado automáticamente"
+            font.pixelSize: DesignTokens.fontBase
+            font.weight: DesignTokens.weightSemiBold
+            color: DesignTokens.bgPrimary
+        }
+
+        SequentialAnimation {
+            id: showAnim
+
+            NumberAnimation {
+                target: deepLinkBanner
+                property: "opacity"
+                to: 1
+                duration: DesignTokens.durationNormal
+                easing.type: Easing.OutQuad
+            }
+            PauseAnimation {
+                duration: 3000
+            }
+            NumberAnimation {
+                target: deepLinkBanner
+                property: "opacity"
+                to: 0
+                duration: DesignTokens.durationSlow
+                easing.type: Easing.InQuad
+            }
+        }
     }
 
     // Onboarding dialog (loaded on demand)
@@ -122,6 +180,11 @@ Window {
 
     TokenConfigDialog {
         id: tokenConfigDialog
+        anchors.centerIn: parent
+    }
+
+    TokenManagementDialog {
+        id: tokenManagementDialog
         anchors.centerIn: parent
     }
 }

@@ -53,7 +53,7 @@ StepIndicator {
                     }
 
                     Text {
-                        text: "Obtén validez legal certificada por solo $2 MXN por documento."
+                        text: "Obtén validez legal certificada " + creditPriceDisplay + " por documento."
                         font.pixelSize: DesignTokens.fontSm
                         color: DesignTokens.textSecondary
                         wrapMode: Text.WordWrap
@@ -140,7 +140,7 @@ StepIndicator {
                     visible: mainViewModel.hasProfessionalTSA && mainViewModel.creditBalance === 0
                     text: "Comprar"
                     variant: "primary"
-                    onClicked: Qt.openUrlExternally("https://selladomx.com/buy-credits")
+                    onClicked: Qt.openUrlExternally(buyCreditsUrl)
                 }
             }
         }
@@ -253,7 +253,7 @@ StepIndicator {
             variant: "success"
             loading: mainViewModel.isSigning
             enabled: !mainViewModel.isSigning && mainViewModel.step2Complete
-            onClicked: mainViewModel.startSigning()
+            onClicked: mainViewModel.confirmSigning()
         }
 
         // Info text
@@ -278,18 +278,30 @@ StepIndicator {
         target: mainViewModel
         function onFileCompleted(filename, success, message, verificationUrl) {
             // Could show individual file success/error indicators here
-            if (verificationUrl) {
-                console.log("Verification URL for", filename, ":", verificationUrl)
-            }
+        }
+
+        function onShowConfirmSigningDialog(fileCount, useProfessionalTSA, creditBalance) {
+            confirmSigningDialog.fileCount = fileCount
+            confirmSigningDialog.useProfessionalTSA = useProfessionalTSA
+            confirmSigningDialog.creditBalance = creditBalance
+            confirmSigningDialog.open()
+        }
+
+        function onVerificationUrlsReady(urls) {
+            signingSuccessDialog.verificationUrls = urls
         }
 
         function onSigningCompleted(successCount, totalCount, usedProfessionalTSA) {
-            // Show success dialog with appropriate messaging
             signingSuccessDialog.signedCount = successCount
             signingSuccessDialog.totalCount = totalCount
             signingSuccessDialog.usedProfessionalTSA = usedProfessionalTSA
             signingSuccessDialog.open()
         }
+    }
+
+    // Confirmation dialog (shown before signing starts)
+    ConfirmSigningDialog {
+        id: confirmSigningDialog
     }
 
     // Signing success dialog (kept here since it needs signing-specific data)

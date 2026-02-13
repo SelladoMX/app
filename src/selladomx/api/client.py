@@ -117,7 +117,7 @@ class SelladoMXAPIClient:
             elif response.status_code >= 400:
                 try:
                     error_data = response.json()
-                    error_msg = error_data.get("message", "Error desconocido")
+                    error_msg = error_data.get("error", error_data.get("message", "Error desconocido"))
                 except ValueError:
                     error_msg = response.text or "Error desconocido"
 
@@ -314,7 +314,7 @@ class SelladoMXAPIClient:
         """
         import re
 
-        return bool(re.match(r"^smx_[0-9a-f]{5,}$", token))
+        return bool(re.match(r"^smx_[A-Za-z0-9]{5,}$", token))
 
     def is_configured(self) -> bool:
         """Check if API client is configured with a valid API key.

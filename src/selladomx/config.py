@@ -1,7 +1,8 @@
 """Configuración centralizada"""
+
+import logging
 import os
 import sys
-import logging
 from typing import Final
 
 logger = logging.getLogger(__name__)
@@ -13,7 +14,8 @@ logger = logging.getLogger(__name__)
 # API Configuration - can be overridden via environment variable
 # Set SELLADOMX_API_URL to point to a different API endpoint (e.g., local dev)
 API_BASE_URL: str = os.environ.get(
-    "SELLADOMX_API_URL", "https://api.selladomx.com"  # Production default
+    "SELLADOMX_API_URL",
+    "https://www.selladomx.com",  # Production default
 )
 
 # Log which API is being used (for debugging)
@@ -37,9 +39,10 @@ TSA_TIMEOUT: Final[int] = 30
 # TSA - Paid Tier (Professional)
 # Override with SELLADOMX_PROFESSIONAL_TSA_PROVIDER environment variable
 PAID_TSA_PROVIDER: Final[str] = os.environ.get(
-    "SELLADOMX_PROFESSIONAL_TSA_PROVIDER", "certum"  # Certum eIDAS (default)
+    "SELLADOMX_PROFESSIONAL_TSA_PROVIDER",
+    "certum",  # Certum eIDAS (default)
 )
-BUY_CREDITS_URL: Final[str] = "https://selladomx.com/buy-credits"
+BUY_CREDITS_URL: Final[str] = f"{API_BASE_URL}/precios"
 
 # ============================================================================
 # PRICING CONFIGURATION
@@ -48,8 +51,7 @@ BUY_CREDITS_URL: Final[str] = "https://selladomx.com/buy-credits"
 # Pricing
 # TODO: Consider fetching from API endpoint in the future to avoid hardcoding
 # For now, update these values when prices change (requires rebuild)
-CREDIT_PRICE_MXN: Final[int] = 2  # Price per document signature in MXN
-CREDIT_PRICE_DISPLAY: Final[str] = f"${CREDIT_PRICE_MXN} MXN"  # Display format
+CREDIT_PRICE_DISPLAY: Final[str] = "desde $7 MXN"  # Minimum price (100-credit package)
 
 # Validación
 OCSP_TIMEOUT: Final[int] = 10

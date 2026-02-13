@@ -217,7 +217,7 @@ Dialog {
                                         "✓ Cumple NOM-151 y eIDAS",
                                         "✓ Evidencia admisible en juicios",
                                         "✓ Proveedor europeo certificado",
-                                        "✓ Solo $2 MXN por documento"
+                                        "✓ " + creditPriceDisplay + " por documento"
                                     ]
 
                                     Text {

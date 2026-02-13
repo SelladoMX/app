@@ -134,7 +134,7 @@ Rectangle {
 
             onClicked: {
                 if (mainViewModel.creditBalance < 5) {
-                    Qt.openUrlExternally("https://selladomx.com/buy-credits")
+                    Qt.openUrlExternally(buyCreditsUrl)
                 }
             }
 
@@ -150,7 +150,7 @@ Rectangle {
             visible: mainViewModel.hasProfessionalTSA && mainViewModel.creditBalance < 5
             text: mainViewModel.creditBalance === 0 ? "Comprar Créditos" : "💳 Comprar más"
             variant: mainViewModel.creditBalance === 0 ? "primary" : "secondary"
-            onClicked: Qt.openUrlExternally("https://selladomx.com/buy-credits")
+            onClicked: Qt.openUrlExternally(buyCreditsUrl)
         }
 
         // Configure token button (if no token)
@@ -183,11 +183,17 @@ Rectangle {
                     onTriggered: mainWindow.showTokenConfigDialog()
                 }
 
+                MenuItem {
+                    text: "Administrar subtokens"
+                    enabled: mainViewModel.hasProfessionalTSA && mainViewModel.isPrimaryToken
+                    onTriggered: mainWindow.showTokenManagementDialog()
+                }
+
                 MenuSeparator {}
 
                 MenuItem {
                     text: "Comprar créditos"
-                    onTriggered: Qt.openUrlExternally("https://selladomx.com/buy-credits")
+                    onTriggered: Qt.openUrlExternally(buyCreditsUrl)
                 }
             }
         }

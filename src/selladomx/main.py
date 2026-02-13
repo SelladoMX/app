@@ -4,10 +4,14 @@ import os
 import logging
 from pathlib import Path
 
+# Load environment variables BEFORE importing config (which reads env vars at module level)
 from dotenv import load_dotenv
+if not load_dotenv():
+    load_dotenv(".env.development")
 
-from PySide6.QtCore import QUrl
+from PySide6.QtCore import QUrl, QEvent, Signal
 from PySide6.QtGui import QGuiApplication
+from PySide6.QtNetwork import QLocalServer, QLocalSocket
 from PySide6.QtQml import QQmlApplicationEngine
 
 from .ui.qml_bridge.main_view_model import MainViewModel
@@ -15,9 +19,76 @@ from .ui.qml_bridge.signing_coordinator import SigningCoordinator
 from .ui.qml_bridge.settings_bridge import SettingsBridge
 from .utils.settings_manager import SettingsManager
 from .utils.deep_link_handler import DeepLinkHandler
-from .config import ONBOARDING_VERSION, COLOR_SUCCESS, COLOR_ERROR
+from .config import ONBOARDING_VERSION, COLOR_SUCCESS, COLOR_ERROR, BUY_CREDITS_URL, CREDIT_PRICE_DISPLAY
 
 logger = logging.getLogger(__name__)
+
+_SINGLE_INSTANCE_KEY = "selladomx-single-instance"
+
+
+class SelladoMXApplication(QGuiApplication):
+    """Custom QGuiApplication with single-instance and deep link support.
+
+    Handles macOS FileOpen events for deep links when the app is already running,
+    and implements a QLocalServer/QLocalSocket pattern to ensure only one instance
+    runs at a time.
+    """
+
+    deepLinkReceived = Signal(str)
+
+    def __init__(self, argv):
+        super().__init__(argv)
+        self._local_server = None
+
+    def event(self, event):
+        """Override to catch QEvent.FileOpen on macOS for deep links."""
+        if event.type() == QEvent.FileOpen:
+            url = event.url().toString()
+            if url:
+                logger.info("Received FileOpen event with URL")
+                self.deepLinkReceived.emit(url)
+                return True
+        return super().event(event)
+
+    def setup_single_instance(self) -> bool:
+        """Set up single-instance enforcement.
+
+        Returns:
+            True if this is the first instance, False if another instance is running.
+        """
+        # Try to connect to an existing instance
+        socket = QLocalSocket(self)
+        socket.connectToServer(_SINGLE_INSTANCE_KEY)
+        if socket.waitForConnected(500):
+            # Another instance is running — send deep link if we have one
+            if len(sys.argv) > 1 and sys.argv[1].startswith("selladomx://"):
+                socket.write(sys.argv[1].encode("utf-8"))
+                socket.waitForBytesWritten(1000)
+            socket.disconnectFromServer()
+            logger.info("Another instance is running, forwarded deep link and exiting")
+            return False
+
+        # No existing instance — create the server
+        self._local_server = QLocalServer(self)
+        # Clean up stale socket file from previous crash
+        QLocalServer.removeServer(_SINGLE_INSTANCE_KEY)
+        if not self._local_server.listen(_SINGLE_INSTANCE_KEY):
+            logger.warning(f"Failed to create local server: {self._local_server.errorString()}")
+        else:
+            self._local_server.newConnection.connect(self._on_new_connection)
+            logger.info("Single-instance server started")
+        return True
+
+    def _on_new_connection(self):
+        """Handle incoming connection from a second instance."""
+        socket = self._local_server.nextPendingConnection()
+        if socket:
+            socket.waitForReadyRead(1000)
+            data = socket.readAll().data().decode("utf-8")
+            socket.disconnectFromServer()
+            if data:
+                logger.info("Received deep link from second instance")
+                self.deepLinkReceived.emit(data)
 
 
 def setup_logging():
@@ -63,6 +134,9 @@ def _handle_deep_link_token(
             COLOR_SUCCESS,
         )
 
+        # Notify QML for banner display
+        view_model.tokenConfiguredViaDeepLink.emit()
+
         logger.info("Token configured successfully via deep link")
 
     except APIError as e:
@@ -74,21 +148,21 @@ def _handle_deep_link_token(
 
 def main():
     """Función principal de la aplicación"""
-    # Load environment variables
-    if not load_dotenv():
-        load_dotenv(".env.development")
-
     setup_logging()
     logger.info("Starting SelladoMX with QML UI")
 
     # Set QML style to avoid native style warnings (must be before QGuiApplication)
     os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
 
-    # Create QGuiApplication (for QML, not QApplication)
-    app = QGuiApplication(sys.argv)
+    # Create SelladoMXApplication (custom subclass with deep link + single-instance)
+    app = SelladoMXApplication(sys.argv)
     app.setApplicationName("SelladoMX")
     app.setOrganizationName("SelladoMX")
     app.setApplicationVersion("0.2.0")
+
+    # Single-instance check: if another instance is running, forward deep link and exit
+    if not app.setup_single_instance():
+        sys.exit(0)
 
     # Initialize settings manager
     settings_manager = SettingsManager()
@@ -133,11 +207,16 @@ def main():
     else:
         icon_file = Path(__file__).parent.parent.parent / "assets" / "selladomx.png"
     context.setContextProperty("appIconSource", QUrl.fromLocalFile(str(icon_file)))
+    context.setContextProperty("buyCreditsUrl", BUY_CREDITS_URL)
+    context.setContextProperty("creditPriceDisplay", CREDIT_PRICE_DISPLAY)
 
     # Connect deep link handler to view model method
     deep_link_handler.token_received.connect(
         lambda token: _handle_deep_link_token(token, settings_manager, view_model)
     )
+
+    # Connect app-level deep link signal (FileOpen events + second instance messages)
+    app.deepLinkReceived.connect(deep_link_handler.handle_url)
 
     # Load main QML file
     qml_file = Path(__file__).parent / "ui" / "qml" / "main.qml"

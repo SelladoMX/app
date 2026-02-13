@@ -213,7 +213,7 @@ class SettingsManager:
         if not self.has_api_key():
             return False
 
-        return self.settings.value("tsa/use_professional", False, type=bool)
+        return self.settings.value("tsa/use_professional", True, type=bool)
 
     def set_use_professional_tsa(self, enabled: bool):
         """Set preference for professional TSA.

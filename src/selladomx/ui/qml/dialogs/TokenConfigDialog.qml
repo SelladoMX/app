@@ -101,7 +101,7 @@ Dialog {
 
         // Help text
         Text {
-            text: "💡 Consigue tu token en <a href='https://selladomx.com/dashboard' style='color: " + DesignTokens.primary + ";'>selladomx.com/dashboard</a>"
+            text: "💡 Consigue tu token en <a href='" + buyCreditsUrl + "' style='color: " + DesignTokens.primary + ";'>selladomx.com/precios</a>"
             font.pixelSize: DesignTokens.fontSm
             color: DesignTokens.textTertiary
             textFormat: Text.RichText
@@ -152,7 +152,7 @@ Dialog {
         }
 
         // Basic format validation
-        var isValidFormat = /^(smx_[0-9a-f]{5,}|[0-9a-fA-F]{64})$/.test(token)
+        var isValidFormat = /^(smx_[A-Za-z0-9]{5,}|[0-9a-fA-F]{64})$/.test(token)
         if (!isValidFormat) {
             validationMessage = "Formato de token inválido. Debe comenzar con 'smx_' o ser un hash de 64 caracteres."
             validationSuccess = false

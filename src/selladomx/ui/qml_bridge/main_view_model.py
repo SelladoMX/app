@@ -45,6 +45,14 @@ class MainViewModel(QObject):
     hasProfessionalTSAChanged = Signal()
     creditBalanceChanged = Signal()
 
+    # Signals for token management
+    tokensLoaded = Signal(list)
+    tokenDerived = Signal(dict)       # {token, alias, expires_at}
+    tokenRevoked = Signal(str)        # token_id
+    tokenError = Signal(str)          # error message
+    isPrimaryTokenChanged = Signal()
+    tokensListChanged = Signal()
+
     # Signals for real-time updates
     fileCompleted = Signal(str, bool, str, str)  # filename, success, message, url
     statusMessage = Signal(str, str)  # message, color
@@ -52,6 +60,11 @@ class MainViewModel(QObject):
     signingCompleted = Signal(
         int, int, bool
     )  # success_count, total_count, used_professional_tsa
+    showConfirmSigningDialog = Signal(
+        int, bool, int
+    )  # file_count, use_professional_tsa, credit_balance
+    tokenConfiguredViaDeepLink = Signal()
+    verificationUrlsReady = Signal(list)  # list of {filename, url} dicts
 
     def __init__(
         self, settings_manager: SettingsManager, signing_coordinator: SigningCoordinator
@@ -81,11 +94,19 @@ class MainViewModel(QObject):
         self._use_professional_tsa = False
         self._credit_balance = 0
 
+        # Token management state
+        self._tokens_list: list[dict] = []
+        self._is_primary_token: bool = False
+
         # Certificate objects
         self.cert = None
         self.private_key = None
         self.signer_cn = ""
         self.signer_serial = ""
+
+        # Verification URLs collected during signing
+        self._verification_urls: list[dict] = []
+        self._success_count: int = 0
 
         # Connect coordinator signals
         self.coordinator.progressChanged.connect(self._on_signing_progress)
@@ -109,11 +130,16 @@ class MainViewModel(QObject):
         # Load cached credit balance
         self._credit_balance = self.settings.get_last_credit_balance()
 
+        # Load token info (primary status)
+        token_info = self.settings.get_token_info()
+        self._is_primary_token = token_info.get("is_primary", False)
+
         # Emit signals to update QML
         self.certPathChanged.emit()
         self.keyPathChanged.emit()
         self.useProfessionalTSAChanged.emit()
         self.creditBalanceChanged.emit()
+        self.isPrimaryTokenChanged.emit()
 
     # ========================================================================
     # PDF FILES MANAGEMENT (STEP 1)
@@ -316,6 +342,21 @@ class MainViewModel(QObject):
     # ========================================================================
 
     @Slot()
+    def confirmSigning(self):
+        """Show confirmation dialog before signing starts."""
+        if not self._step1_complete or not self._step2_complete:
+            self._append_status_log(
+                "✗ Completa los pasos anteriores primero", COLOR_ERROR
+            )
+            return
+
+        self.showConfirmSigningDialog.emit(
+            len(self._pdf_files),
+            self._use_professional_tsa,
+            self._credit_balance,
+        )
+
+    @Slot()
     def startSigning(self):
         """Start the signing process."""
         if not self._step1_complete or not self._step2_complete:
@@ -331,6 +372,8 @@ class MainViewModel(QObject):
         self._is_signing = True
         self._current_progress = 0
         self._status_log = ""
+        self._verification_urls = []
+        self._success_count = 0
         self.isSigningChanged.emit()
         self.currentProgressChanged.emit()
         self.statusLogChanged.emit()
@@ -393,6 +436,15 @@ class MainViewModel(QObject):
         color = COLOR_SUCCESS if success else COLOR_ERROR
         self._append_status_log(message, color)
 
+        if success:
+            self._success_count += 1
+
+        # Collect verification URLs for the success dialog
+        if verification_url:
+            self._verification_urls.append(
+                {"filename": filename, "url": verification_url}
+            )
+
         # Emit signal for QML to handle (e.g., show link button)
         self.fileCompleted.emit(filename, success, message, verification_url)
 
@@ -406,7 +458,7 @@ class MainViewModel(QObject):
         self.isSigningChanged.emit()
 
         total_count = len(self._pdf_files)
-        success_count = total_count - len(errors)
+        success_count = self._success_count
 
         if errors:
             self._append_status_log(
@@ -416,6 +468,10 @@ class MainViewModel(QObject):
             self._append_status_log(
                 "✓ Todos los documentos firmados exitosamente", COLOR_SUCCESS
             )
+
+        # Emit verification URLs if any were collected
+        if self._verification_urls:
+            self.verificationUrlsReady.emit(self._verification_urls)
 
         # Emit completion signal for QML to show appropriate dialog
         self.signingCompleted.emit(
@@ -545,6 +601,8 @@ class MainViewModel(QObject):
             self.settings.set_token(token)
             if "token_info" in response:
                 self.settings.set_token_info(response["token_info"])
+                self._is_primary_token = response["token_info"].get("is_primary", False)
+                self.isPrimaryTokenChanged.emit()
             self.settings.set_last_credit_balance(response["credits_remaining"])
 
             # Update internal state
@@ -576,6 +634,98 @@ class MainViewModel(QObject):
             message = f"❌ Error inesperado: {str(e)}"
             self.tokenValidationResult.emit(False, message)
             logger.error(f"Unexpected error during token validation: {e}")
+
+    # ========================================================================
+    # TOKEN MANAGEMENT (SUBTOKENS)
+    # ========================================================================
+
+    @Property(list, notify=tokensListChanged)
+    def tokensList(self) -> list:
+        """Get list of derived tokens (property for QML)."""
+        return self._tokens_list
+
+    @Property(bool, notify=isPrimaryTokenChanged)
+    def isPrimaryToken(self) -> bool:
+        """Check if current token is a primary token (property for QML)."""
+        return self._is_primary_token
+
+    @Slot()
+    def listTokens(self):
+        """List all tokens for the current user."""
+        from ...api.client import SelladoMXAPIClient
+        from ...api.exceptions import APIError
+
+        api_key = self.settings.get_token()
+        if not api_key:
+            self.tokenError.emit("No se encontró token configurado")
+            return
+
+        try:
+            client = SelladoMXAPIClient(api_key=api_key)
+            response = client.list_tokens()
+            self._tokens_list = response.get("derived", [])
+            self.tokensListChanged.emit()
+            self.tokensLoaded.emit(self._tokens_list)
+            logger.info(f"Loaded {len(self._tokens_list)} derived tokens")
+        except APIError as e:
+            logger.error(f"Failed to list tokens: {e}")
+            self.tokenError.emit(f"Error al cargar subtokens: {e.message}")
+
+    @Slot(str, int)
+    def deriveToken(self, alias: str, expires_in_days: int):
+        """Create a derived token.
+
+        Args:
+            alias: User-friendly name for the token
+            expires_in_days: Expiration in days (0 = no expiration)
+        """
+        from ...api.client import SelladoMXAPIClient
+        from ...api.exceptions import APIError, PrimaryTokenRequiredError
+
+        api_key = self.settings.get_token()
+        if not api_key:
+            self.tokenError.emit("No se encontró token configurado")
+            return
+
+        try:
+            client = SelladoMXAPIClient(api_key=api_key)
+            expires = expires_in_days if expires_in_days > 0 else None
+            response = client.derive_token(alias, expires)
+            self.tokenDerived.emit(response)
+            logger.info(f"Derived token created: {alias}")
+            # Refresh the list
+            self.listTokens()
+        except PrimaryTokenRequiredError:
+            self.tokenError.emit("Se requiere el token primario para crear subtokens")
+        except APIError as e:
+            logger.error(f"Failed to derive token: {e}")
+            self.tokenError.emit(f"Error al crear subtoken: {e.message}")
+
+    @Slot(str)
+    def revokeToken(self, token_id: str):
+        """Revoke a token by ID.
+
+        Args:
+            token_id: UUID of the token to revoke
+        """
+        from ...api.client import SelladoMXAPIClient
+        from ...api.exceptions import APIError
+
+        api_key = self.settings.get_token()
+        if not api_key:
+            self.tokenError.emit("No se encontró token configurado")
+            return
+
+        try:
+            client = SelladoMXAPIClient(api_key=api_key)
+            client.revoke_token(token_id)
+            self.tokenRevoked.emit(token_id)
+            logger.info(f"Token revoked: {token_id}")
+            # Refresh the list
+            self.listTokens()
+        except APIError as e:
+            logger.error(f"Failed to revoke token: {e}")
+            self.tokenError.emit(f"Error al revocar subtoken: {e.message}")
 
     # ========================================================================
     # DEEP LINK HANDLING
