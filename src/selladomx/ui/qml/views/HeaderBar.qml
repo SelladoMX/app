@@ -189,6 +189,12 @@ Rectangle {
                     onTriggered: mainWindow.showTokenManagementDialog()
                 }
 
+                MenuItem {
+                    text: "📋 Historial de documentos"
+                    enabled: mainViewModel.hasProfessionalTSA
+                    onTriggered: historyDialog.open()
+                }
+
                 MenuSeparator {}
 
                 MenuItem {

@@ -207,7 +207,86 @@ class SelladoMXAPIClient:
 
         return response
 
-    def get_history(self, limit: int = 50, offset: int = 0) -> list[dict]:
+    def request_tsa_sign(
+        self,
+        tsa_req_b64: str,
+        filename: str,
+        size_bytes: int,
+        signer_cn: str = "",
+        signer_serial: str = "",
+    ) -> dict:
+        """Proxy a TimeStampReq through the API to Certum TSA (consumes 1 credit).
+
+        Args:
+            tsa_req_b64: Base64-encoded DER TimeStampReq from pyhanko
+            filename: Original PDF filename
+            size_bytes: Document size in bytes
+            signer_cn: Signer's Common Name from certificate
+            signer_serial: Certificate serial number
+
+        Returns:
+            Dictionary with:
+                - tsa_resp_b64: Full TimeStampResp (base64) for pyhanko
+                - record_id: UUID of the timestamp record
+                - verification_token: Token for public verification URL
+                - verification_url: Public URL to verify the certificate
+                - timestamp_utc: ISO timestamp
+                - credits_remaining: Remaining credits
+
+        Raises:
+            InsufficientCreditsError: If user has no credits
+            AuthenticationError: If API key is invalid
+            NetworkError: If connection fails
+        """
+        payload = {
+            "tsa_req_b64": tsa_req_b64,
+            "filename": filename,
+            "size_bytes": size_bytes,
+            "signer_cn": signer_cn,
+            "signer_serial": signer_serial,
+        }
+
+        response = self._request("POST", "/api/v1/timestamp/sign", json_data=payload)
+
+        logger.info(
+            f"TSA sign request successful for {filename}. "
+            f"Verification URL: {response.get('verification_url')}"
+        )
+
+        return response
+
+    def complete_timestamp(
+        self,
+        record_id: str,
+        document_hash: str,
+        file_size: Optional[int] = None,
+    ) -> dict:
+        """Update a timestamp record with the final document hash.
+
+        Called after signing completes to replace the "pending" hash with
+        the actual SHA-256 hash of the signed PDF.
+
+        Args:
+            record_id: UUID of the timestamp record
+            document_hash: SHA-256 hex hash of the signed PDF
+            file_size: Final file size in bytes (optional)
+
+        Returns:
+            Dictionary with: {"success": true}
+
+        Raises:
+            AuthenticationError: If API key is invalid
+            NetworkError: If connection fails
+        """
+        payload: dict = {"document_hash": document_hash}
+        if file_size is not None:
+            payload["file_size"] = file_size
+
+        return self._request(
+            "PATCH", f"/api/v1/timestamp/sign/{record_id}", json_data=payload
+        )
+
+    def get_history(self, limit: int = 50, offset: int = 0) -> dict:
         """Get user's timestamp history.
 
         Args:
@@ -215,7 +294,7 @@ class SelladoMXAPIClient:
             offset: Number of records to skip
 
         Returns:
-            List of timestamp records
+            Dict with 'total' (int) and 'items' (list of timestamp records)
 
         Raises:
             AuthenticationError: If API key is invalid
@@ -224,7 +303,7 @@ class SelladoMXAPIClient:
         response = self._request(
             "GET", f"/api/v1/timestamp/history?limit={limit}&offset={offset}"
         )
-        return response.get("records", [])
+        return response
 
     def verify_by_hash(self, document_hash: str) -> Optional[dict]:
         """Verify a document by its hash (public endpoint, no auth required).

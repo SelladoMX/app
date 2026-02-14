@@ -187,4 +187,9 @@ Window {
         id: tokenManagementDialog
         anchors.centerIn: parent
     }
+
+    HistoryDialog {
+        id: historyDialog
+        anchors.centerIn: parent
+    }
 }

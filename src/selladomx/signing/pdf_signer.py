@@ -13,6 +13,14 @@ from pyhanko.pdf_utils.reader import PdfFileReader
 from pyhanko.sign import fields, signers
 from pyhanko.sign.validation import validate_pdf_signature
 
+from pyhanko.sign.timestamps import TimeStamper
+
+from ..api.exceptions import (
+    AuthenticationError,
+    InsufficientCreditsError,
+    NetworkError,
+    APIError,
+)
 from ..config import SIGNED_SUFFIX
 from ..errors import PDFError, SigningError
 from .certificate_validator import PrivateKey
@@ -29,6 +37,7 @@ class PDFSigner:
         cert: x509.Certificate,
         private_key: PrivateKey,
         tsa_client: Optional[TSAClient] = None,
+        timestamper: Optional[TimeStamper] = None,
     ):
         """
         Inicializa el firmador de PDFs.
@@ -36,11 +45,13 @@ class PDFSigner:
         Args:
             cert: Certificado digital
             private_key: Clave privada correspondiente
-            tsa_client: Cliente TSA opcional para sellado de tiempo
+            tsa_client: Cliente TSA opcional para sellado de tiempo (free)
+            timestamper: Pre-built pyhanko TimeStamper (e.g., APITimeStamper for professional TSA)
         """
         self.cert = cert
         self.private_key = private_key
         self.tsa_client = tsa_client
+        self.timestamper = timestamper
         logger.info("PDF signer initialized")
 
     def sign_pdf(self, pdf_path: Path, output_path: Optional[Path] = None) -> Path:
@@ -114,16 +125,18 @@ class PDFSigner:
                 ),
             )
 
-            # Obtener timestamper si está disponible
-            timestamper = None
-            if self.tsa_client:
+            # Use provided timestamper (API-based) or fall back to TSA client (free)
+            timestamper = self.timestamper
+            if timestamper is None and self.tsa_client:
                 try:
                     timestamper = self.tsa_client.get_timestamper()
-                    logger.info("Using TSA for timestamp")
+                    logger.info("Using free TSA for timestamp")
                 except Exception as e:
                     logger.warning(
                         f"Could not get timestamper, continuing without it: {e}"
                     )
+            elif timestamper is not None:
+                logger.info("Using provided timestamper (professional TSA)")
 
             # Firmar el PDF
             out = signers.sign_pdf(
@@ -141,6 +154,9 @@ class PDFSigner:
             logger.info(f"PDF signed successfully: {output_path.name}")
             return output_path
 
+        except (InsufficientCreditsError, AuthenticationError, NetworkError, APIError):
+            # Let API-specific exceptions propagate so the worker can handle them
+            raise
         except Exception as e:
             logger.error(f"Error signing PDF: {e}")
             raise SigningError(f"No se pudo firmar el PDF: {e}")

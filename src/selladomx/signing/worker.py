@@ -15,7 +15,7 @@ from ..api.exceptions import (
 )
 from ..config import SIGNED_SUFFIX
 from .pdf_signer import PDFSigner
-from .tsa import TSAClient
+from .tsa import APITimeStamper, TSAClient
 
 
 logger = logging.getLogger(__name__)
@@ -72,9 +72,9 @@ class SigningWorker(QThread):
 
     def run(self):
         """Execute signing process."""
-        signer = PDFSigner(self.cert, self.private_key, self.tsa_client)
         total = len(self.pdf_paths)
 
+        # For professional TSA: create API client upfront
         api_client = None
         if self.use_professional_tsa and self.api_key:
             api_client = SelladoMXAPIClient(api_key=self.api_key)
@@ -92,47 +92,47 @@ class SigningWorker(QThread):
                 else:
                     output_path = None  # Use default (same folder as source)
 
+                # Create appropriate timestamper for this file
+                api_timestamper = None
+                if api_client and self.use_professional_tsa:
+                    api_timestamper = APITimeStamper(
+                        api_client=api_client,
+                        filename=pdf_path.name,
+                        size_bytes=pdf_path.stat().st_size,
+                        signer_cn=self.signer_cn,
+                        signer_serial=self.signer_serial,
+                    )
+
+                # Create signer with the appropriate timestamper
+                # Each file gets its own PDFSigner because the APITimeStamper
+                # is per-file (different filename/size metadata)
+                signer = PDFSigner(
+                    self.cert,
+                    self.private_key,
+                    tsa_client=self.tsa_client,
+                    timestamper=api_timestamper,
+                )
+
+                # Sign — timestamp is now embedded during signing
                 output_path = signer.sign_pdf(pdf_path, output_path)
 
-                # Professional TSA registration
+                # After signing: update record with actual file hash
                 verification_url = ""
-                if api_client and self.use_professional_tsa:
+                if api_timestamper and api_timestamper.record_id:
+                    file_hash = hashlib.sha256(
+                        output_path.read_bytes()
+                    ).hexdigest()
+                    file_size = output_path.stat().st_size
                     try:
-                        file_hash = hashlib.sha256(output_path.read_bytes()).hexdigest()
-                        file_size = output_path.stat().st_size
-                        response = api_client.request_timestamp(
-                            document_hash=file_hash,
-                            filename=pdf_path.name,
-                            size_bytes=file_size,
-                            signer_cn=self.signer_cn,
-                            signer_serial=self.signer_serial,
+                        api_client.complete_timestamp(
+                            api_timestamper.record_id, file_hash, file_size
                         )
-                        verification_url = response.get("verification_url", "")
-                        logger.info(f"Professional TSA registered for {pdf_path.name}")
-                    except InsufficientCreditsError:
-                        error_msg = "No tienes créditos suficientes. Compra más en selladomx.com/precios"
-                        self.errors.append(f"{pdf_path.name}: {error_msg}")
-                        self.file_completed.emit(
-                            pdf_path.name, False, error_msg, ""
-                        )
-                        logger.error(f"Insufficient credits for {pdf_path.name}")
-                        break
-                    except AuthenticationError:
-                        error_msg = "Token inválido o expirado. Reconfigura tu token."
-                        self.errors.append(f"{pdf_path.name}: {error_msg}")
-                        self.file_completed.emit(
-                            pdf_path.name, False, error_msg, ""
-                        )
-                        logger.error(f"Auth error for {pdf_path.name}")
-                        break
-                    except (NetworkError, APIError) as e:
-                        error_msg = e.message if hasattr(e, 'message') and e.message else "Servicio no disponible. Intenta más tarde."
-                        self.errors.append(f"{pdf_path.name}: {error_msg}")
-                        self.file_completed.emit(
-                            pdf_path.name, False, error_msg, ""
-                        )
-                        logger.error(f"TSA service error for {pdf_path.name}: {error_msg}")
-                        break
+                    except Exception as e:
+                        logger.warning(f"Failed to update record hash: {e}")
+                    verification_url = api_timestamper.verification_url or ""
+                    logger.info(
+                        f"Professional TSA embedded for {pdf_path.name}"
+                    )
 
                 self.file_completed.emit(
                     pdf_path.name,
@@ -140,6 +140,30 @@ class SigningWorker(QThread):
                     f"Signed successfully: {output_path.name}",
                     verification_url,
                 )
+            except InsufficientCreditsError:
+                error_msg = "No tienes créditos suficientes. Compra más en selladomx.com/precios"
+                self.errors.append(f"{pdf_path.name}: {error_msg}")
+                self.file_completed.emit(pdf_path.name, False, error_msg, "")
+                logger.error(f"Insufficient credits for {pdf_path.name}")
+                break
+            except AuthenticationError:
+                error_msg = "Token inválido o expirado. Reconfigura tu token."
+                self.errors.append(f"{pdf_path.name}: {error_msg}")
+                self.file_completed.emit(pdf_path.name, False, error_msg, "")
+                logger.error(f"Auth error for {pdf_path.name}")
+                break
+            except (NetworkError, APIError) as e:
+                error_msg = (
+                    e.message
+                    if hasattr(e, "message") and e.message
+                    else "Servicio no disponible. Intenta más tarde."
+                )
+                self.errors.append(f"{pdf_path.name}: {error_msg}")
+                self.file_completed.emit(pdf_path.name, False, error_msg, "")
+                logger.error(
+                    f"TSA service error for {pdf_path.name}: {error_msg}"
+                )
+                break
             except Exception as e:
                 error_msg = str(e)
                 self.errors.append(f"{pdf_path.name}: {error_msg}")

@@ -1,7 +1,7 @@
 """MainViewModel - Central bridge between Python backend and QML UI."""
 import logging
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from PySide6.QtCore import QObject, Signal, Slot, Property, QUrl
 
@@ -17,6 +17,7 @@ from ...config import (
     COLOR_MUTED_LIGHT,
 )
 from .signing_coordinator import SigningCoordinator
+from .history_view_model import HistoryViewModel
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +98,10 @@ class MainViewModel(QObject):
         # Token management state
         self._tokens_list: list[dict] = []
         self._is_primary_token: bool = False
+
+        # API client and history view model
+        self._api_client: Optional['SelladoMXAPIClient'] = None
+        self._history_view_model: Optional[HistoryViewModel] = None
 
         # Certificate objects
         self.cert = None
@@ -608,6 +613,10 @@ class MainViewModel(QObject):
             # Update internal state
             self._credit_balance = response["credits_remaining"]
             self.creditBalanceChanged.emit()
+
+            # Reset history view model to force re-creation with new token
+            self._api_client = None
+            self._history_view_model = None
             self.hasProfessionalTSAChanged.emit()
 
             # Emit success
@@ -648,6 +657,17 @@ class MainViewModel(QObject):
     def isPrimaryToken(self) -> bool:
         """Check if current token is a primary token (property for QML)."""
         return self._is_primary_token
+
+    @Property(QObject, constant=False, notify=hasProfessionalTSAChanged)
+    def historyViewModel(self) -> Optional[HistoryViewModel]:
+        """Get history view model (lazy-loaded when API client is available)."""
+        if self._history_view_model is None and self.settings.has_api_key():
+            from ...api.client import SelladoMXAPIClient
+            api_key = self.settings.get_token()
+            if api_key:
+                self._api_client = SelladoMXAPIClient(api_key=api_key)
+                self._history_view_model = HistoryViewModel(self._api_client)
+        return self._history_view_model
 
     @Slot()
     def listTokens(self):

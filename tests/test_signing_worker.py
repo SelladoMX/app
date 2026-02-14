@@ -48,12 +48,13 @@ class TestSigningWorkerNoFallback:
     @patch("selladomx.signing.worker.PDFSigner")
     def test_insufficient_credits_emits_error_no_fallback(self, mock_signer_cls, mock_api_cls):
         """InsufficientCreditsError should emit failure, not silently sign with free TSA."""
-        mock_signer = mock_signer_cls.return_value
-        output_path = Path("/tmp/test_firmado.pdf")
-        mock_signer.sign_pdf.return_value = output_path
-
         mock_api = mock_api_cls.return_value
-        mock_api.request_timestamp.side_effect = InsufficientCreditsError()
+        mock_api.request_tsa_sign.side_effect = InsufficientCreditsError()
+
+        # sign_pdf raises InsufficientCreditsError because APITimeStamper
+        # calls request_tsa_sign during signing
+        mock_signer = mock_signer_cls.return_value
+        mock_signer.sign_pdf.side_effect = InsufficientCreditsError()
 
         worker = self._create_worker()
 
@@ -83,11 +84,7 @@ class TestSigningWorkerNoFallback:
     def test_auth_error_emits_error_no_fallback(self, mock_signer_cls, mock_api_cls):
         """AuthenticationError should emit failure, not silently sign with free TSA."""
         mock_signer = mock_signer_cls.return_value
-        output_path = Path("/tmp/test_firmado.pdf")
-        mock_signer.sign_pdf.return_value = output_path
-
-        mock_api = mock_api_cls.return_value
-        mock_api.request_timestamp.side_effect = AuthenticationError("Invalid token")
+        mock_signer.sign_pdf.side_effect = AuthenticationError("Invalid token")
 
         worker = self._create_worker()
 
@@ -111,11 +108,7 @@ class TestSigningWorkerNoFallback:
     def test_network_error_emits_error_no_fallback(self, mock_signer_cls, mock_api_cls):
         """NetworkError should emit failure, not silently sign with free TSA."""
         mock_signer = mock_signer_cls.return_value
-        output_path = Path("/tmp/test_firmado.pdf")
-        mock_signer.sign_pdf.return_value = output_path
-
-        mock_api = mock_api_cls.return_value
-        mock_api.request_timestamp.side_effect = NetworkError("Connection refused")
+        mock_signer.sign_pdf.side_effect = NetworkError("Connection refused")
 
         worker = self._create_worker()
 
@@ -139,11 +132,7 @@ class TestSigningWorkerNoFallback:
     def test_api_error_emits_error_no_fallback(self, mock_signer_cls, mock_api_cls):
         """Generic APIError should emit failure, not silently sign with free TSA."""
         mock_signer = mock_signer_cls.return_value
-        output_path = Path("/tmp/test_firmado.pdf")
-        mock_signer.sign_pdf.return_value = output_path
-
-        mock_api = mock_api_cls.return_value
-        mock_api.request_timestamp.side_effect = APIError("Server error", 500)
+        mock_signer.sign_pdf.side_effect = APIError("Server error", 500)
 
         worker = self._create_worker()
 
@@ -161,18 +150,25 @@ class TestSigningWorkerNoFallback:
         _, success, message, _ = completed_calls[0]
         assert success is False
 
+    @patch("selladomx.signing.worker.APITimeStamper")
     @patch("selladomx.signing.worker.SelladoMXAPIClient")
     @patch("selladomx.signing.worker.PDFSigner")
-    def test_professional_tsa_success_emits_verification_url(self, mock_signer_cls, mock_api_cls):
+    def test_professional_tsa_success_emits_verification_url(
+        self, mock_signer_cls, mock_api_cls, mock_timestamper_cls
+    ):
         """Successful professional TSA should emit verification URL."""
         mock_signer = mock_signer_cls.return_value
         output_path = Path("/tmp/test_firmado.pdf")
         mock_signer.sign_pdf.return_value = output_path
 
         mock_api = mock_api_cls.return_value
-        mock_api.request_timestamp.return_value = {
-            "verification_url": "https://selladomx.com/verify/abc123"
-        }
+        mock_api.complete_timestamp.return_value = {"success": True}
+
+        # Set up the APITimeStamper mock to have record_id and verification_url
+        # (these get set during signing via async_request_tsa_response)
+        mock_timestamper = mock_timestamper_cls.return_value
+        mock_timestamper.record_id = "test-record-id"
+        mock_timestamper.verification_url = "https://selladomx.com/verify/abc123"
 
         worker = self._create_worker()
 
@@ -193,10 +189,7 @@ class TestSigningWorkerNoFallback:
     def test_multiple_files_stops_on_first_tsa_error(self, mock_signer_cls, mock_api_cls):
         """When TSA fails, should stop processing remaining files."""
         mock_signer = mock_signer_cls.return_value
-        mock_signer.sign_pdf.return_value = Path("/tmp/out.pdf")
-
-        mock_api = mock_api_cls.return_value
-        mock_api.request_timestamp.side_effect = InsufficientCreditsError()
+        mock_signer.sign_pdf.side_effect = InsufficientCreditsError()
 
         worker = SigningWorker(
             pdf_paths=[Path("/tmp/a.pdf"), Path("/tmp/b.pdf"), Path("/tmp/c.pdf")],
