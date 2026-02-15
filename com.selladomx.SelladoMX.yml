@@ -39,8 +39,8 @@ modules:
   - name: selladomx
     buildsystem: simple
     build-commands:
-      # Install the application
-      - pip3 install --prefix=${FLATPAK_DEST} --no-deps .
+      # Install the pre-built wheel (no build dependencies needed)
+      - pip3 install --prefix=${FLATPAK_DEST} --no-deps --no-index --find-links=flatpak-python-deps selladomx
 
       # Install desktop file
       - install -Dm644 assets/selladomx.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop

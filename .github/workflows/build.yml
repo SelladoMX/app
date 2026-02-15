@@ -222,6 +222,10 @@ jobs:
           mkdir -p flatpak-python-deps
           pip download -r requirements.txt -d flatpak-python-deps
 
+          # Build our app wheel (so flatpak doesn't need poetry-core)
+          poetry build
+          cp dist/*.whl flatpak-python-deps/
+
       - name: Install Flatpak tools
         run: |
           sudo apt-get update
