@@ -52,6 +52,27 @@ Dialog {
             }
         }
 
+        // Informational banner
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: infoBannerText.implicitHeight + DesignTokens.sm * 2
+            radius: DesignTokens.radiusMd
+            color: DesignTokens.infoLight
+            border.width: 1
+            border.color: DesignTokens.info
+
+            Text {
+                id: infoBannerText
+                anchors.fill: parent
+                anchors.margins: DesignTokens.sm
+                text: "Aquí se muestran únicamente los documentos firmados con protección mejorada (créditos de pago)."
+                font.pixelSize: DesignTokens.fontSm
+                color: DesignTokens.info
+                wrapMode: Text.WordWrap
+                verticalAlignment: Text.AlignVCenter
+            }
+        }
+
         // Loading indicator
         BusyIndicator {
             visible: viewModel && viewModel.isLoading
@@ -143,42 +164,27 @@ Dialog {
                             color: DesignTokens.textTertiary
                             elide: Text.ElideRight
                             Layout.fillWidth: true
-                            visible: modelData.signer_cn
+                            visible: modelData.signer_cn !== undefined && modelData.signer_cn !== ""
                         }
 
                         // Verification URL
-                        RowLayout {
+                        Text {
+                            visible: modelData.verification_token !== undefined && modelData.verification_token !== ""
+                            property string verifyUrl: "https://www.selladomx.com/verify/" + modelData.verification_token
+                            text: "<a href='" + verifyUrl + "'>Ver certificado de validez</a>"
+                            textFormat: Text.RichText
+                            font.pixelSize: DesignTokens.fontSm
+                            color: DesignTokens.info
                             Layout.fillWidth: true
-                            spacing: DesignTokens.sm
 
-                            Text {
-                                property string verifyUrl: "https://www.selladomx.com/verify/" + modelData.verification_token
-                                text: "<a href='" + verifyUrl + "'>Ver certificado de validez</a>"
-                                textFormat: Text.RichText
-                                font.pixelSize: DesignTokens.fontSm
-                                color: DesignTokens.info
-                                Layout.fillWidth: true
-
-                                onLinkActivated: function(link) {
-                                    Qt.openUrlExternally(link)
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                    acceptedButtons: Qt.NoButton
-                                }
+                            onLinkActivated: function(link) {
+                                Qt.openUrlExternally(link)
                             }
 
-                            ModernButton {
-                                text: "Copiar"
-                                variant: "secondary"
-                                onClicked: {
-                                    var verifyUrl = "https://www.selladomx.com/verify/" + modelData.verification_token
-                                    clipboardHelper.text = verifyUrl
-                                    clipboardHelper.selectAll()
-                                    clipboardHelper.copy()
-                                }
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                acceptedButtons: Qt.NoButton
                             }
                         }
                     }
@@ -188,7 +194,7 @@ Dialog {
 
         // Pagination controls
         RowLayout {
-            visible: viewModel && viewModel.totalPages > 1
+            visible: viewModel && !viewModel.isLoading && viewModel.totalCount > 0
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignHCenter
             spacing: DesignTokens.md
@@ -221,12 +227,6 @@ Dialog {
             Layout.fillWidth: true
             onClicked: historyDialog.close()
         }
-    }
-
-    // Hidden TextEdit for clipboard operations
-    TextEdit {
-        id: clipboardHelper
-        visible: false
     }
 
     // Error handling

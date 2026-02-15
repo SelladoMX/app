@@ -18,8 +18,6 @@ Dialog {
     width: 500
     height: contentColumn.implicitHeight + DesignTokens.xl * 4
 
-    anchors.centerIn: parent
-
     background: Rectangle {
         color: DesignTokens.bgPrimary
         radius: DesignTokens.radiusXl

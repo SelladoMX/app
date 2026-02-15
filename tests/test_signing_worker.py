@@ -46,7 +46,9 @@ class TestSigningWorkerNoFallback:
 
     @patch("selladomx.signing.worker.SelladoMXAPIClient")
     @patch("selladomx.signing.worker.PDFSigner")
-    def test_insufficient_credits_emits_error_no_fallback(self, mock_signer_cls, mock_api_cls):
+    def test_insufficient_credits_emits_error_no_fallback(
+        self, mock_signer_cls, mock_api_cls
+    ):
         """InsufficientCreditsError should emit failure, not silently sign with free TSA."""
         mock_api = mock_api_cls.return_value
         mock_api.request_tsa_sign.side_effect = InsufficientCreditsError()
@@ -186,7 +188,9 @@ class TestSigningWorkerNoFallback:
 
     @patch("selladomx.signing.worker.SelladoMXAPIClient")
     @patch("selladomx.signing.worker.PDFSigner")
-    def test_multiple_files_stops_on_first_tsa_error(self, mock_signer_cls, mock_api_cls):
+    def test_multiple_files_stops_on_first_tsa_error(
+        self, mock_signer_cls, mock_api_cls
+    ):
         """When TSA fails, should stop processing remaining files."""
         mock_signer = mock_signer_cls.return_value
         mock_signer.sign_pdf.side_effect = InsufficientCreditsError()

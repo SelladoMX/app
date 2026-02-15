@@ -123,7 +123,9 @@ class APITimeStamper(TimeStamper):
     Certum and returns the full TimeStampResp for embedding in the PDF.
     """
 
-    def __init__(self, api_client, filename, size_bytes, signer_cn="", signer_serial=""):
+    def __init__(
+        self, api_client, filename, size_bytes, signer_cn="", signer_serial=""
+    ):
         super().__init__()
         self.api_client = api_client
         self.filename = filename
@@ -135,7 +137,9 @@ class APITimeStamper(TimeStamper):
         self.verification_url: Optional[str] = None
         self.credits_remaining: Optional[int] = None
 
-    async def async_request_tsa_response(self, req: tsp.TimeStampReq) -> tsp.TimeStampResp:
+    async def async_request_tsa_response(
+        self, req: tsp.TimeStampReq
+    ) -> tsp.TimeStampResp:
         """Send TimeStampReq to SelladoMX API, which forwards to Certum."""
         tsa_req_b64 = base64.b64encode(req.dump()).decode("ascii")
 

@@ -64,6 +64,9 @@ SIGNED_SUFFIX: Final[str] = "_firmado"
 # Seguridad
 LOG_SENSITIVE_DATA: Final[bool] = False
 
+# Debug Mode
+IS_DEBUG: Final[bool] = os.environ.get("SELLADOMX_DEBUG", "0") == "1"
+
 # Platform Detection
 IS_MACOS: Final[bool] = sys.platform == "darwin"
 IS_WINDOWS: Final[bool] = sys.platform == "win32"

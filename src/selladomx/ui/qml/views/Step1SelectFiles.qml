@@ -235,4 +235,5 @@ StepIndicator {
             mainViewModel.addPdfFiles(selectedFiles)
         }
     }
+
 }

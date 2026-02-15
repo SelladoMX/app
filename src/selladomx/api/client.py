@@ -117,7 +117,9 @@ class SelladoMXAPIClient:
             elif response.status_code >= 400:
                 try:
                     error_data = response.json()
-                    error_msg = error_data.get("error", error_data.get("message", "Error desconocido"))
+                    error_msg = error_data.get(
+                        "error", error_data.get("message", "Error desconocido")
+                    )
                 except ValueError:
                     error_msg = response.text or "Error desconocido"
 

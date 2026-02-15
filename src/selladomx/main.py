@@ -6,6 +6,7 @@ from pathlib import Path
 
 # Load environment variables BEFORE importing config (which reads env vars at module level)
 from dotenv import load_dotenv
+
 if not load_dotenv():
     load_dotenv(".env.development")
 
@@ -19,7 +20,15 @@ from .ui.qml_bridge.signing_coordinator import SigningCoordinator
 from .ui.qml_bridge.settings_bridge import SettingsBridge
 from .utils.settings_manager import SettingsManager
 from .utils.deep_link_handler import DeepLinkHandler
-from .config import ONBOARDING_VERSION, COLOR_SUCCESS, COLOR_ERROR, BUY_CREDITS_URL, CREDIT_PRICE_DISPLAY
+from .utils.update_checker import UpdateChecker
+from . import __version__
+from .config import (
+    ONBOARDING_VERSION,
+    COLOR_SUCCESS,
+    COLOR_ERROR,
+    BUY_CREDITS_URL,
+    CREDIT_PRICE_DISPLAY,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +82,9 @@ class SelladoMXApplication(QGuiApplication):
         # Clean up stale socket file from previous crash
         QLocalServer.removeServer(_SINGLE_INSTANCE_KEY)
         if not self._local_server.listen(_SINGLE_INSTANCE_KEY):
-            logger.warning(f"Failed to create local server: {self._local_server.errorString()}")
+            logger.warning(
+                f"Failed to create local server: {self._local_server.errorString()}"
+            )
         else:
             self._local_server.newConnection.connect(self._on_new_connection)
             logger.info("Single-instance server started")
@@ -158,7 +169,7 @@ def main():
     app = SelladoMXApplication(sys.argv)
     app.setApplicationName("SelladoMX")
     app.setOrganizationName("SelladoMX")
-    app.setApplicationVersion("0.2.0")
+    app.setApplicationVersion(__version__)
 
     # Single-instance check: if another instance is running, forward deep link and exit
     if not app.setup_single_instance():
@@ -207,8 +218,13 @@ def main():
     else:
         icon_file = Path(__file__).parent.parent.parent / "assets" / "selladomx.png"
     context.setContextProperty("appIconSource", QUrl.fromLocalFile(str(icon_file)))
+    context.setContextProperty("appVersion", __version__)
     context.setContextProperty("buyCreditsUrl", BUY_CREDITS_URL)
     context.setContextProperty("creditPriceDisplay", CREDIT_PRICE_DISPLAY)
+
+    # Update checker
+    update_checker = UpdateChecker(__version__)
+    context.setContextProperty("updateChecker", update_checker)
 
     # Connect deep link handler to view model method
     deep_link_handler.token_received.connect(

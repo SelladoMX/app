@@ -15,6 +15,7 @@ from ...config import (
     COLOR_INFO,
     COLOR_MUTED,
     COLOR_MUTED_LIGHT,
+    IS_DEBUG,
 )
 from .signing_coordinator import SigningCoordinator
 from .history_view_model import HistoryViewModel
@@ -45,12 +46,14 @@ class MainViewModel(QObject):
     useProfessionalTSAChanged = Signal()
     hasProfessionalTSAChanged = Signal()
     creditBalanceChanged = Signal()
+    outputDirChanged = Signal()
+    signingSuccessfulChanged = Signal()
 
     # Signals for token management
     tokensLoaded = Signal(list)
-    tokenDerived = Signal(dict)       # {token, alias, expires_at}
-    tokenRevoked = Signal(str)        # token_id
-    tokenError = Signal(str)          # error message
+    tokenDerived = Signal(dict)  # {token, alias, expires_at}
+    tokenRevoked = Signal(str)  # token_id
+    tokenError = Signal(str)  # error message
     isPrimaryTokenChanged = Signal()
     tokensListChanged = Signal()
 
@@ -66,6 +69,7 @@ class MainViewModel(QObject):
     )  # file_count, use_professional_tsa, credit_balance
     tokenConfiguredViaDeepLink = Signal()
     verificationUrlsReady = Signal(list)  # list of {filename, url} dicts
+    formReset = Signal()
 
     def __init__(
         self, settings_manager: SettingsManager, signing_coordinator: SigningCoordinator
@@ -94,13 +98,15 @@ class MainViewModel(QObject):
         self._status_log = ""
         self._use_professional_tsa = False
         self._credit_balance = 0
+        self._output_dir = ""
+        self._signing_successful = False
 
         # Token management state
         self._tokens_list: list[dict] = []
         self._is_primary_token: bool = False
 
         # API client and history view model
-        self._api_client: Optional['SelladoMXAPIClient'] = None
+        self._api_client: Optional["SelladoMXAPIClient"] = None
         self._history_view_model: Optional[HistoryViewModel] = None
 
         # Certificate objects
@@ -134,6 +140,17 @@ class MainViewModel(QObject):
 
         # Load cached credit balance
         self._credit_balance = self.settings.get_last_credit_balance()
+
+        # Load output directory preference
+        saved_output_dir = self.settings.get_output_dir()
+        if saved_output_dir and not Path(saved_output_dir).is_dir():
+            logger.warning(
+                f"Saved output directory no longer exists: {saved_output_dir}"
+            )
+            self.settings.clear_output_dir()
+            saved_output_dir = ""
+        self._output_dir = saved_output_dir
+        self.outputDirChanged.emit()
 
         # Load token info (primary status)
         token_info = self.settings.get_token_info()
@@ -210,6 +227,45 @@ class MainViewModel(QObject):
     def step1Complete(self) -> bool:
         """Check if step 1 is complete (property for QML)."""
         return self._step1_complete
+
+    # ========================================================================
+    # OUTPUT DIRECTORY
+    # ========================================================================
+
+    @Property(str, notify=outputDirChanged)
+    def outputDir(self) -> str:
+        """Get output directory path (property for QML)."""
+        return self._output_dir
+
+    @Property(str, notify=outputDirChanged)
+    def outputDirDisplay(self) -> str:
+        """Get display name for output directory (property for QML)."""
+        if self._output_dir:
+            return Path(self._output_dir).name
+        return "Misma carpeta que el original"
+
+    @Slot(str)
+    def setOutputDir(self, folder_url: str):
+        """Set output directory from QML FolderDialog.
+
+        Args:
+            folder_url: Folder URL from QML (file:///path/to/folder)
+        """
+        url = QUrl(folder_url)
+        path = url.toLocalFile()
+        if path and Path(path).is_dir():
+            self._output_dir = path
+            self.settings.set_output_dir(path)
+            self.outputDirChanged.emit()
+            logger.info(f"Output directory set: {path}")
+
+    @Slot()
+    def clearOutputDir(self):
+        """Clear the output directory preference."""
+        self._output_dir = ""
+        self.settings.clear_output_dir()
+        self.outputDirChanged.emit()
+        logger.info("Output directory cleared")
 
     # ========================================================================
     # CERTIFICATE MANAGEMENT (STEP 2)
@@ -375,11 +431,13 @@ class MainViewModel(QObject):
             return
 
         self._is_signing = True
+        self._signing_successful = False
         self._current_progress = 0
         self._status_log = ""
         self._verification_urls = []
         self._success_count = 0
         self.isSigningChanged.emit()
+        self.signingSuccessfulChanged.emit()
         self.currentProgressChanged.emit()
         self.statusLogChanged.emit()
 
@@ -411,6 +469,7 @@ class MainViewModel(QObject):
             api_key=api_key,
             signer_cn=self.signer_cn,
             signer_serial=self.signer_serial,
+            output_dir=Path(self._output_dir) if self._output_dir else None,
         )
 
     def _on_signing_progress(self, current: int, total: int):
@@ -464,6 +523,9 @@ class MainViewModel(QObject):
 
         total_count = len(self._pdf_files)
         success_count = self._success_count
+
+        self._signing_successful = success_count > 0
+        self.signingSuccessfulChanged.emit()
 
         if errors:
             self._append_status_log(
@@ -521,6 +583,41 @@ class MainViewModel(QObject):
     def statusLog(self) -> str:
         """Get status log HTML (property for QML)."""
         return self._status_log
+
+    @Property(bool, constant=True)
+    def isDebugMode(self) -> bool:
+        """Whether debug mode is enabled (property for QML)."""
+        return IS_DEBUG
+
+    @Property(bool, notify=signingSuccessfulChanged)
+    def signingSuccessful(self) -> bool:
+        """Whether the last signing was successful (property for QML)."""
+        return self._signing_successful
+
+    @Slot()
+    def resetForm(self):
+        """Reset the form after successful signing.
+
+        Clears PDF files and signing state but preserves certificate (Step 2).
+        """
+        self._pdf_files.clear()
+        self._step1_complete = False
+        self._signing_successful = False
+        self._current_progress = 0
+        self._signing_progress = 0
+        self._status_log = ""
+        self._verification_urls = []
+        self._success_count = 0
+
+        self.pdfFilesChanged.emit()
+        self.step1CompleteChanged.emit()
+        self.signingSuccessfulChanged.emit()
+        self.currentProgressChanged.emit()
+        self.signingProgressChanged.emit()
+        self.statusLogChanged.emit()
+
+        self.formReset.emit()
+        logger.info("Form reset after signing")
 
     # ========================================================================
     # TSA AND CREDITS (STEP 3)
@@ -663,6 +760,7 @@ class MainViewModel(QObject):
         """Get history view model (lazy-loaded when API client is available)."""
         if self._history_view_model is None and self.settings.has_api_key():
             from ...api.client import SelladoMXAPIClient
+
             api_key = self.settings.get_token()
             if api_key:
                 self._api_client = SelladoMXAPIClient(api_key=api_key)

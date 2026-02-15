@@ -305,3 +305,31 @@ class SettingsManager:
         self.settings.remove("certificate/last_key_path")
         self.settings.sync()
         logger.info("Cleared certificate paths")
+
+    # ========================================================================
+    # OUTPUT DIRECTORY
+    # ========================================================================
+
+    def get_output_dir(self) -> str:
+        """Get the saved output directory for signed files.
+
+        Returns:
+            Output directory path, or empty string if not set.
+        """
+        return self.settings.value("signing/output_dir", "", type=str)
+
+    def set_output_dir(self, path: str):
+        """Save output directory for signed files.
+
+        Args:
+            path: Path to output directory.
+        """
+        self.settings.setValue("signing/output_dir", path)
+        self.settings.sync()
+        logger.debug(f"Saved output directory: {path}")
+
+    def clear_output_dir(self):
+        """Clear saved output directory."""
+        self.settings.remove("signing/output_dir")
+        self.settings.sync()
+        logger.info("Cleared output directory")

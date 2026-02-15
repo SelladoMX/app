@@ -2,6 +2,8 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import QtQuick.Dialogs
+import QtCore
 import "../design"
 import "../components"
 import "../dialogs"
@@ -13,64 +15,14 @@ StepIndicator {
     stepTitle: "Firmar"
     stepDescription: "Inicia el proceso de firma digital"
     stepState: {
-        if (!mainViewModel.step2Complete) return "disabled"
+        if (!mainViewModel.step1Complete || !mainViewModel.step2Complete) return "disabled"
         return "active"
     }
 
     content: ColumnLayout {
         spacing: DesignTokens.lg
 
-        // Benefits Banner (always visible)
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: benefitsLayout.implicitHeight + DesignTokens.md * 2
-            radius: DesignTokens.radiusLg
-            color: DesignTokens.bgPrimary
-            border.width: 2
-            border.color: DesignTokens.borderDefault
-
-            RowLayout {
-                id: benefitsLayout
-                anchors.fill: parent
-                anchors.margins: DesignTokens.md
-                spacing: DesignTokens.md
-
-                Text {
-                    text: "⚖️"
-                    font.pixelSize: DesignTokens.font3xl
-                }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: DesignTokens.xs
-
-                    Text {
-                        text: "<b>¿Documento legal o empresarial?</b>"
-                        textFormat: Text.RichText
-                        font.pixelSize: DesignTokens.fontBase
-                        color: DesignTokens.textPrimary
-                        Layout.fillWidth: true
-                    }
-
-                    Text {
-                        text: "Obtén validez legal certificada " + creditPriceDisplay + " por documento."
-                        font.pixelSize: DesignTokens.fontSm
-                        color: DesignTokens.textSecondary
-                        wrapMode: Text.WordWrap
-                        Layout.fillWidth: true
-                    }
-                }
-
-                ModernButton {
-                    visible: !mainViewModel.hasProfessionalTSA
-                    text: "Configurar"
-                    variant: "primary"
-                    onClicked: mainWindow.showTokenConfigDialog()
-                }
-            }
-        }
-
-        // TSA Professional checkbox
+        // Enhanced protection toggle
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: tsaCheckLayout.implicitHeight + DesignTokens.lg * 2
@@ -116,7 +68,7 @@ StepIndicator {
                     spacing: DesignTokens.xs
 
                     Text {
-                        text: "🔒 Usar TSA Profesional"
+                        text: "Usar protección mejorada"
                         font.pixelSize: DesignTokens.fontLg
                         font.weight: DesignTokens.weightSemiBold
                         color: DesignTokens.textPrimary
@@ -124,15 +76,21 @@ StepIndicator {
 
                     Text {
                         text: mainViewModel.hasProfessionalTSA
-                            ? "Validez legal garantizada - " + mainViewModel.creditBalance + " créditos disponibles"
-                            : "Configura tu token para usar TSA Profesional"
+                            ? "Recomendado para documentos legales o empresariales"
+                            : "Configura tu token para habilitar esta opción"
                         font.pixelSize: DesignTokens.fontSm
-                        color: mainViewModel.creditBalance > 0 || !mainViewModel.hasProfessionalTSA
-                            ? DesignTokens.textSecondary
-                            : DesignTokens.error
+                        color: DesignTokens.textSecondary
                         wrapMode: Text.WordWrap
                         Layout.fillWidth: true
                     }
+                }
+
+                // Configure button (when no token)
+                ModernButton {
+                    visible: !mainViewModel.hasProfessionalTSA
+                    text: "Configurar"
+                    variant: "primary"
+                    onClicked: mainWindow.showTokenConfigDialog()
                 }
 
                 // Buy credits button (if balance is 0)
@@ -141,6 +99,51 @@ StepIndicator {
                     text: "Comprar"
                     variant: "primary"
                     onClicked: Qt.openUrlExternally(buyCreditsUrl)
+                }
+            }
+        }
+
+        // Output directory selector
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: outputDirLayout.implicitHeight + DesignTokens.sm * 2
+            radius: DesignTokens.radiusMd
+            color: DesignTokens.bgSecondary
+            border.width: 1
+            border.color: DesignTokens.borderDefault
+
+            RowLayout {
+                id: outputDirLayout
+                anchors.fill: parent
+                anchors.margins: DesignTokens.sm
+                spacing: DesignTokens.md
+
+                Text {
+                    text: "Guardar en:"
+                    font.pixelSize: DesignTokens.fontBase
+                    font.weight: DesignTokens.weightMedium
+                    color: DesignTokens.textSecondary
+                }
+
+                Text {
+                    text: mainViewModel.outputDirDisplay
+                    font.pixelSize: DesignTokens.fontBase
+                    color: DesignTokens.textPrimary
+                    elide: Text.ElideMiddle
+                    Layout.fillWidth: true
+                }
+
+                ModernButton {
+                    text: "Cambiar"
+                    variant: "secondary"
+                    onClicked: folderDialog.open()
+                }
+
+                ModernButton {
+                    visible: mainViewModel.outputDir !== ""
+                    text: "Restablecer"
+                    variant: "secondary"
+                    onClicked: mainViewModel.clearOutputDir()
                 }
             }
         }
@@ -207,8 +210,9 @@ StepIndicator {
             }
         }
 
-        // Status log
+        // Status log (only visible in debug mode)
         Rectangle {
+            visible: mainViewModel.isDebugMode
             Layout.fillWidth: true
             Layout.preferredHeight: 180
             color: DesignTokens.surfaceDefault
@@ -249,10 +253,10 @@ StepIndicator {
         ModernButton {
             Layout.fillWidth: true
             Layout.preferredHeight: DesignTokens.buttonXl
-            text: mainViewModel.isSigning ? "Firmando..." : ("Firmar " + mainViewModel.pdfCount + " PDF(s)")
+            text: mainViewModel.signingSuccessful ? "Firmado exitosamente ✓" : mainViewModel.isSigning ? "Firmando..." : ("Firmar " + mainViewModel.pdfCount + " PDF(s)")
             variant: "success"
             loading: mainViewModel.isSigning
-            enabled: !mainViewModel.isSigning && mainViewModel.step2Complete
+            enabled: !mainViewModel.isSigning && !mainViewModel.signingSuccessful && mainViewModel.step1Complete && mainViewModel.step2Complete
             onClicked: mainViewModel.confirmSigning()
         }
 
@@ -261,9 +265,9 @@ StepIndicator {
             visible: !mainViewModel.isSigning
             text: {
                 if (mainViewModel.useProfessionalTSA) {
-                    return "✨ Los documentos serán firmados con TSA Profesional (validez legal garantizada)"
+                    return "Los documentos serán firmados con protección mejorada (sello de tiempo certificado)"
                 } else {
-                    return "ℹ️ Los documentos serán firmados con TSA Básico"
+                    return "Los documentos serán firmados con sello de tiempo básico"
                 }
             }
             font.pixelSize: DesignTokens.fontSm
@@ -302,10 +306,25 @@ StepIndicator {
     // Confirmation dialog (shown before signing starts)
     ConfirmSigningDialog {
         id: confirmSigningDialog
+        parent: Overlay.overlay
+        anchors.centerIn: parent
     }
 
     // Signing success dialog (kept here since it needs signing-specific data)
     SigningSuccessDialog {
         id: signingSuccessDialog
+        parent: Overlay.overlay
+        anchors.centerIn: parent
+    }
+
+    // Folder selection dialog for output directory
+    FolderDialog {
+        id: folderDialog
+        title: "Seleccionar carpeta destino"
+        currentFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
+
+        onAccepted: {
+            mainViewModel.setOutputDir(selectedFolder)
+        }
     }
 }

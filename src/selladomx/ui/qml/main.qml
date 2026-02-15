@@ -54,6 +54,7 @@ Window {
 
         // Main Content (3 Steps)
         ScrollView {
+            id: mainScrollView
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
@@ -95,6 +96,11 @@ Window {
 
         function onTokenConfiguredViaDeepLink() {
             deepLinkBanner.show()
+        }
+
+        function onFormReset() {
+            // Scroll to top (Step 1) after form reset
+            mainScrollView.contentItem.contentY = 0
         }
     }
 
@@ -191,5 +197,28 @@ Window {
     HistoryDialog {
         id: historyDialog
         anchors.centerIn: parent
+    }
+
+    // Update available dialog
+    UpdateAvailableDialog {
+        id: updateDialog
+        anchors.centerIn: parent
+    }
+
+    // Check for updates shortly after startup
+    Timer {
+        interval: 3000
+        running: true
+        repeat: false
+        onTriggered: updateChecker.check()
+    }
+
+    Connections {
+        target: updateChecker
+        function onUpdateAvailable(latestVersion, downloadUrl) {
+            updateDialog.latestVersion = latestVersion
+            updateDialog.downloadUrl = downloadUrl
+            updateDialog.open()
+        }
     }
 }

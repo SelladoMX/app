@@ -119,9 +119,7 @@ class SigningWorker(QThread):
                 # After signing: update record with actual file hash
                 verification_url = ""
                 if api_timestamper and api_timestamper.record_id:
-                    file_hash = hashlib.sha256(
-                        output_path.read_bytes()
-                    ).hexdigest()
+                    file_hash = hashlib.sha256(output_path.read_bytes()).hexdigest()
                     file_size = output_path.stat().st_size
                     try:
                         api_client.complete_timestamp(
@@ -130,9 +128,7 @@ class SigningWorker(QThread):
                     except Exception as e:
                         logger.warning(f"Failed to update record hash: {e}")
                     verification_url = api_timestamper.verification_url or ""
-                    logger.info(
-                        f"Professional TSA embedded for {pdf_path.name}"
-                    )
+                    logger.info(f"Professional TSA embedded for {pdf_path.name}")
 
                 self.file_completed.emit(
                     pdf_path.name,
@@ -160,9 +156,7 @@ class SigningWorker(QThread):
                 )
                 self.errors.append(f"{pdf_path.name}: {error_msg}")
                 self.file_completed.emit(pdf_path.name, False, error_msg, "")
-                logger.error(
-                    f"TSA service error for {pdf_path.name}: {error_msg}"
-                )
+                logger.error(f"TSA service error for {pdf_path.name}: {error_msg}")
                 break
             except Exception as e:
                 error_msg = str(e)

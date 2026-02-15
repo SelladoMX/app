@@ -19,8 +19,6 @@ Dialog {
     width: 550
     height: Math.min(700, contentColumn.implicitHeight + DesignTokens.xl * 4)
 
-    anchors.centerIn: parent
-
     background: Rectangle {
         color: DesignTokens.bgPrimary
         radius: DesignTokens.radiusXl
@@ -29,8 +27,16 @@ Dialog {
     }
 
     onClosed: {
-        // Reset verification URLs when dialog closes
+        var hadSignedDocs = signedCount > 0
+        // Reset all dialog state
         verificationUrls = []
+        signedCount = 0
+        totalCount = 0
+        usedProfessionalTSA = false
+        // Reset form after a short delay to allow dialog animation to finish
+        if (hadSignedDocs) {
+            resetFormTimer.start()
+        }
     }
 
     ColumnLayout {
@@ -210,23 +216,6 @@ Dialog {
                     }
                 }
 
-                ModernButton {
-                    text: "Copiar URLs"
-                    variant: "secondary"
-                    Layout.fillWidth: true
-                    onClicked: {
-                        var text = ""
-                        for (var i = 0; i < successDialog.verificationUrls.length; i++) {
-                            var item = successDialog.verificationUrls[i]
-                            text += item.filename + ": " + item.url + "\n"
-                        }
-                        // Copy to clipboard using a hidden TextEdit
-                        clipboardHelper.text = text.trim()
-                        clipboardHelper.selectAll()
-                        clipboardHelper.copy()
-                    }
-                }
-
                 Text {
                     text: "Se envió un correo de confirmación por cada documento firmado"
                     font.pixelSize: DesignTokens.fontSm
@@ -341,9 +330,11 @@ Dialog {
         }
     }
 
-    // Hidden TextEdit for clipboard operations
-    TextEdit {
-        id: clipboardHelper
-        visible: false
+    // Timer to reset form after dialog closes
+    Timer {
+        id: resetFormTimer
+        interval: 300
+        repeat: false
+        onTriggered: mainViewModel.resetForm()
     }
 }
