@@ -200,32 +200,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: latest
-
-      - name: Generate Python dependencies for Flatpak
-        run: |
-          # Install poetry export plugin
-          poetry self add poetry-plugin-export
-
-          # Install flatpak-builder-tools dependencies
-          pip install aiohttp toml packaging
-          git clone --depth 1 https://github.com/flatpak/flatpak-builder-tools.git
-
-          # Generate requirements and dependencies
-          poetry export -f requirements.txt --without-hashes > requirements.txt
-          python3 flatpak-builder-tools/pip/flatpak-pip-generator \
-            --runtime org.kde.Platform \
-            --requirements-file requirements.txt \
-            --output generated-sources
-
       - name: Install Flatpak tools
         run: |
           sudo apt-get update

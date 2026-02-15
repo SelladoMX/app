@@ -49,9 +49,7 @@ htmlcov/
 .env
 
 # Flatpak build artifacts
-build-flatpak/
-flatpak-repo/
+build-dir/
+repo/
 .flatpak-builder/
 *.flatpak
-generated-sources.json
-flatpak-builder-tools/

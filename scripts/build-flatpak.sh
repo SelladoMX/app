@@ -4,18 +4,12 @@
 set -e
 
 MANIFEST="com.selladomx.SelladoMX.yml"
-BUILD_DIR="build-flatpak"
-REPO_DIR="flatpak-repo"
+BUILD_DIR="build-dir"
+REPO_DIR="repo"
 
 echo "Building SelladoMX Flatpak..."
 
-# Ensure dependencies are generated
-if [ ! -f "generated-sources.json" ]; then
-    echo "Generando dependencias Python..."
-    ./scripts/generate-python-deps.sh
-fi
-
-# Build
+# Build using Poetry directly (no need for generated-sources.json)
 flatpak-builder --force-clean --ccache --repo="$REPO_DIR" "$BUILD_DIR" "$MANIFEST"
 
 # Export bundle for testing
