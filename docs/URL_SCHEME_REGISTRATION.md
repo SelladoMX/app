@@ -25,9 +25,9 @@ Starting from version 0.1.0, SelladoMX **automatically registers** the URL schem
 - Works with portable .exe files
 
 ### Linux
-- Creates desktop entry at `~/.local/share/applications/selladomx.desktop`
-- Registers MIME type handler via `xdg-mime`
-- Works with AppImage files
+- Flatpak automatically registers the URL scheme via desktop file
+- Desktop entry at `/var/lib/flatpak/exports/share/applications/` (system) or `~/.local/share/flatpak/exports/share/applications/` (user)
+- MIME type handler registered automatically by Flatpak
 
 ### macOS
 - Registration handled by the .app bundle's `Info.plist`
