@@ -242,7 +242,7 @@ Dialog {
             }
 
             Text {
-                text: "Documentos firmados con TSA Básico (validez legal básica)."
+                text: "Documentos firmados con sello de tiempo básico (validez legal básica)."
                 font.pixelSize: DesignTokens.fontBase
                 font.weight: DesignTokens.weightMedium
                 color: DesignTokens.warning
@@ -273,7 +273,7 @@ Dialog {
                     }
 
                     Text {
-                        text: "Con TSA Profesional obtienes hash verificable, fecha certificada por terceros y evidencia admisible en juicios " + creditPriceDisplay + " por documento."
+                        text: "Con protección mejorada obtienes hash verificable, fecha certificada por terceros y evidencia admisible en juicios " + creditPriceDisplay + " por documento."
                         font.pixelSize: DesignTokens.fontBase
                         color: DesignTokens.warningDark
                         lineHeight: 1.6
@@ -319,7 +319,7 @@ Dialog {
 
             ModernButton {
                 visible: !usedProfessionalTSA && signedCount > 0
-                text: "Ver TSA Profesional"
+                text: "Ver protección mejorada"
                 variant: "primary"
                 Layout.fillWidth: true
                 onClicked: {

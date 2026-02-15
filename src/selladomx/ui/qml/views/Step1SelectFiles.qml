@@ -187,7 +187,7 @@ StepIndicator {
 
                 Text {
                     visible: mainViewModel.pdfCount > 0
-                    text: "💰 Costo con TSA Profesional: " + mainViewModel.pdfCount + " × $2 = $" + (mainViewModel.pdfCount * 2) + " MXN"
+                    text: "💰 Costo con protección mejorada: " + mainViewModel.pdfCount + " × $2 = $" + (mainViewModel.pdfCount * 2) + " MXN"
                     font.pixelSize: DesignTokens.fontSm
                     color: DesignTokens.primary
                     font.weight: DesignTokens.weightSemiBold

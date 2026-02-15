@@ -95,7 +95,7 @@ Dialog {
             }
 
             Text {
-                text: "Los documentos que firmes con TSA Profesional aparecerán aquí"
+                text: "Los documentos que firmes con protección mejorada aparecerán aquí"
                 font.pixelSize: DesignTokens.fontBase
                 color: DesignTokens.textTertiary
                 Layout.alignment: Qt.AlignHCenter

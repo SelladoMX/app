@@ -321,7 +321,7 @@ StepIndicator {
     FolderDialog {
         id: folderDialog
         title: "Seleccionar carpeta destino"
-        currentFolder: StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
+        currentFolder: mainViewModel.outputDir !== "" ? "file://" + mainViewModel.outputDir : StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
 
         onAccepted: {
             mainViewModel.setOutputDir(selectedFolder)

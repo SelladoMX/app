@@ -79,7 +79,7 @@ Dialog {
                 spacing: DesignTokens.sm
 
                 Text {
-                    text: confirmDialog.useProfessionalTSA ? "TSA Profesional" : "TSA Básico"
+                    text: confirmDialog.useProfessionalTSA ? "Protección mejorada" : "Firma básica"
                     font.pixelSize: DesignTokens.fontLg
                     font.weight: DesignTokens.weightBold
                     color: DesignTokens.textPrimary

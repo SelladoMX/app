@@ -60,7 +60,7 @@ Rectangle {
             visible: !mainViewModel.hasProfessionalTSA
 
             contentItem: Text {
-                text: "Usando TSA Básico • Mejorar validez legal →"
+                text: "Usando firma básica • Mejorar validez legal →"
                 font.pixelSize: DesignTokens.fontSm
                 color: DesignTokens.textPrimary
                 font.underline: true
@@ -112,7 +112,7 @@ Rectangle {
                         }
 
                         Text {
-                            text: "TSA Profesional"
+                            text: "Protección mejorada"
                             font.pixelSize: DesignTokens.fontXs
                             color: DesignTokens.textSecondary
                         }

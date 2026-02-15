@@ -51,7 +51,7 @@ Dialog {
                 spacing: DesignTokens.sm
 
                 Text {
-                    text: "✓ TSA Profesional"
+                    text: "✓ Protección mejorada"
                     font.pixelSize: DesignTokens.fontLg
                     font.weight: DesignTokens.weightBold
                     color: DesignTokens.accent
@@ -89,7 +89,7 @@ Dialog {
                 spacing: DesignTokens.sm
 
                 Text {
-                    text: "⚠️ TSA Básico"
+                    text: "⚠️ Firma básica"
                     font.pixelSize: DesignTokens.fontLg
                     font.weight: DesignTokens.weightBold
                     color: DesignTokens.error

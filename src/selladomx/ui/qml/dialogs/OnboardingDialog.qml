@@ -205,7 +205,7 @@ Dialog {
                                 spacing: DesignTokens.xs
 
                                 Text {
-                                    text: "TSA Profesional"
+                                    text: "Protección mejorada"
                                     font.pixelSize: DesignTokens.fontBase
                                     font.weight: DesignTokens.weightBold
                                     color: DesignTokens.accent
@@ -247,7 +247,7 @@ Dialog {
                                 spacing: DesignTokens.xs
 
                                 Text {
-                                    text: "TSA Básico"
+                                    text: "Firma básica"
                                     font.pixelSize: DesignTokens.fontBase
                                     font.weight: DesignTokens.weightBold
                                     color: DesignTokens.textSecondary
@@ -277,7 +277,7 @@ Dialog {
                     Item { Layout.preferredHeight: DesignTokens.xs }
 
                     Text {
-                        text: "💡 Recomendamos TSA Profesional para contratos, facturas y trámites oficiales"
+                        text: "💡 Recomendamos protección mejorada para contratos, facturas y trámites oficiales"
                         font.pixelSize: DesignTokens.fontSm
                         font.weight: DesignTokens.weightMedium
                         color: DesignTokens.primary
