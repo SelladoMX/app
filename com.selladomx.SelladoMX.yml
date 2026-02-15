@@ -34,8 +34,8 @@ modules:
       - '*'
     sources:
       - type: archive
-        url: https://files.pythonhosted.org/packages/1c/87/bfe5d3a35be23a88591cd4dfb9ca531f70e46e70e0ab6a28f630e73b2779/poetry-2.0.1.tar.gz
-        sha256: c30d6e6585bcea93917f77897c1337c386b06e842acba9e86af26c5e70ffbdf2
+        url: https://files.pythonhosted.org/packages/7d/b7/4c242ff85f6263f411060336ef7370e444b1718de1122d0c145e92170b01/poetry-2.3.2.tar.gz
+        sha256: 6e81526ae99a4f07f75174600bfe8b73e74c786dc18c9d1ce1800dd6f807414b
 
   # Module 2: Main application with dependencies
   - name: selladomx
