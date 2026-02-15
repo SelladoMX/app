@@ -1,0 +1,52 @@
+name: Update Flathub
+
+# NOTE: Only enable this workflow AFTER initial Flathub approval
+# Requires: FLATHUB_TOKEN secret with push access to flathub/com.selladomx.SelladoMX
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-flathub:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Flathub repository
+        uses: actions/checkout@v6
+        with:
+          repository: flathub/com.selladomx.SelladoMX
+          token: ${{ secrets.FLATHUB_TOKEN }}
+          path: flathub-repo
+
+      - name: Checkout main repo (for manifest)
+        uses: actions/checkout@v6
+        with:
+          path: main-repo
+
+      - name: Update manifest
+        run: |
+          cd flathub-repo
+
+          # Update version tag in manifest
+          VERSION=${GITHUB_REF#refs/tags/v}
+          sed -i "s/tag: v.*/tag: ${GITHUB_REF#refs/tags/}/" com.selladomx.SelladoMX.yml
+
+          # Copy updated generated-sources.json
+          cp ../main-repo/generated-sources.json .
+
+          # Update release in metainfo
+          sed -i "s/<release version=\".*\" date=\".*\">/<release version=\"$VERSION\" date=\"$(date +%Y-%m-%d)\">/" com.selladomx.SelladoMX.metainfo.xml
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.FLATHUB_TOKEN }}
+          path: flathub-repo
+          commit-message: "Update to ${{ github.event.release.tag_name }}"
+          title: "Update to ${{ github.event.release.tag_name }}"
+          body: |
+            Automated update from upstream release
+
+            Release notes: ${{ github.event.release.html_url }}
+          branch: "update-${{ github.event.release.tag_name }}"
+          delete-branch: true

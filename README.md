@@ -27,11 +27,24 @@ Para reportar vulnerabilidades, consulta [SECURITY.md](SECURITY.md).
 
 ## Instalación
 
-Descarga el ejecutable para tu sistema operativo desde [Releases](https://github.com/SelladoMX/app/releases).
+### Linux
 
-- **Windows**: `SelladoMX-Windows.zip` (portable, no requiere instalación)
-- **macOS**: `SelladoMX-macOS.dmg` (arrastra a Aplicaciones)
-- **Linux**: `SelladoMX-Linux-x86_64.AppImage` (dale permisos de ejecución)
+[![Disponible en Flathub](https://flathub.org/assets/badges/flathub-badge-en.svg)](https://flathub.org/apps/com.selladomx.SelladoMX)
+
+```bash
+flatpak install flathub com.selladomx.SelladoMX
+flatpak run com.selladomx.SelladoMX
+```
+
+También disponible como bundle `.flatpak` en [GitHub Releases](https://github.com/SelladoMX/app/releases).
+
+### macOS
+
+Descarga `SelladoMX-macOS.dmg` desde [GitHub Releases](https://github.com/SelladoMX/app/releases).
+
+### Windows
+
+Descarga `SelladoMX-Windows.zip` desde [GitHub Releases](https://github.com/SelladoMX/app/releases).
 
 ### Verificación de descargas
 

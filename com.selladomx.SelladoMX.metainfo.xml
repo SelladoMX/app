@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.selladomx.SelladoMX</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+
+  <name>SelladoMX</name>
+  <summary>Firma digital de PDFs con certificados e.firma</summary>
+
+  <description>
+    <p>
+      SelladoMX es una aplicación de escritorio para firmar documentos PDF digitalmente
+      usando certificados e.firma del SAT (México). Incluye soporte para sellos de tiempo
+      (TSA) tanto básicos como profesionales con validez legal certificada.
+    </p>
+    <p>Características principales:</p>
+    <ul>
+      <li>Firma digital con certificados e.firma (.cer + .key)</li>
+      <li>Sello de tiempo básico (gratuito) o protección mejorada (certificado)</li>
+      <li>Procesamiento por lotes de múltiples PDFs</li>
+      <li>Verificación de firmas y sellos de tiempo</li>
+      <li>Historial de documentos firmados con protección mejorada</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">com.selladomx.SelladoMX.desktop</launchable>
+
+  <url type="homepage">https://www.selladomx.com</url>
+  <url type="bugtracker">https://github.com/SelladoMX/app/issues</url>
+  <url type="vcs-browser">https://github.com/SelladoMX/app</url>
+
+  <developer_name>SelladoMX Team</developer_name>
+
+  <categories>
+    <category>Office</category>
+    <category>Utility</category>
+  </categories>
+
+  <keywords>
+    <keyword>PDF</keyword>
+    <keyword>firma</keyword>
+    <keyword>digital</keyword>
+    <keyword>efirma</keyword>
+    <keyword>SAT</keyword>
+    <keyword>timestamp</keyword>
+  </keywords>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Ventana principal con selección de PDFs</caption>
+      <image>https://raw.githubusercontent.com/SelladoMX/app/main/docs/screenshots/main-window.png</image>
+    </screenshot>
+    <!-- Agregar más screenshots si existen -->
+  </screenshots>
+
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release version="0.3.1" date="2026-02-15">
+      <description>
+        <p>Mejoras de UI/UX y sistema de actualización automática</p>
+      </description>
+    </release>
+  </releases>
+
+  <provides>
+    <mediatype>application/pdf</mediatype>
+    <id>com.selladomx.SelladoMX</id>
+  </provides>
+
+  <custom>
+    <value key="Purism::form_factor">workstation</value>
+    <value key="Purism::form_factor">mobile</value>
+  </custom>
+</component>

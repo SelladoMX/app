@@ -74,10 +74,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            platform: linux
-            artifact_name: SelladoMX-Linux
-            artifact_file: SelladoMX-Linux-x86_64.AppImage
           - os: windows-latest
             platform: windows
             artifact_name: SelladoMX-Windows
@@ -115,25 +111,6 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
 
-      - name: Install system dependencies for Qt (Linux)
-        if: matrix.platform == 'linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libgl1 \
-            libxkbcommon-x11-0 \
-            libxcb-icccm4 \
-            libxcb-image0 \
-            libxcb-keysyms1 \
-            libxcb-randr0 \
-            libxcb-render-util0 \
-            libxcb-xinerama0 \
-            libxcb-xfixes0 \
-            libxcb-shape0 \
-            libegl1 \
-            libdbus-1-3 \
-            libfontconfig1
-
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -149,19 +126,6 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: |
           poetry run pyinstaller selladomx.spec
-
-      - name: Install AppImage tools (Linux)
-        if: matrix.platform == 'linux'
-        run: |
-          wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-          chmod +x linuxdeploy*.AppImage
-
-      - name: Build AppImage (Linux)
-        if: matrix.platform == 'linux'
-        run: |
-          ./scripts/build-appimage.sh
-        env:
-          ARCH: x86_64
 
       - name: Add README to Windows build
         if: matrix.platform == 'windows'
@@ -201,22 +165,7 @@ jobs:
             hdiutil create -volname "SelladoMX" -srcfolder "dist/SelladoMX.app" -ov -format UDZO "dist/${{ matrix.artifact_file }}"
           fi
 
-      - name: Upload artifact (Linux)
-        if: matrix.platform == 'linux'
-        uses: actions/upload-artifact@v6
-        with:
-          name: ${{ matrix.artifact_name }}
-          path: dist/${{ matrix.artifact_file }}
-
-      - name: Upload artifact (Windows)
-        if: matrix.platform == 'windows'
-        uses: actions/upload-artifact@v6
-        with:
-          name: ${{ matrix.artifact_name }}
-          path: dist/${{ matrix.artifact_file }}
-
-      - name: Upload artifact (macOS)
-        if: matrix.platform == 'macos'
+      - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.artifact_name }}
@@ -238,10 +187,100 @@ jobs:
           prerelease: false
           generate_release_notes: true
 
+  build-flatpak:
+    name: Build Flatpak
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+
+      - name: Generate Python dependencies for Flatpak
+        run: |
+          # Install poetry export plugin
+          poetry self add poetry-plugin-export
+
+          # Install flatpak-builder-tools dependencies
+          pip install aiohttp toml packaging
+          git clone --depth 1 https://github.com/flatpak/flatpak-builder-tools.git
+
+          # Generate requirements and dependencies
+          poetry export -f requirements.txt --without-hashes > requirements.txt
+          python3 flatpak-builder-tools/pip/flatpak-pip-generator \
+            --runtime org.kde.Platform \
+            --requirements-file requirements.txt \
+            --output generated-sources
+
+      - name: Install Flatpak tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          sudo flatpak install -y --noninteractive flathub org.kde.Platform//6.7 org.kde.Sdk//6.7
+
+      - name: Cache Flatpak build directory
+        uses: actions/cache@v4
+        with:
+          path: .flatpak-builder
+          key: flatpak-builder-${{ hashFiles('com.selladomx.SelladoMX.yml', 'poetry.lock') }}
+          restore-keys: |
+            flatpak-builder-
+
+      - name: Build Flatpak
+        run: |
+          flatpak-builder --force-clean --repo=repo --ccache build-dir com.selladomx.SelladoMX.yml
+
+      - name: Export Flatpak bundle
+        run: |
+          # Extract version from tag, or use 'dev' for non-tag builds
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF_NAME#v}
+          else
+            VERSION="dev"
+          fi
+
+          flatpak build-bundle repo \
+            SelladoMX-${VERSION}.flatpak \
+            com.selladomx.SelladoMX \
+            --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SelladoMX-Flatpak
+          path: SelladoMX-*.flatpak
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: SelladoMX-*.flatpak
+
+      - name: Upload to Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: SelladoMX-*.flatpak
+
   checksums:
     name: Generate checksums
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, build-flatpak]
     permissions:
       contents: write
       id-token: write
@@ -255,7 +294,7 @@ jobs:
       - name: Generate SHA256 checksums
         run: |
           cd artifacts
-          find . -type f \( -name "*.AppImage" -o -name "*.zip" -o -name "*.dmg" \) \
+          find . -type f \( -name "*.flatpak" -o -name "*.zip" -o -name "*.dmg" \) \
             -exec sha256sum {} \; | sed 's|  \./[^/]*/|  |' > ../SHA256SUMS.txt
           cat ../SHA256SUMS.txt
 

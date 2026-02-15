@@ -47,3 +47,11 @@ htmlcov/
 
 # Environment variables (local config only)
 .env
+
+# Flatpak build artifacts
+build-flatpak/
+flatpak-repo/
+.flatpak-builder/
+*.flatpak
+generated-sources.json
+flatpak-builder-tools/
