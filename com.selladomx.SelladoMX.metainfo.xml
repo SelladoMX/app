@@ -56,6 +56,17 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.4.0" date="2026-02-15">
+      <description>
+        <p>Migración a Flatpak para distribución en Linux</p>
+        <ul>
+          <li>Reemplazado AppImage por Flatpak como método de distribución principal</li>
+          <li>Mejor portabilidad y compatibilidad en todas las distribuciones Linux</li>
+          <li>Integración automática con sistemas de escritorio</li>
+          <li>Actualizaciones automáticas vía Flatpak</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.3.1" date="2026-02-15">
       <description>
         <p>Mejoras de UI/UX y sistema de actualización automática</p>

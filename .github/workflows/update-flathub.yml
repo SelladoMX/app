@@ -10,6 +10,7 @@ on:
 jobs:
   update-flathub:
     runs-on: ubuntu-latest
+    if: false  # Disabled until Flathub approval and FLATHUB_TOKEN is configured
     steps:
       - name: Checkout Flathub repository
         uses: actions/checkout@v6
