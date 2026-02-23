@@ -310,14 +310,14 @@ files = [
 
 [[package]]
 name = "click"
-version = "8.3.1"
+version = "8.1.8"
 description = "Composable command line interface toolkit"
 optional = false
-python-versions = ">=3.10"
+python-versions = ">=3.7"
 groups = ["main", "dev"]
 files = [
-    {file = "click-8.3.1-py3-none-any.whl", hash = "sha256:981153a64e25f12d547d3426c367a4857371575ee7ad18df2a6183ab0545b2a6"},
-    {file = "click-8.3.1.tar.gz", hash = "sha256:12ff4785d337a1bb490bb7e9c2b1ee5da3112e94a8622f26a6c77f5d2fc6842a"},
+    {file = "click-8.1.8-py3-none-any.whl", hash = "sha256:63c132bbbed01578a06712a2d1f497bb62d9c1c0d329b7903a866228027263b2"},
+    {file = "click-8.1.8.tar.gz", hash = "sha256:ed53c9d8990d83c2a27deae68e4ee337473f6330c040a31d4225c9574d16096a"},
 ]
 
 [package.dependencies]
@@ -407,6 +407,18 @@ sdist = ["build (>=1.0.0)"]
 ssh = ["bcrypt (>=3.1.5)"]
 test = ["certifi (>=2024)", "cryptography-vectors (==46.0.5)", "pretend (>=0.7)", "pytest (>=7.4.0)", "pytest-benchmark (>=4.0)", "pytest-cov (>=2.10.1)", "pytest-xdist (>=3.5.0)"]
 test-randomorder = ["pytest-randomly"]
+
+[[package]]
+name = "defusedxml"
+version = "0.7.1"
+description = "XML bomb protection for Python stdlib modules"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+groups = ["main"]
+files = [
+    {file = "defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61"},
+    {file = "defusedxml-0.7.1.tar.gz", hash = "sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69"},
+]
 
 [[package]]
 name = "idna"
@@ -584,39 +596,38 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyhanko"
-version = "0.21.0"
+version = "0.27.1"
 description = "Tools for stamping and signing PDF files"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "pyHanko-0.21.0-py3-none-any.whl", hash = "sha256:0a4de2c26a55c85ee6da79fc995a7fc6a61b7520270f03251caf8977ba27ccb8"},
-    {file = "pyHanko-0.21.0.tar.gz", hash = "sha256:e5609fb8a0b8d60168999cffaa382f0361066cb429204ad2b76e84e6e7f5eb93"},
+    {file = "pyhanko-0.27.1-py3-none-any.whl", hash = "sha256:f95b94d5202f16b30c06ee19a9049ffe590e852f249a6ce3f91f57db71ecbb32"},
+    {file = "pyhanko-0.27.1.tar.gz", hash = "sha256:2378e3189591740a94d5633d772cb11d9a619dab7ed5437fa3004c95ae279de8"},
 ]
 
 [package.dependencies]
 asn1crypto = ">=1.5.1"
-click = ">=8.1.3"
-cryptography = ">=41.0.5"
-pyhanko-certvalidator = ">=0.26.2,<0.27"
+click = ">=8.1.3,<8.2.0"
+cryptography = ">=43.0.3"
+defusedxml = ">=0.7.1,<0.8.0"
+pyhanko-certvalidator = ">=0.26.5,<0.27"
 pyyaml = ">=6.0"
 qrcode = ">=7.3.1"
 requests = ">=2.31.0"
 tzlocal = ">=4.3"
 
 [package.extras]
-async-http = ["aiohttp (>=3.9.0,<3.10.0)"]
+async-http = ["aiohttp (>=3.9,<3.12)"]
 docs = ["sphinx", "sphinx-rtd-theme"]
-etsi = ["xsdata (>=23.8,<24.0)"]
-extra-pubkey-algs = ["oscrypto (>=1.2.1)"]
+etsi = ["xsdata (>=24.4,<26.0)"]
 image-support = ["Pillow (>=7.2.0)", "python-barcode (==0.15.1)"]
-live-test = ["certomancer-csc-dummy (==0.2.3)", "certomancer[pkcs12,web-api] (>=0.11.0,<0.12.0)", "pyHanko[async-http,extra-pubkey-algs,testing-basic,xmp]", "pytest-aiohttp (>=1.0.4,<1.1.0)", "pytest-cov (>=4.0,<4.2)"]
-mypy = ["pyHanko[async-http,etsi,extra-pubkey-algs,image-support,opentype,pkcs11,xmp]", "types-PyYAML", "types-python-dateutil", "types-requests", "types-tzlocal"]
-opentype = ["fonttools (>=4.33.3)", "uharfbuzz (>=0.25.0,<0.38.0)"]
+live-test = ["certomancer-csc-dummy (==0.3.0)", "certomancer[web-api] (>=0.12.3,<0.13)", "pyHanko[async-http,testing-basic]", "pytest-aiohttp (>=1.0.4,<1.2.0)", "pytest-cov (>=4.0,<6.2)"]
+mypy = ["pyHanko[async-http,etsi,image-support,opentype,pkcs11]", "types-PyYAML", "types-python-dateutil", "types-requests", "types-tzlocal"]
+opentype = ["fonttools (>=4.33.3)", "uharfbuzz (>=0.25.0,<0.51.0)"]
 pkcs11 = ["python-pkcs11 (>=0.7.0,<0.8.0)"]
-testing = ["certomancer-csc-dummy (==0.2.3)", "pyHanko[async-http,extra-pubkey-algs,image-support,opentype,pkcs11,testing-basic,xmp]", "pyHanko[etsi]", "pytest-aiohttp (>=1.0.4,<1.1.0)"]
-testing-basic = ["backports.zoneinfo[tzdata] ; python_version < \"3.9\"", "certomancer (==0.11.*)", "freezegun (>=1.1.0)", "pytest (>=6.1.1)", "pytest-asyncio (==0.21.1)", "pytest-cov (>=4.0,<4.2)", "requests-mock (>=1.8.0)"]
-xmp = ["defusedxml (>=0.7.1,<0.8.0)"]
+testing = ["certomancer-csc-dummy (==0.3.0)", "pyHanko[async-http,image-support,opentype,pkcs11,testing-basic]", "pyHanko[etsi]", "pytest-aiohttp (>=1.0.4,<1.2.0)"]
+testing-basic = ["backports.zoneinfo[tzdata] ; python_version < \"3.9\"", "certomancer (>=0.12.3,<0.13)", "freezegun (>=1.1.0)", "pytest (>=6.1.1)", "pytest-asyncio (==0.24.0) ; python_version < \"3.9\"", "pytest-asyncio (==0.26.0) ; python_version >= \"3.9\"", "pytest-cov (>=4.0,<6.2)", "requests-mock (>=1.8.0)"]
 
 [[package]]
 name = "pyhanko-certvalidator"
@@ -1113,4 +1124,4 @@ zstd = ["backports-zstd (>=1.0.0) ; python_version < \"3.14\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.14"
-content-hash = "ed6d03a630c9669bb474373a214c2bc95b99121377756be33d5630075b78d675"
+content-hash = "28d5e68f218d4642b80aa25e82d4c441cb40b15fea81b723c13b5a2963d27d3e"

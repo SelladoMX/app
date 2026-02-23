@@ -9,7 +9,7 @@ packages = [{include = "selladomx", from = "src"}]
 [tool.poetry.dependencies]
 python = ">=3.11,<3.14"
 PySide6 = "^6.10.2"
-pyhanko = "^0.21.0"
+pyhanko = "^0.27.1"
 pyhanko-certvalidator = "^0.26.0"
 cryptography = "^46.0.5"
 requests = "^2.31.0"
