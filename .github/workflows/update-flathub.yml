@@ -39,7 +39,7 @@ jobs:
           sed -i "s/<release version=\".*\" date=\".*\">/<release version=\"$VERSION\" date=\"$(date +%Y-%m-%d)\">/" com.selladomx.SelladoMX.metainfo.xml
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.FLATHUB_TOKEN }}
           path: flathub-repo
