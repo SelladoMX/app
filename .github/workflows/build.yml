@@ -166,7 +166,7 @@ jobs:
           fi
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact_name }}
           path: dist/${{ matrix.artifact_file }}
@@ -260,7 +260,7 @@ jobs:
             --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: SelladoMX-Flatpak
           path: SelladoMX-*.flatpak
