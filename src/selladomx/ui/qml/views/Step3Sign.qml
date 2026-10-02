@@ -1,4 +1,3 @@
-// Step3Sign.qml - Signing process step
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -85,7 +84,6 @@ StepIndicator {
                     }
                 }
 
-                // Configure button (when no token)
                 ModernButton {
                     visible: !mainViewModel.hasProfessionalTSA
                     text: "Configurar"
@@ -93,7 +91,6 @@ StepIndicator {
                     onClicked: mainWindow.showTokenConfigDialog()
                 }
 
-                // Buy credits button (if balance is 0)
                 ModernButton {
                     visible: mainViewModel.hasProfessionalTSA && mainViewModel.creditBalance === 0
                     text: "Comprar"
@@ -210,7 +207,7 @@ StepIndicator {
             }
         }
 
-        // Status log (only visible in debug mode)
+        // Status log
         Rectangle {
             visible: mainViewModel.isDebugMode
             Layout.fillWidth: true
@@ -249,7 +246,6 @@ StepIndicator {
             }
         }
 
-        // Sign button
         ModernButton {
             Layout.fillWidth: true
             Layout.preferredHeight: DesignTokens.buttonXl
@@ -260,7 +256,6 @@ StepIndicator {
             onClicked: mainViewModel.confirmSigning()
         }
 
-        // Info text
         Text {
             visible: !mainViewModel.isSigning
             text: {
@@ -277,11 +272,9 @@ StepIndicator {
         }
     }
 
-    // Handle file completion for potential UI updates
     Connections {
         target: mainViewModel
         function onFileCompleted(filename, success, message, verificationUrl) {
-            // Could show individual file success/error indicators here
         }
 
         function onShowConfirmSigningDialog(fileCount, useProfessionalTSA, creditBalance) {
@@ -303,21 +296,19 @@ StepIndicator {
         }
     }
 
-    // Confirmation dialog (shown before signing starts)
     ConfirmSigningDialog {
         id: confirmSigningDialog
         parent: Overlay.overlay
         anchors.centerIn: parent
     }
 
-    // Signing success dialog (kept here since it needs signing-specific data)
+    // Lives here, not with the shared dialogs in main.qml, because it needs signing-specific data
     SigningSuccessDialog {
         id: signingSuccessDialog
         parent: Overlay.overlay
         anchors.centerIn: parent
     }
 
-    // Folder selection dialog for output directory
     FolderDialog {
         id: folderDialog
         title: "Seleccionar carpeta destino"

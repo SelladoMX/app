@@ -1,5 +1,3 @@
-// DesignTokens.qml - Design System Singleton
-// Based on design_tokens.py and selladomx.com website styling
 pragma Singleton
 import QtQuick 2.15
 
@@ -22,11 +20,11 @@ QtObject {
     readonly property color surfaceOverlay: "#F5F5F5"
 
     // Primary (Navy Blue) - Main brand color aligned with selladomx.com
-    readonly property color primary: "#0f2a44"           // Navy
-    readonly property color primaryHover: "#1a3d5c"      // Navy hover
-    readonly property color primaryActive: "#0a1f33"     // Navy dark
-    readonly property color primaryLight: "#1a3d5c"      // Navy light
-    readonly property color primarySubtle: "#f0f6fb"     // Navy subtle
+    readonly property color primary: "#0f2a44"
+    readonly property color primaryHover: "#1a3d5c"
+    readonly property color primaryActive: "#0a1f33"
+    readonly property color primaryLight: "#1a3d5c"
+    readonly property color primarySubtle: "#f0f6fb"
 
     // Text Colors
     readonly property color textPrimary: "#111827"       // Gray-900
@@ -40,16 +38,16 @@ QtObject {
     readonly property color borderSubtle: "#F3F4F6"      // Gray-100
 
     // Accent (Green) - CTAs and success, aligned with selladomx.com
-    readonly property color accent: "#2e7d32"            // Green accent
-    readonly property color accentHover: "#4caf50"       // Green accent hover
-    readonly property color accentActive: "#1b5e20"      // Green accent active
-    readonly property color accentLight: "#e8f5e9"       // Green accent light
+    readonly property color accent: "#2e7d32"
+    readonly property color accentHover: "#4caf50"
+    readonly property color accentActive: "#1b5e20"
+    readonly property color accentLight: "#e8f5e9"
 
     // Semantic Colors
-    readonly property color success: "#2e7d32"           // Green (aligned with site)
-    readonly property color successLight: "#e8f5e9"      // Green light
-    readonly property color successHover: "#4caf50"      // Green hover
-    readonly property color successActive: "#1b5e20"     // Green active
+    readonly property color success: "#2e7d32"
+    readonly property color successLight: "#e8f5e9"
+    readonly property color successHover: "#4caf50"
+    readonly property color successActive: "#1b5e20"
 
     readonly property color warning: "#F59E0B"           // Amber-500
     readonly property color warningLight: "#FEF3C7"      // Amber-50
@@ -84,7 +82,7 @@ QtObject {
     readonly property color stepDisabledText: "#D1D5DB"
 
     // ========================================================================
-    // SPACING - 8px Grid System
+    // SPACING
     // ========================================================================
 
     readonly property int xs: 4
@@ -165,11 +163,11 @@ QtObject {
     // SHADOWS
     // ========================================================================
 
-    readonly property color shadowColor: "#10000000"    // 10% black
+    readonly property color shadowColor: "#10000000"    // ARGB, ~6% black
     readonly property int shadowRadius: 8
     readonly property int shadowVerticalOffset: 4
 
-    readonly property color shadowColorLight: "#08000000"  // 5% black
+    readonly property color shadowColorLight: "#08000000"  // ARGB, ~3% black
     readonly property int shadowRadiusLight: 4
     readonly property int shadowVerticalOffsetLight: 2
 

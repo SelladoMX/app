@@ -2,7 +2,6 @@
 import pytest
 from pathlib import Path
 
-# These imports will fail if not in dev environment, that's ok
 try:
     from selladomx.signing.pdf_signer import PDFSigner
     from selladomx.signing.tsa import TSAClient
@@ -54,7 +53,6 @@ def test_complete_signing_workflow(
     2. PDF signing with TSA timestamp
     3. Output file creation and validity
     """
-    # Load and validate certificate
     validator = CertificateValidator(test_cert_path, test_key_path, test_password)
 
     try:
@@ -62,26 +60,21 @@ def test_complete_signing_workflow(
     except CertificateError as e:
         pytest.skip(f"Certificate validation failed (expected for test certs): {e}")
 
-    # Setup TSA client (free tier)
     tsa_client = TSAClient()
-
-    # Create output path in temp directory
     output_path = tmp_path / "signed_output.pdf"
 
-    # Sign PDF
     signer = PDFSigner(cert, private_key, tsa_client)
     result_path = signer.sign_pdf(test_pdf_path, output_path)
 
-    # Verify output exists
     assert result_path.exists(), "Signed PDF was not created"
     assert result_path.stat().st_size > 0, "Signed PDF is empty"
 
-    # Verify it's a valid PDF (check magic number)
+    # PDF magic number
     with open(result_path, "rb") as f:
         header = f.read(4)
         assert header == b"%PDF", "Output is not a valid PDF file"
 
-    # Verify file is larger than input (signature adds data)
+    # The signature adds data
     original_size = test_pdf_path.stat().st_size
     signed_size = result_path.stat().st_size
     assert signed_size > original_size, "Signed PDF should be larger than original"
@@ -97,8 +90,7 @@ def test_certificate_validator_loads_files(
     """Test that certificate validator can load certificate and key files."""
     validator = CertificateValidator(test_cert_path, test_key_path, test_password)
 
-    # This will raise CertificateError for invalid/expired certs, which is expected
-    # We just want to verify the files can be loaded
+    # Only checks the files load; validate_all() is not called.
     assert validator.cert_path.exists()
     assert validator.key_path.exists()
 
@@ -108,7 +100,6 @@ def test_tsa_client_initialization():
     tsa_client = TSAClient()
     assert tsa_client is not None
 
-    # Verify free TSA URLs are configured
     from selladomx.config import TSA_FREE_PROVIDERS
 
     assert len(TSA_FREE_PROVIDERS) > 0, "No free TSA providers configured"
@@ -116,16 +107,13 @@ def test_tsa_client_initialization():
 
 def test_pdf_signer_requires_certificate():
     """Test that PDF signer requires valid certificate and key."""
-    # This test verifies the PDFSigner constructor signature
-    # without actually signing (which would require valid cert/key)
-
+    # Constructor only; signing would need a valid cert/key.
     from cryptography import x509
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import rsa
     from cryptography.hazmat.backends import default_backend
     from datetime import datetime, timedelta, UTC
 
-    # Generate a minimal self-signed cert for testing constructor
     private_key = rsa.generate_private_key(
         public_exponent=65537, key_size=2048, backend=default_backend()
     )

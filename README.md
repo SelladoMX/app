@@ -104,7 +104,7 @@ Requiere Python 3.11+ y Poetry.
 ```bash
 poetry run python run.py
 ```
-Usa automáticamente `.env.development` con `http://localhost:8000`
+Usa automáticamente `.env.development` con `http://localhost:8787`
 
 **Para override personalizado:**
 ```bash
@@ -113,7 +113,7 @@ echo "SELLADOMX_API_URL=http://localhost:3000" > .env
 ```
 
 **Builds/Producción:**
-Los ejecutables usan los valores hardcodeados con `https://api.selladomx.com`
+Los ejecutables usan los valores hardcodeados con `https://www.selladomx.com`
 
 **Variables disponibles:**
 - `SELLADOMX_API_URL` - URL de la API
@@ -131,7 +131,6 @@ Los ejecutables usan los valores hardcodeados con `https://api.selladomx.com`
 ## Documentación
 
 - [URL Scheme Registration](docs/URL_SCHEME_REGISTRATION.md) - Deep links y magic links
-- [Implementation Summary](IMPLEMENTATION_SUMMARY.md) - Detalles de implementación
 
 ## Licencia
 

@@ -25,35 +25,29 @@ finish-args:
   - --persist=.config/SelladoMX
 
 modules:
-  # Module 1: Python dependencies (from poetry.lock via CI)
+  # requirements.txt and flatpak-python-deps/ are generated from poetry.lock in CI
   - name: python-deps
     buildsystem: simple
     build-commands:
-      # Install from pre-downloaded wheels (no network needed)
       - pip3 install --prefix=${FLATPAK_DEST} --no-index --find-links=flatpak-python-deps -r requirements.txt
     sources:
       - type: dir
         path: .
 
-  # Module 2: Main application
   - name: selladomx
     buildsystem: simple
     build-commands:
-      # Install the pre-built wheel (no build dependencies needed)
+      # The app wheel is pre-built in CI so the build needs no poetry-core
       - pip3 install --prefix=${FLATPAK_DEST} --no-deps --no-index --find-links=flatpak-python-deps selladomx
 
-      # Install desktop file
       - install -Dm644 assets/selladomx.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
       - desktop-file-edit --set-key=Exec --set-value="selladomx %u" ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
       - desktop-file-edit --set-key=Icon --set-value=${FLATPAK_ID} ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
 
-      # Install icon
       - install -Dm644 assets/selladomx.png ${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png
 
-      # Install AppStream metadata
       - install -Dm644 ${FLATPAK_ID}.metainfo.xml ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
 
-      # Install launcher script
       - install -Dm755 scripts/flatpak-launcher.sh ${FLATPAK_DEST}/bin/selladomx
 
     sources:

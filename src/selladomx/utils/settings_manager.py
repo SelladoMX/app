@@ -77,8 +77,6 @@ class SettingsManager:
 
         Note:
             Deprecated: Use get_token() instead.
-            This stores the API key in QSettings (encrypted on disk by OS).
-            For production, consider using keyring library for better security.
         """
         return self.get_token()
 
@@ -93,7 +91,6 @@ class SettingsManager:
         """
         token = self.settings.value("api/token", None, type=str)
         if not token:
-            # Fallback to old api/key for transition
             token = self.settings.value("api/key", None, type=str)
         if token:
             logger.info("Token found in settings")
@@ -107,8 +104,6 @@ class SettingsManager:
 
         Note:
             Deprecated: Use set_token() instead.
-            API key is stored encrypted on disk by QSettings.
-            Never log or display the full API key.
         """
         self.set_token(api_key)
 
@@ -116,14 +111,13 @@ class SettingsManager:
         """Store authentication token.
 
         Args:
-            token: Token string to store (encrypted by OS)
+            token: Token string to store
 
         Note:
-            Token is stored encrypted on disk by QSettings.
-            Never log or display the full token.
+            QSettings stores the token in plaintext (plist, INI file or
+            registry, depending on the OS). Never log or display the full token.
         """
         self.settings.setValue("api/token", token)
-        # Clear old key if exists
         if self.settings.contains("api/key"):
             self.settings.remove("api/key")
         self.settings.sync()

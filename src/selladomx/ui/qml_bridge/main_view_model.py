@@ -24,14 +24,8 @@ logger = logging.getLogger(__name__)
 
 
 class MainViewModel(QObject):
-    """ViewModel principal que expone toda la lógica a QML.
+    """ViewModel principal que expone toda la lógica a QML."""
 
-    This class acts as the bridge between the Python backend and QML frontend.
-    It exposes properties and slots that QML can access, and emits signals
-    that QML can listen to.
-    """
-
-    # Signals for notifying QML of changes
     pdfFilesChanged = Signal()
     step1CompleteChanged = Signal()
     step2CompleteChanged = Signal()
@@ -84,7 +78,6 @@ class MainViewModel(QObject):
         self.settings = settings_manager
         self.coordinator = signing_coordinator
 
-        # Internal state
         self._pdf_files: List[str] = []
         self._step1_complete = False
         self._step2_complete = False
@@ -105,11 +98,9 @@ class MainViewModel(QObject):
         self._tokens_list: list[dict] = []
         self._is_primary_token: bool = False
 
-        # API client and history view model
         self._api_client: Optional["SelladoMXAPIClient"] = None
         self._history_view_model: Optional[HistoryViewModel] = None
 
-        # Certificate objects
         self.cert = None
         self.private_key = None
         self.signer_cn = ""
@@ -119,29 +110,21 @@ class MainViewModel(QObject):
         self._verification_urls: list[dict] = []
         self._success_count: int = 0
 
-        # Connect coordinator signals
         self.coordinator.progressChanged.connect(self._on_signing_progress)
         self.coordinator.fileCompleted.connect(self._on_file_completed)
         self.coordinator.finished.connect(self._on_signing_finished)
 
-        # Load saved preferences
         self._load_saved_preferences()
 
         logger.info("MainViewModel initialized")
 
     def _load_saved_preferences(self):
         """Load saved preferences from settings."""
-        # Load last used certificate paths
         self._cert_path = self.settings.get_last_cert_path()
         self._key_path = self.settings.get_last_key_path()
-
-        # Load TSA preference
         self._use_professional_tsa = self.settings.use_professional_tsa()
-
-        # Load cached credit balance
         self._credit_balance = self.settings.get_last_credit_balance()
 
-        # Load output directory preference
         saved_output_dir = self.settings.get_output_dir()
         if saved_output_dir and not Path(saved_output_dir).is_dir():
             logger.warning(
@@ -152,11 +135,9 @@ class MainViewModel(QObject):
         self._output_dir = saved_output_dir
         self.outputDirChanged.emit()
 
-        # Load token info (primary status)
         token_info = self.settings.get_token_info()
         self._is_primary_token = token_info.get("is_primary", False)
 
-        # Emit signals to update QML
         self.certPathChanged.emit()
         self.keyPathChanged.emit()
         self.useProfessionalTSAChanged.emit()
@@ -283,7 +264,6 @@ class MainViewModel(QObject):
         self.settings.set_last_cert_path(self._cert_path)
         self.certPathChanged.emit()
 
-        # Try to validate if both cert and key are set
         if self._cert_path and self._key_path:
             self._append_status_log(
                 "Certificado seleccionado. Ingresa la contraseña para validar.",
@@ -302,7 +282,6 @@ class MainViewModel(QObject):
         self.settings.set_last_key_path(self._key_path)
         self.keyPathChanged.emit()
 
-        # Try to validate if both cert and key are set
         if self._cert_path and self._key_path:
             self._append_status_log(
                 "Llave privada seleccionada. Ingresa la contraseña para validar.",
@@ -323,7 +302,6 @@ class MainViewModel(QObject):
             validator = CertificateValidator(cert_path, key_path, password)
             self.cert, self.private_key = validator.validate_all()
 
-            # Extract signer info
             subject = self.cert.subject
             for attr in subject:
                 if attr.oid._name == "commonName":
@@ -441,7 +419,6 @@ class MainViewModel(QObject):
         self.currentProgressChanged.emit()
         self.statusLogChanged.emit()
 
-        # Get API key if using professional TSA
         api_key = None
         if self._use_professional_tsa:
             api_key = self.settings.get_token()
@@ -453,14 +430,12 @@ class MainViewModel(QObject):
                 self.isSigningChanged.emit()
                 return
 
-        # Convert paths to Path objects
         pdf_paths = [Path(p) for p in self._pdf_files]
 
         self._append_status_log(
             f"Iniciando firma de {len(pdf_paths)} documento(s)...", COLOR_INFO
         )
 
-        # Start signing
         self.coordinator.start(
             pdf_paths=pdf_paths,
             cert=self.cert,
@@ -509,7 +484,6 @@ class MainViewModel(QObject):
                 {"filename": filename, "url": verification_url}
             )
 
-        # Emit signal for QML to handle (e.g., show link button)
         self.fileCompleted.emit(filename, success, message, verification_url)
 
     def _on_signing_finished(self, errors: List[str]):
@@ -536,16 +510,13 @@ class MainViewModel(QObject):
                 "✓ Todos los documentos firmados exitosamente", COLOR_SUCCESS
             )
 
-        # Emit verification URLs if any were collected
         if self._verification_urls:
             self.verificationUrlsReady.emit(self._verification_urls)
 
-        # Emit completion signal for QML to show appropriate dialog
         self.signingCompleted.emit(
             success_count, total_count, self._use_professional_tsa
         )
 
-        # Refresh credit balance if professional TSA was used
         if self._use_professional_tsa:
             self._refresh_credit_balance()
 
@@ -556,12 +527,11 @@ class MainViewModel(QObject):
             message: Message to append
             color: HTML color code
         """
-        timestamp = ""  # Could add timestamp if needed
+        timestamp = ""
         html = f'<span style="color: {color};">{message}</span><br>'
         self._status_log += html
         self.statusLogChanged.emit()
 
-        # Also emit individual status message
         self.statusMessage.emit(message, color)
 
     @Property(int, notify=currentProgressChanged)
@@ -695,11 +665,9 @@ class MainViewModel(QObject):
         from ...api.exceptions import APIError, AuthenticationError, NetworkError
 
         try:
-            # Validate token with API
             client = SelladoMXAPIClient(api_key=token)
             response = client.get_balance()
 
-            # Save token and metadata
             self.settings.set_token(token)
             if "token_info" in response:
                 self.settings.set_token_info(response["token_info"])
@@ -707,7 +675,6 @@ class MainViewModel(QObject):
                 self.isPrimaryTokenChanged.emit()
             self.settings.set_last_credit_balance(response["credits_remaining"])
 
-            # Update internal state
             self._credit_balance = response["credits_remaining"]
             self.creditBalanceChanged.emit()
 
@@ -716,7 +683,6 @@ class MainViewModel(QObject):
             self._history_view_model = None
             self.hasProfessionalTSAChanged.emit()
 
-            # Emit success
             message = f"✅ Token configurado exitosamente\n{response['credits_remaining']} créditos disponibles"
             self.tokenValidationResult.emit(True, message)
 
@@ -811,7 +777,6 @@ class MainViewModel(QObject):
             response = client.derive_token(alias, expires)
             self.tokenDerived.emit(response)
             logger.info(f"Derived token created: {alias}")
-            # Refresh the list
             self.listTokens()
         except PrimaryTokenRequiredError:
             self.tokenError.emit("Se requiere el token primario para crear subtokens")
@@ -839,7 +804,6 @@ class MainViewModel(QObject):
             client.revoke_token(token_id)
             self.tokenRevoked.emit(token_id)
             logger.info(f"Token revoked: {token_id}")
-            # Refresh the list
             self.listTokens()
         except APIError as e:
             logger.error(f"Failed to revoke token: {e}")
@@ -857,8 +821,4 @@ class MainViewModel(QObject):
             url: Deep link URL (selladomx://token?value=xxx)
         """
         logger.info(f"Handling deep link: {url}")
-
-        # Extract token from URL
-        # This will be connected to DeepLinkHandler in main.py
-        # For now, just log it
         self._append_status_log("Deep link recibido - procesando...", COLOR_INFO)
