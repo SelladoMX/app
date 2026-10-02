@@ -1,4 +1,3 @@
-// SigningSuccessDialog.qml - Success dialog with TSA tier messaging
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -28,7 +27,6 @@ Dialog {
 
     onClosed: {
         var hadSignedDocs = signedCount > 0
-        // Reset all dialog state
         verificationUrls = []
         signedCount = 0
         totalCount = 0
@@ -44,7 +42,7 @@ Dialog {
         anchors.fill: parent
         spacing: DesignTokens.lg
 
-        // Error state - no documents were signed
+        // Error state
         ColumnLayout {
             visible: signedCount === 0
             spacing: DesignTokens.md
@@ -330,7 +328,6 @@ Dialog {
         }
     }
 
-    // Timer to reset form after dialog closes
     Timer {
         id: resetFormTimer
         interval: 300

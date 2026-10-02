@@ -1,4 +1,3 @@
-// ConfirmSigningDialog.qml - Confirmation dialog before signing starts
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -30,7 +29,6 @@ Dialog {
         anchors.fill: parent
         spacing: DesignTokens.lg
 
-        // Header
         Text {
             text: "Confirmar firma de documentos"
             font.pixelSize: DesignTokens.font2xl

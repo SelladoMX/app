@@ -1,4 +1,3 @@
-// HeaderBar.qml - Header with app title and credit balance
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -19,7 +18,6 @@ Rectangle {
         RowLayout {
             spacing: DesignTokens.md
 
-            // App icon
             Image {
                 source: appIconSource
                 width: 40
@@ -53,7 +51,6 @@ Rectangle {
             Layout.fillWidth: true
         }
 
-        // Free tier upgrade prompt (when no token)
         Button {
             id: upgradeButton
             flat: true
@@ -77,7 +74,6 @@ Rectangle {
             }
         }
 
-        // Credits display (when has token)
         Button {
             id: creditsButton
             flat: true
@@ -145,7 +141,6 @@ Rectangle {
             }
         }
 
-        // Buy credits button (if no credits or low)
         ModernButton {
             visible: mainViewModel.hasProfessionalTSA && mainViewModel.creditBalance < 5
             text: mainViewModel.creditBalance === 0 ? "Comprar Créditos" : "💳 Comprar más"
@@ -153,7 +148,6 @@ Rectangle {
             onClicked: Qt.openUrlExternally(buyCreditsUrl)
         }
 
-        // Configure token button (if no token)
         ModernButton {
             visible: !mainViewModel.hasProfessionalTSA
             text: "Configurar Token"
@@ -161,7 +155,7 @@ Rectangle {
             onClicked: mainWindow.showTokenConfigDialog()
         }
 
-        // Settings button (if has token)
+        // Settings button
         Button {
             visible: mainViewModel.hasProfessionalTSA
             text: "⚙️"

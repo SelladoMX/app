@@ -1,4 +1,3 @@
-// Step1SelectFiles.qml - PDF file selection step
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -31,7 +30,6 @@ StepIndicator {
                 ColorAnimation { duration: DesignTokens.durationFast }
             }
 
-            // File list view
             ListView {
                 id: fileListView
                 anchors.fill: parent
@@ -56,7 +54,6 @@ StepIndicator {
                         anchors.margins: DesignTokens.sm
                         spacing: DesignTokens.sm
 
-                        // PDF icon
                         Text {
                             text: "📄"
                             font.pixelSize: DesignTokens.fontXl
@@ -75,7 +72,6 @@ StepIndicator {
                             font.pixelSize: DesignTokens.fontBase
                         }
 
-                        // Remove button
                         ToolButton {
                             text: "✕"
                             font.pixelSize: DesignTokens.fontLg
@@ -120,14 +116,12 @@ StepIndicator {
                 }
             }
 
-            // Drag & Drop area
             DropArea {
                 id: dropArea
                 anchors.fill: parent
 
                 onDropped: {
                     if (drop.hasUrls) {
-                        // Filter for PDF files only
                         var pdfUrls = []
                         for (var i = 0; i < drop.urls.length; i++) {
                             var url = drop.urls[i].toString()
@@ -213,7 +207,6 @@ StepIndicator {
             }
         }
 
-        // Info text
         Text {
             text: "💡 Puedes seleccionar múltiples archivos o arrastrarlos a la lista"
             font.pixelSize: DesignTokens.fontSm
@@ -223,7 +216,6 @@ StepIndicator {
         }
     }
 
-    // File selection dialog
     FileDialog {
         id: fileDialog
         title: "Seleccionar archivos PDF"

@@ -1,4 +1,3 @@
-// BenefitsDialog.qml - TSA Professional benefits comparison dialog
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -25,7 +24,6 @@ Dialog {
         anchors.fill: parent
         spacing: DesignTokens.lg
 
-        // Header
         Text {
             text: "🔒 Protege tus documentos con validez legal"
             font.pixelSize: DesignTokens.font3xl

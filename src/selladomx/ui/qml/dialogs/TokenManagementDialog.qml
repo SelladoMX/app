@@ -1,4 +1,3 @@
-// TokenManagementDialog.qml - Subtoken management dialog
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -21,18 +20,15 @@ Dialog {
         border.color: DesignTokens.borderDefault
     }
 
-    // State
     property string newTokenValue: ""
     property string newTokenAlias: ""
     property bool isLoading: false
     property string errorMessage: ""
 
-    // Revoke confirmation state
     property string revokeTokenId: ""
     property string revokeTokenAlias: ""
 
     onOpened: {
-        // Clear state and load tokens
         newTokenValue = ""
         newTokenAlias = ""
         errorMessage = ""
@@ -45,7 +41,6 @@ Dialog {
         anchors.fill: parent
         spacing: DesignTokens.md
 
-        // Title
         Text {
             text: "Administrar Subtokens"
             font.pixelSize: DesignTokens.font2xl
@@ -54,7 +49,7 @@ Dialog {
             Layout.fillWidth: true
         }
 
-        // Warning banner (not primary token)
+        // Warning banner
         Rectangle {
             visible: !mainViewModel.isPrimaryToken
             Layout.fillWidth: true
@@ -76,7 +71,6 @@ Dialog {
             }
         }
 
-        // Error message
         Rectangle {
             visible: errorMessage !== ""
             Layout.fillWidth: true
@@ -224,7 +218,6 @@ Dialog {
             }
         }
 
-        // Active subtokens header
         Text {
             text: "Subtokens activos"
             font.pixelSize: DesignTokens.fontLg
@@ -323,7 +316,6 @@ Dialog {
                 }
             }
 
-            // Empty state
             Text {
                 visible: mainViewModel.tokensList.length === 0
                 anchors.centerIn: parent
@@ -354,7 +346,6 @@ Dialog {
         }
     }
 
-    // Revoke confirmation dialog
     Dialog {
         id: revokeConfirmDialog
         title: "Confirmar revocación"
@@ -417,7 +408,6 @@ Dialog {
         }
     }
 
-    // Connect to ViewModel signals
     Connections {
         target: mainViewModel
 

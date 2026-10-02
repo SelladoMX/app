@@ -1,4 +1,3 @@
-// StepIndicator.qml - Step container for guided workflow
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -7,27 +6,22 @@ import "../design"
 Rectangle {
     id: step
 
-    // Properties
     property int stepNumber: 1
     property string stepTitle: ""
     property string stepDescription: ""
     property string stepState: "pending"  // pending, active, completed, disabled
     property alias content: contentLoader.sourceComponent
 
-    // Signals
     signal completed()
 
-    // Sizing
     implicitHeight: mainLayout.implicitHeight + (DesignTokens.xxxl * 2)
     implicitWidth: parent.width
 
-    // Styling
     radius: DesignTokens.radiusXxl
     color: getBackgroundColor()
     border.width: 3
     border.color: getBorderColor()
 
-    // Transitions
     Behavior on border.color {
         ColorAnimation { duration: DesignTokens.durationNormal }
     }
@@ -35,20 +29,17 @@ Rectangle {
         ColorAnimation { duration: DesignTokens.durationNormal }
     }
 
-    // Main layout
     ColumnLayout {
         id: mainLayout
         anchors.fill: parent
         anchors.margins: DesignTokens.xxxl
         spacing: DesignTokens.xl
 
-        // Header
         RowLayout {
             id: headerLayout
             spacing: DesignTokens.lg
             Layout.fillWidth: true
 
-            // Number badge
             Rectangle {
                 id: numberBadge
                 width: DesignTokens.stepNumberSize
@@ -66,7 +57,6 @@ Rectangle {
                     }
                 }
 
-                // Pulse animation when active
                 SequentialAnimation on scale {
                     running: step.stepState === "active"
                     loops: Animation.Infinite
@@ -129,7 +119,6 @@ Rectangle {
             }
         }
 
-        // Content container
         Loader {
             id: contentLoader
             Layout.fillWidth: true

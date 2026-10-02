@@ -1,4 +1,3 @@
-// HistoryDialog.qml - Document history dialog with pagination
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -73,7 +72,6 @@ Dialog {
             }
         }
 
-        // Loading indicator
         BusyIndicator {
             visible: viewModel && viewModel.isLoading
             Layout.alignment: Qt.AlignHCenter
@@ -128,7 +126,6 @@ Dialog {
                         anchors.margins: DesignTokens.md
                         spacing: DesignTokens.xs
 
-                        // Filename
                         Text {
                             text: modelData.filename || "Sin nombre"
                             font.pixelSize: DesignTokens.fontBase
@@ -157,7 +154,6 @@ Dialog {
                             }
                         }
 
-                        // Signer info
                         Text {
                             text: "Firmado por: " + (modelData.signer_cn || "Sin información del firmante")
                             font.pixelSize: DesignTokens.fontSm
@@ -167,7 +163,6 @@ Dialog {
                             visible: modelData.signer_cn !== undefined && modelData.signer_cn !== ""
                         }
 
-                        // Verification URL
                         Text {
                             visible: modelData.verification_token !== undefined && modelData.verification_token !== ""
                             property string verifyUrl: "https://www.selladomx.com/verify/" + modelData.verification_token
@@ -220,7 +215,6 @@ Dialog {
             }
         }
 
-        // Close button
         ModernButton {
             text: "Cerrar"
             variant: "primary"
@@ -229,7 +223,6 @@ Dialog {
         }
     }
 
-    // Error handling
     Connections {
         target: viewModel
         function onErrorOccurred(message) {
@@ -239,7 +232,6 @@ Dialog {
         }
     }
 
-    // Error message display
     Rectangle {
         id: errorMessage
         visible: errorText.visible

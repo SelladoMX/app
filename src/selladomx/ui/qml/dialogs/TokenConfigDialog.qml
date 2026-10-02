@@ -1,4 +1,3 @@
-// TokenConfigDialog.qml - Token configuration dialog
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -21,7 +20,6 @@ Dialog {
         border.color: DesignTokens.borderDefault
     }
 
-    // Custom properties
     property bool isValidating: false
     property bool validationSuccess: false
     property string validationMessage: ""
@@ -31,7 +29,6 @@ Dialog {
         anchors.fill: parent
         spacing: DesignTokens.lg
 
-        // Title
         Text {
             text: "Configurar Token de Autenticación"
             font.pixelSize: DesignTokens.font2xl
@@ -40,7 +37,6 @@ Dialog {
             Layout.fillWidth: true
         }
 
-        // Subtitle
         Text {
             text: "Ingresa tu token de SelladoMX para acceder a TSA profesional.\nFormato esperado: smx_xxxxxxxxxxxxx"
             font.pixelSize: DesignTokens.fontBase
@@ -49,7 +45,6 @@ Dialog {
             Layout.fillWidth: true
         }
 
-        // Token input
         TextField {
             id: tokenInput
             Layout.fillWidth: true
@@ -73,7 +68,6 @@ Dialog {
             }
         }
 
-        // Validation result
         Rectangle {
             visible: validationMessage !== ""
             Layout.fillWidth: true
@@ -99,7 +93,6 @@ Dialog {
             Layout.fillHeight: true
         }
 
-        // Help text
         Text {
             text: "💡 Consigue tu token en <a href='" + buyCreditsUrl + "' style='color: " + DesignTokens.primary + ";'>selladomx.com/precios</a>"
             font.pixelSize: DesignTokens.fontSm
@@ -151,7 +144,6 @@ Dialog {
             return
         }
 
-        // Basic format validation
         var isValidFormat = /^(smx_[A-Za-z0-9]{5,}|[0-9a-fA-F]{64})$/.test(token)
         if (!isValidFormat) {
             validationMessage = "Formato de token inválido. Debe comenzar con 'smx_' o ser un hash de 64 caracteres."
@@ -162,11 +154,9 @@ Dialog {
         isValidating = true
         validationMessage = "Validando token con el servidor..."
 
-        // Call the backend to validate and save
         mainViewModel.validateAndSaveToken(token)
     }
 
-    // Connect to validation result signal
     Connections {
         target: mainViewModel
         function onTokenValidationResult(success, message) {
@@ -175,7 +165,6 @@ Dialog {
             tokenDialog.validationMessage = message
 
             if (success) {
-                // Close dialog after a short delay
                 closeTimer.start()
             }
         }

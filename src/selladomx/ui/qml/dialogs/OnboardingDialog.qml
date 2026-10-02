@@ -1,4 +1,3 @@
-// OnboardingDialog.qml - Modern onboarding wizard
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -31,7 +30,6 @@ Dialog {
         anchors.fill: parent
         spacing: 0
 
-        // Slides container
         StackLayout {
             id: slidesStack
             currentIndex: currentSlide
@@ -47,7 +45,6 @@ Dialog {
 
                     Item { Layout.preferredHeight: DesignTokens.xl }
 
-                    // App icon
                     Image {
                         source: appIconSource
                         Layout.preferredWidth: 72
@@ -387,7 +384,6 @@ Dialog {
                 anchors.margins: DesignTokens.lg
                 spacing: DesignTokens.md
 
-                // Skip button
                 Button {
                     text: "Omitir"
                     flat: true
@@ -432,7 +428,6 @@ Dialog {
 
                 Item { Layout.fillWidth: true }
 
-                // Previous button
                 ModernButton {
                     text: "Anterior"
                     variant: "secondary"
@@ -440,7 +435,6 @@ Dialog {
                     onClicked: currentSlide--
                 }
 
-                // Next/Finish button
                 ModernButton {
                     text: currentSlide < totalSlides - 1 ? "Siguiente" : "Comenzar"
                     variant: "primary"

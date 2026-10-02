@@ -1,4 +1,3 @@
-// ModernButton.qml - Modern button component with animations
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import "../design"
@@ -6,12 +5,10 @@ import "../design"
 Button {
     id: control
 
-    // Custom properties
     property string variant: "primary"  // primary, secondary, success, danger
     property bool loading: false
     property bool fullWidth: false
 
-    // Sizing
     implicitWidth: fullWidth ? parent.width : Math.max(120, contentItem.implicitWidth + leftPadding + rightPadding)
     implicitHeight: DesignTokens.buttonLg
 
@@ -20,10 +17,8 @@ Button {
     topPadding: 0
     bottomPadding: 0
 
-    // Cursor
     hoverEnabled: true
 
-    // Scale animation on press
     scale: pressed ? 0.97 : 1.0
     Behavior on scale {
         NumberAnimation {
@@ -32,7 +27,6 @@ Button {
         }
     }
 
-    // Content
     contentItem: Item {
         implicitWidth: row.implicitWidth
         implicitHeight: row.implicitHeight
@@ -42,7 +36,6 @@ Button {
             anchors.centerIn: parent
             spacing: DesignTokens.sm
 
-            // Loading indicator
             BusyIndicator {
                 visible: control.loading
                 width: 20
@@ -51,7 +44,6 @@ Button {
                 running: control.loading
             }
 
-            // Button text
             Text {
                 text: control.text
                 font.pixelSize: DesignTokens.fontLg
@@ -63,7 +55,6 @@ Button {
         }
     }
 
-    // Background
     background: Rectangle {
         id: backgroundRect
         radius: DesignTokens.radiusLg
@@ -72,7 +63,6 @@ Button {
         border.width: variant === "secondary" ? 2 : 0
         border.color: variant === "secondary" ? DesignTokens.primary : DesignTokens.borderDefault
 
-        // Gradient for primary/success/danger variants
         gradient: Gradient {
             GradientStop {
                 position: 0.0
@@ -84,7 +74,6 @@ Button {
             }
         }
 
-        // Hover overlay
         Rectangle {
             anchors.fill: parent
             radius: parent.radius
@@ -99,7 +88,6 @@ Button {
             }
         }
 
-        // Disabled overlay
         Rectangle {
             anchors.fill: parent
             radius: parent.radius

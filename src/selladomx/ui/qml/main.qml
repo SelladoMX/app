@@ -1,4 +1,3 @@
-// main.qml - Main application window
 import QtQuick 2.15
 import QtQuick.Window 2.15
 import QtQuick.Controls 2.15
@@ -11,7 +10,6 @@ import "dialogs"
 Window {
     id: mainWindow
 
-    // Window properties
     width: 950
     height: 750
     minimumWidth: 900
@@ -21,12 +19,12 @@ Window {
 
     color: DesignTokens.bgPrimary
 
-    // Function to show onboarding (called from Python)
+    // Called from Python
     function showOnboarding() {
         onboardingLoader.active = true
     }
 
-    // Global dialog functions (called from child components)
+    // Called from child components
     function showBenefitsDialog() {
         benefitsDialog.open()
     }
@@ -45,14 +43,12 @@ Window {
         anchors.margins: DesignTokens.xl
         spacing: DesignTokens.lg
 
-        // Header Bar
         HeaderBar {
             id: headerBar
             Layout.fillWidth: true
             Layout.preferredHeight: 60
         }
 
-        // Main Content (3 Steps)
         ScrollView {
             id: mainScrollView
             Layout.fillWidth: true
@@ -86,11 +82,9 @@ Window {
         }
     }
 
-    // Status message popup (optional - for floating notifications)
     Connections {
         target: mainViewModel
         function onStatusMessage(message, color) {
-            // Could show a toast notification here
             console.log("[Status]", message)
         }
 
@@ -99,12 +93,10 @@ Window {
         }
 
         function onFormReset() {
-            // Scroll to top (Step 1) after form reset
             mainScrollView.contentItem.contentY = 0
         }
     }
 
-    // Deep link token configured notification banner
     Rectangle {
         id: deepLinkBanner
         anchors.horizontalCenter: parent.horizontalCenter
@@ -154,7 +146,6 @@ Window {
         }
     }
 
-    // Onboarding dialog (loaded on demand)
     Loader {
         id: onboardingLoader
         active: false
@@ -162,7 +153,6 @@ Window {
         sourceComponent: OnboardingDialog {
             anchors.centerIn: parent
             onAccepted: {
-                // Mark onboarding as completed via settings bridge
                 settingsBridge.markOnboardingCompleted()
                 onboardingLoader.active = false
             }
@@ -199,13 +189,11 @@ Window {
         anchors.centerIn: parent
     }
 
-    // Update available dialog
     UpdateAvailableDialog {
         id: updateDialog
         anchors.centerIn: parent
     }
 
-    // Check for updates shortly after startup
     Timer {
         interval: 3000
         running: true

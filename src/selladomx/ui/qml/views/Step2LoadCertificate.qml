@@ -1,4 +1,3 @@
-// Step2LoadCertificate.qml - Certificate and private key loading step
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -171,7 +170,6 @@ StepIndicator {
                     enabled: mainViewModel.certPath && mainViewModel.keyPath
 
                     onTextChanged: {
-                        // Auto-validate when password is entered and both files are selected
                         if (mainViewModel.certPath && mainViewModel.keyPath && text.length > 0) {
                             validateTimer.restart()
                         }
@@ -247,7 +245,6 @@ StepIndicator {
             }
         }
 
-        // Info text
         Text {
             text: "🔒 Tu contraseña es procesada localmente y nunca se envía a ningún servidor"
             font.pixelSize: DesignTokens.fontSm
@@ -257,7 +254,6 @@ StepIndicator {
         }
     }
 
-    // File dialogs
     FileDialog {
         id: certDialog
         title: "Seleccionar certificado"
