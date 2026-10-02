@@ -56,6 +56,8 @@ class TSAClient:
         """
         last_error = None
 
+        # FIXME: crear HTTPTimeStamper no contacta al servidor, así que el primer
+        # provider siempre "funciona" y el fallback nunca se activa.
         for tsa_url in self.fallback_providers:
             try:
                 logger.info(f"Attempting to create timestamper with: {tsa_url}")

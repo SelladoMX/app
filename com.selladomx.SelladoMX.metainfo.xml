@@ -18,7 +18,6 @@
       <li>Firma digital con certificados e.firma (.cer + .key)</li>
       <li>Sello de tiempo básico (gratuito) o protección mejorada (certificado)</li>
       <li>Procesamiento por lotes de múltiples PDFs</li>
-      <li>Verificación de firmas y sellos de tiempo</li>
       <li>Historial de documentos firmados con protección mejorada</li>
     </ul>
   </description>

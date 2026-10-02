@@ -29,14 +29,12 @@ Para reportar vulnerabilidades, consulta [SECURITY.md](SECURITY.md).
 
 ### Linux
 
-[![Disponible en Flathub](https://flathub.org/assets/badges/flathub-badge-en.svg)](https://flathub.org/apps/com.selladomx.SelladoMX)
+Descarga `SelladoMX-<versión>.flatpak` desde [GitHub Releases](https://github.com/SelladoMX/app/releases):
 
 ```bash
-flatpak install flathub com.selladomx.SelladoMX
+flatpak install --user SelladoMX-<versión>.flatpak
 flatpak run com.selladomx.SelladoMX
 ```
-
-También disponible como bundle `.flatpak` en [GitHub Releases](https://github.com/SelladoMX/app/releases).
 
 ### macOS
 
@@ -74,7 +72,7 @@ El TSA básico funciona bien para uso personal. Si necesitas validez legal certi
 - Cumplimiento NOM-151-SCFI-2016 y normas europeas eIDAS
 - Proveedor europeo certificado
 - Evidencia admisible en procesos legales
-- Desde $2 MXN por documento
+- Desde $7 MXN por documento
 
 Configura tu token desde **Configuración** o usa un magic link desde tu email.
 
