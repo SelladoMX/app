@@ -59,18 +59,14 @@ class CertificateValidator:
             CertificateRevokedError: Si el certificado está revocado
             CertificateValidationError: Si falla la validación
         """
-        # Cargar certificado
         cert = self._load_certificate()
         logger.info(f"Certificate loaded: {cert.subject.rfc4514_string()}")
 
-        # Cargar clave privada
         private_key = self._load_private_key()
         logger.info("Private key loaded successfully")
 
-        # Validar vigencia
         self._validate_validity(cert)
 
-        # Validar revocación
         self._validate_revocation(cert)
 
         logger.info("Certificate validation successful")
@@ -91,7 +87,6 @@ class CertificateValidator:
             try:
                 return x509.load_der_x509_certificate(cert_data, default_backend())
             except Exception:
-                # Si falla, intentar PEM
                 return x509.load_pem_x509_certificate(cert_data, default_backend())
 
         except Exception as e:
@@ -110,9 +105,7 @@ class CertificateValidator:
                 key_data = f.read()
 
             # Los archivos .key del SAT pueden estar en varios formatos
-            # Intentar múltiples métodos de carga
-
-            # 1. Intentar DER (más común en e.firma)
+            # DER primero (más común en e.firma)
             try:
                 return serialization.load_der_private_key(
                     key_data, password=self.password, backend=default_backend()
@@ -120,7 +113,6 @@ class CertificateValidator:
             except Exception as der_error:
                 logger.debug(f"DER loading failed: {der_error}")
 
-            # 2. Intentar PEM
             try:
                 return serialization.load_pem_private_key(
                     key_data, password=self.password, backend=default_backend()
@@ -128,7 +120,6 @@ class CertificateValidator:
             except Exception as pem_error:
                 logger.debug(f"PEM loading failed: {pem_error}")
 
-            # 3. Intentar con OpenSSL legacy para formatos antiguos
             try:
                 from cryptography.hazmat.primitives.serialization import pkcs12
 
@@ -141,7 +132,6 @@ class CertificateValidator:
             except Exception as pkcs12_error:
                 logger.debug(f"PKCS#12 loading failed: {pkcs12_error}")
 
-            # Si todos fallan, reportar error
             raise CertificateError(
                 "No se pudo cargar la clave privada. Verifique que:\n"
                 "1. El archivo .key sea correcto\n"
@@ -167,15 +157,14 @@ class CertificateValidator:
         """Valida que el certificado esté dentro de su período de vigencia"""
         now = datetime.now(timezone.utc)
 
-        # Use not_valid_before/not_valid_after (compatible con cryptography >= 42.0)
+        # not_valid_*_utc existe desde cryptography 42; versiones anteriores solo
+        # tienen not_valid_*, que devuelve datetimes naive
         try:
             not_before = cert.not_valid_before_utc
             not_after = cert.not_valid_after_utc
         except AttributeError:
-            # Fallback para versiones más nuevas de cryptography
             not_before = cert.not_valid_before
             not_after = cert.not_valid_after
-            # Asegurar que sean timezone-aware
             if not_before.tzinfo is None:
                 not_before = not_before.replace(tzinfo=timezone.utc)
             if not_after.tzinfo is None:
@@ -198,13 +187,11 @@ class CertificateValidator:
         Intenta OCSP primero, si falla y está habilitado el fallback, usa CRL.
         """
         try:
-            # Crear contexto de validación
             context = ValidationContext(
                 allow_fetching=True,
                 revocation_mode="hard-fail" if not ENABLE_CRL_FALLBACK else "soft-fail",
             )
 
-            # Intentar validar
             validator = context.certificate_registry
 
             logger.info("Checking certificate revocation status")
@@ -240,14 +227,12 @@ class CertificateValidator:
         Returns:
             Diccionario con información del certificado
         """
-        # Obtener fechas de validez (compatible con diferentes versiones de cryptography)
         try:
             not_before = cert.not_valid_before_utc
             not_after = cert.not_valid_after_utc
         except AttributeError:
             not_before = cert.not_valid_before
             not_after = cert.not_valid_after
-            # Asegurar que sean timezone-aware
             if not_before.tzinfo is None:
                 not_before = not_before.replace(tzinfo=timezone.utc)
             if not_after.tzinfo is None:
@@ -261,7 +246,6 @@ class CertificateValidator:
             "not_after": not_after.isoformat(),
         }
 
-        # Extraer nombre común si existe
         try:
             cn_attrs = cert.subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)
             if cn_attrs:

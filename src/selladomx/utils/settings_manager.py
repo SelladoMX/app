@@ -163,7 +163,7 @@ class SettingsManager:
         """
         expires_at_str = self.settings.value("api/token_expires_at", None, type=str)
         if not expires_at_str:
-            return False  # No expiration set
+            return False
 
         from datetime import datetime
 
@@ -203,7 +203,7 @@ class SettingsManager:
         Returns:
             True if professional TSA is preferred, False for free TSA.
         """
-        # Default to False (free TSA) if not set or no API key
+        # No API key: always free TSA. With one, default to professional.
         if not self.has_api_key():
             return False
 

@@ -58,13 +58,11 @@ class SigningCoordinator(QObject):
             logger.warning("Signing already in progress")
             return
 
-        # Create TSA client if not using professional TSA
         if not use_professional_tsa:
             self.tsa_client = TSAClient()
         else:
             self.tsa_client = None
 
-        # Create worker thread
         self.worker = SigningWorker(
             pdf_paths=pdf_paths,
             cert=cert,
@@ -77,12 +75,10 @@ class SigningCoordinator(QObject):
             signer_serial=signer_serial,
         )
 
-        # Connect worker signals to our signals (pass-through)
         self.worker.progress.connect(self._on_progress)
         self.worker.file_completed.connect(self._on_file_completed)
         self.worker.finished.connect(self._on_finished)
 
-        # Start the worker thread
         self.worker.start()
 
         logger.info(f"Started signing {len(pdf_paths)} files")
@@ -117,7 +113,6 @@ class SigningCoordinator(QObject):
         """
         self.finished.emit(errors)
 
-        # Clean up worker
         if self.worker:
             self.worker.deleteLater()
             self.worker = None

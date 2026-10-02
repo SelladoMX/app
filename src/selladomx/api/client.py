@@ -84,7 +84,6 @@ class SelladoMXAPIClient:
                 method=method, url=url, json=json_data, timeout=30
             )
 
-            # Handle errors
             if response.status_code == 401:
                 error_data = response.json() if response.content else {}
                 error_type = error_data.get("error", "")
@@ -98,7 +97,6 @@ class SelladoMXAPIClient:
                         "API key inválido o expirado", status_code=401
                     )
             elif response.status_code == 403:
-                # Check if it's insufficient credits or primary token required
                 try:
                     error_data = response.json()
                     if error_data.get("error") == "insufficient_credits":
@@ -125,7 +123,6 @@ class SelladoMXAPIClient:
 
                 raise APIError(error_msg, status_code=response.status_code)
 
-            # Success - return JSON
             return response.json()
 
         except requests.exceptions.ConnectionError as e:
@@ -161,7 +158,7 @@ class SelladoMXAPIClient:
         response = self._request("GET", "/api/v1/balance")
         credits = response.get("credits_remaining", 0)
         logger.info(f"Current balance: {credits} credits")
-        return response  # Return full dict instead of just credits
+        return response
 
     def request_timestamp(
         self,
@@ -352,7 +349,7 @@ class SelladoMXAPIClient:
 
         Returns:
             dict: {
-                "token": "smx_xxxxx...",  # Full token (only shown once!)
+                "token": "smx_xxxxx...",  # Full token (only shown once)
                 "alias": "Laptop Juan",
                 "expires_at": "2025-01-20T10:00:00Z"
             }
@@ -398,7 +395,7 @@ class SelladoMXAPIClient:
         return bool(re.match(r"^smx_[A-Za-z0-9]{5,}$", token))
 
     def is_configured(self) -> bool:
-        """Check if API client is configured with a valid API key.
+        """Check if API client is configured with an API key.
 
         Returns:
             True if API key is set, False otherwise

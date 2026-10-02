@@ -74,7 +74,6 @@ class SigningWorker(QThread):
         """Execute signing process."""
         total = len(self.pdf_paths)
 
-        # For professional TSA: create API client upfront
         api_client = None
         if self.use_professional_tsa and self.api_key:
             api_client = SelladoMXAPIClient(api_key=self.api_key)
@@ -83,7 +82,6 @@ class SigningWorker(QThread):
             self.progress.emit(i, total)
 
             try:
-                # Calculate output_path if output directory was specified
                 if self.output_dir:
                     output_path = (
                         self.output_dir
@@ -92,7 +90,6 @@ class SigningWorker(QThread):
                 else:
                     output_path = None  # Use default (same folder as source)
 
-                # Create appropriate timestamper for this file
                 api_timestamper = None
                 if api_client and self.use_professional_tsa:
                     api_timestamper = APITimeStamper(
@@ -103,7 +100,6 @@ class SigningWorker(QThread):
                         signer_serial=self.signer_serial,
                     )
 
-                # Create signer with the appropriate timestamper
                 # Each file gets its own PDFSigner because the APITimeStamper
                 # is per-file (different filename/size metadata)
                 signer = PDFSigner(
@@ -113,10 +109,8 @@ class SigningWorker(QThread):
                     timestamper=api_timestamper,
                 )
 
-                # Sign — timestamp is now embedded during signing
                 output_path = signer.sign_pdf(pdf_path, output_path)
 
-                # After signing: update record with actual file hash
                 verification_url = ""
                 if api_timestamper and api_timestamper.record_id:
                     file_hash = hashlib.sha256(output_path.read_bytes()).hexdigest()

@@ -8,7 +8,6 @@ from ...api.exceptions import AuthenticationError, NetworkError
 class HistoryViewModel(QObject):
     """ViewModel for document history with pagination."""
 
-    # Signals
     historyLoaded = Signal(list, int)  # items, total_count
     loadingChanged = Signal(bool)
     errorOccurred = Signal(str)

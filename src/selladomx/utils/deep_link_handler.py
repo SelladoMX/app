@@ -38,20 +38,16 @@ class DeepLinkHandler(QObject):
             Token string if valid, None otherwise
         """
         try:
-            # Parse URL
             parsed = urlparse(url)
 
-            # Validate scheme
             if parsed.scheme != "selladomx":
                 logger.error(f"Invalid scheme: {parsed.scheme}")
                 return None
 
-            # Validate path (should be 'auth')
             if parsed.netloc != "auth" and parsed.path.strip("/") != "auth":
                 logger.error(f"Invalid path: {parsed.netloc or parsed.path}")
                 return None
 
-            # Extract token from query params
             params = parse_qs(parsed.query)
             token = params.get("token", [None])[0]
 
@@ -59,7 +55,6 @@ class DeepLinkHandler(QObject):
                 logger.error("Missing token parameter")
                 return None
 
-            # Validate token format
             from selladomx.api.client import SelladoMXAPIClient
 
             if not SelladoMXAPIClient.validate_token_format(token):

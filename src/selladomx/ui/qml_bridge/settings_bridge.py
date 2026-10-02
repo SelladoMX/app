@@ -15,7 +15,6 @@ class SettingsBridge(QObject):
     with signals for property changes.
     """
 
-    # Signals
     lastCertPathChanged = Signal()
     lastKeyPathChanged = Signal()
     hasApiKeyChanged = Signal()

@@ -74,7 +74,6 @@ class PDFSigner:
         if not pdf_path.exists():
             raise PDFError(f"Archivo PDF no encontrado: {pdf_path}")
 
-        # Determinar ruta de salida
         if output_path is None:
             output_path = (
                 pdf_path.parent / f"{pdf_path.stem}{SIGNED_SUFFIX}{pdf_path.suffix}"
@@ -85,18 +84,16 @@ class PDFSigner:
         logger.info(f"Signing PDF: {pdf_path.name}")
 
         try:
-            # Leer PDF en memoria
             with open(pdf_path, "rb") as f:
                 pdf_data = BytesIO(f.read())
 
-            # Crear writer incremental (preserva PDF original)
+            # Escritura incremental: preserva el PDF original
             writer = IncrementalPdfFileWriter(pdf_data)
 
-            # Convertir certificado de cryptography a asn1crypto
+            # pyhanko requiere objetos asn1crypto, no de cryptography
             cert_bytes = self.cert.public_bytes(encoding=serialization.Encoding.DER)
             asn1_cert = asn1_x509.Certificate.load(cert_bytes)
 
-            # Convertir clave privada de cryptography a asn1crypto
             key_bytes = self.private_key.private_bytes(
                 encoding=serialization.Encoding.DER,
                 format=serialization.PrivateFormat.PKCS8,
@@ -104,19 +101,16 @@ class PDFSigner:
             )
             asn1_key = asn1_keys.PrivateKeyInfo.load(key_bytes)
 
-            # Crear signer con objetos asn1crypto
             signer = signers.SimpleSigner(
                 signing_cert=asn1_cert, signing_key=asn1_key, cert_registry=None
             )
 
-            # Configurar metadata de la firma
             signature_meta = signers.PdfSignatureMetadata(
                 field_name="Signature1",
                 name=self._get_signer_name(),
                 location="México",
             )
 
-            # Agregar campo de firma invisible
             fields.append_signature_field(
                 writer,
                 sig_field_spec=fields.SigFieldSpec(
@@ -125,7 +119,6 @@ class PDFSigner:
                 ),
             )
 
-            # Use provided timestamper (API-based) or fall back to TSA client (free)
             timestamper = self.timestamper
             if timestamper is None and self.tsa_client:
                 try:
@@ -138,7 +131,6 @@ class PDFSigner:
             elif timestamper is not None:
                 logger.info("Using provided timestamper (professional TSA)")
 
-            # Firmar el PDF
             out = signers.sign_pdf(
                 writer,
                 signature_meta=signature_meta,
@@ -147,7 +139,6 @@ class PDFSigner:
                 in_place=True,
             )
 
-            # Guardar PDF firmado
             with open(output_path, "wb") as f:
                 f.write(out.getbuffer())
 
@@ -197,7 +188,6 @@ class PDFSigner:
                 reader = PdfFileReader(f)
                 sig_fields = fields.enumerate_sig_fields(reader)
 
-                # Verificar cada firma
                 all_valid = True
                 for sig_field in sig_fields:
                     logger.info(f"Verifying signature field: {sig_field.field_name}")
@@ -210,7 +200,6 @@ class PDFSigner:
                         all_valid = False
                         continue
 
-                    # Validar firma
                     try:
                         status = validate_pdf_signature(embedded_sig, reader)
                         if status.valid:

@@ -19,7 +19,6 @@ def register_url_scheme_windows():
     try:
         import winreg
 
-        # Get executable path
         if getattr(sys, "frozen", False):
             # Running as compiled executable
             exe_path = sys.executable
@@ -32,12 +31,10 @@ def register_url_scheme_windows():
         # Register URL scheme in HKEY_CURRENT_USER (doesn't require admin)
         key_path = r"Software\Classes\selladomx"
 
-        # Create main key
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path) as key:
             winreg.SetValue(key, "", winreg.REG_SZ, "URL:SelladoMX Protocol")
             winreg.SetValueEx(key, "URL Protocol", 0, winreg.REG_SZ, "")
 
-        # Create shell\open\command key
         command_path = rf"{key_path}\shell\open\command"
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, command_path) as key:
             winreg.SetValue(key, "", winreg.REG_SZ, f'"{exe_path}" "%1"')
@@ -85,14 +82,12 @@ def register_url_scheme_linux():
         # Check if running from AppImage
         appimage_path = os.environ.get("APPIMAGE")
         if not appimage_path:
-            # Not running from AppImage, check if frozen
             if getattr(sys, "frozen", False):
                 appimage_path = sys.executable
             else:
                 # Development mode
                 appimage_path = "selladomx"
 
-        # Create desktop entry
         desktop_file_content = f"""[Desktop Entry]
 Type=Application
 Name=SelladoMX
@@ -105,7 +100,6 @@ MimeType=x-scheme-handler/selladomx;
 StartupWMClass=selladomx
 """
 
-        # Write to ~/.local/share/applications/
         apps_dir = home / ".local" / "share" / "applications"
         apps_dir.mkdir(parents=True, exist_ok=True)
 
@@ -115,7 +109,6 @@ StartupWMClass=selladomx
 
         logger.info(f"Desktop file written to {desktop_file}")
 
-        # Update desktop database
         import subprocess
 
         try:
@@ -134,7 +127,6 @@ StartupWMClass=selladomx
         except Exception as e:
             logger.warning(f"Failed to update desktop database: {e}")
 
-        # Register MIME type
         try:
             result = subprocess.run(
                 [
@@ -218,7 +210,6 @@ def is_url_scheme_registered():
     elif sys.platform == "linux":
         return is_url_scheme_registered_linux()
     elif sys.platform == "darwin":
-        # macOS handles this via Info.plist
         return True
     else:
         return False

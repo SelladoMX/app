@@ -67,7 +67,6 @@ class TSAClient:
                 logger.warning(f"Failed to create timestamper with {tsa_url}: {e}")
                 continue
 
-        # Si llegamos aquí, todos los TSAs fallaron
         logger.error(f"All TSA providers failed. Last error: {last_error}")
         raise TSAError(
             f"No se pudo conectar a ningún servicio TSA. "
