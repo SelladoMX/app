@@ -35,6 +35,10 @@ make reset-onboarding              # show the first-run onboarding again
 - User-facing strings are in Spanish; log messages are in English. The docs are in Spanish.
 - CI (`.github/workflows/build.yml`) runs on `v*` tags and manual dispatch. It builds the Windows zip, the macOS DMG and the Flatpak bundle, with build-provenance attestations.
 
+## Commits
+
+Don't add `Co-Authored-By` trailers or "Generated with" lines to commits or PR descriptions. `.claude/settings.json` disables Claude's attribution for this repo.
+
 ## Comments and docs
 
 Write a comment only when it tells the reader something the code can't: an ordering constraint, a workaround, a security boundary, or the reason for a non-obvious choice, stated once. Don't narrate steps, label self-describing elements, record history ("now", "used to"), or describe plans; put plans in issues. Keep docstrings (including Args/Returns), `# ====` banners in long files, and QML landmarks on containers without an id. Check doc claims against the code before writing them.
