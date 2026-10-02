@@ -13,53 +13,38 @@ This will:
 1. Open the SelladoMX application automatically
 2. Validate the token with the backend
 3. Configure your authentication automatically
-4. Display your credit balance and account info
+4. Show your remaining credits
 
 ## Automatic Registration
 
-Starting from version 0.1.0, SelladoMX **automatically registers** the URL scheme on first launch.
+SelladoMX attempts registration once, on first launch; the attempt is recorded in QSettings (`system/url_scheme_registered`) whether or not it succeeded.
 
 ### Windows
 - Registers in `HKEY_CURRENT_USER\Software\Classes\selladomx`
 - No administrator rights required
-- Works with portable .exe files
+- Stores the path of the running `selladomx.exe`; if the folder is moved, the registered path is stale and must be re-registered
 
 ### Linux
-- Flatpak automatically registers the URL scheme via desktop file
-- Desktop entry at `/var/lib/flatpak/exports/share/applications/` (system) or `~/.local/share/flatpak/exports/share/applications/` (user)
-- MIME type handler registered automatically by Flatpak
+- The Flatpak exports `com.selladomx.SelladoMX.desktop` (with `MimeType=x-scheme-handler/selladomx`) to `/var/lib/flatpak/exports/share/applications/` (system install) or `~/.local/share/flatpak/exports/share/applications/` (user install)
+- On first launch the app also writes `~/.local/share/applications/selladomx.desktop` and runs `xdg-mime default selladomx.desktop x-scheme-handler/selladomx`
 
 ### macOS
-- Registration handled by the .app bundle's `Info.plist`
-- Configured during build via PyInstaller
+- Registration handled by `CFBundleURLTypes` in the .app bundle's `Info.plist`, set in `selladomx.spec`
 
 ## Testing
 
-Test if the URL scheme is registered:
+Check registration (offers to register if missing):
 
 ```bash
-# Run the test script
-python scripts/test_url_scheme.py
+poetry run python scripts/test_url_scheme.py
 ```
 
-Or manually test:
+Open a test link:
 
-### Windows
-```cmd
-# Open from Command Prompt
-start selladomx://auth?token=smx_test123
-```
-
-### Linux
 ```bash
-# Open from terminal
-xdg-open "selladomx://auth?token=smx_test123"
-```
-
-### macOS
-```bash
-# Open from terminal
-open "selladomx://auth?token=smx_test123"
+start selladomx://auth?token=smx_test123          # Windows (cmd)
+xdg-open "selladomx://auth?token=smx_test123"     # Linux
+open "selladomx://auth?token=smx_test123"         # macOS
 ```
 
 ## Manual Registration (Fallback)
@@ -67,10 +52,7 @@ open "selladomx://auth?token=smx_test123"
 If automatic registration fails, you can register manually:
 
 ### Windows
-Run the batch script:
-```cmd
-scripts\register-url-scheme-windows.bat
-```
+Copy `scripts\register-url-scheme-windows.bat` next to `selladomx.exe` (it registers the exe in its own folder) and run it.
 
 Or import the registry manually by creating a `.reg` file with:
 ```registry
@@ -81,24 +63,18 @@ Windows Registry Editor Version 5.00
 "URL Protocol"=""
 
 [HKEY_CURRENT_USER\Software\Classes\selladomx\shell\open\command]
-@="\"C:\\Path\\To\\SelladoMX.exe\" \"%1\""
+@="\"C:\\Path\\To\\selladomx.exe\" \"%1\""
 ```
 
-### Linux
-Copy the desktop file:
+### Linux (without Flatpak)
 ```bash
-# Copy from assets
 cp assets/selladomx.desktop ~/.local/share/applications/
-
-# Make executable
 chmod +x ~/.local/share/applications/selladomx.desktop
-
-# Register MIME type
 xdg-mime default selladomx.desktop x-scheme-handler/selladomx
-
-# Update database
 update-desktop-database ~/.local/share/applications/
 ```
+
+`assets/selladomx.desktop` runs `selladomx %u`, so `selladomx` must be on `PATH`.
 
 ## Troubleshooting
 
@@ -111,17 +87,13 @@ update-desktop-database ~/.local/share/applications/
 3. Re-run `register-url-scheme-windows.bat`
 
 ### Linux: Links don't open the app
-1. Check desktop file exists:
-   ```bash
-   ls ~/.local/share/applications/selladomx.desktop
-   ```
-2. Verify MIME type association:
+1. Verify MIME type association:
    ```bash
    xdg-mime query default x-scheme-handler/selladomx
    ```
-   Should return: `selladomx.desktop`
-3. Check desktop file has correct Exec path
-4. Re-run registration:
+   Should return `com.selladomx.SelladoMX.desktop` (Flatpak) or `selladomx.desktop`
+2. Check that the desktop file it names exists and has a correct `Exec` line
+3. Re-run registration:
    ```bash
    python scripts/test_url_scheme.py
    ```
@@ -129,53 +101,23 @@ update-desktop-database ~/.local/share/applications/
 ### macOS: Links don't work
 1. Ensure you're running from the .app bundle (not the raw executable)
 2. Check Info.plist contains `CFBundleURLTypes`
-3. Rebuild the .app:
-   ```bash
-   ./scripts/build.sh
-   ```
+3. Rebuild the .app with `make build`
 
 ## Security Considerations
 
-- The URL scheme handler validates token format before processing
 - Only `selladomx://auth?token=XXX` URLs are accepted
-- Token must match the `smx_[0-9a-f]{5,}` pattern
+- Token must match `^smx_[A-Za-z0-9]{5,}$` (`SelladoMXAPIClient.validate_token_format`)
 - Invalid URLs are logged and rejected silently
-- Backend validates all tokens before accepting them
+- The token is saved only after the API accepts it (balance request)
 
 ## Implementation Details
 
-The URL scheme registration is handled by:
-
-1. **Platform Helpers** (`src/selladomx/utils/platform_helpers.py`)
-   - Cross-platform registration functions
-   - Detection of existing registrations
-   - Error handling and logging
-
-2. **Main Application** (`src/selladomx/main.py`)
-   - Checks registration status on startup
-   - Registers silently on first launch
-   - Processes deep link arguments
-
-3. **Deep Link Handler** (`src/selladomx/utils/deep_link_handler.py`)
-   - Parses and validates URLs
-   - Extracts tokens securely
-   - Emits signals to UI
-
-4. **Settings Manager** (`src/selladomx/utils/settings_manager.py`)
-   - Tracks registration status
-   - Prevents duplicate registrations
-   - Stores configuration
+- `src/selladomx/utils/platform_helpers.py`: per-platform registration and checks
+- `src/selladomx/utils/deep_link_handler.py`: URL parsing and token validation
+- `src/selladomx/main.py`: first-launch registration; links passed as `argv[1]`, via macOS `FileOpen` events, or forwarded from a second instance to the running one over `QLocalServer`
 
 ## For Developers
 
-To test during development:
-
 ```bash
-# Install in development mode
-pip install -e .
-
-# Run with deep link argument
-python -m selladomx "selladomx://auth?token=smx_test123"
+poetry run selladomx "selladomx://auth?token=smx_test123"
 ```
-
-The app will automatically register the URL scheme on first run, even in development mode.

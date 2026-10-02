@@ -24,15 +24,15 @@ The following are in scope for security reports:
 - The SelladoMX desktop application (this repository)
 - Certificate handling and private key protection
 - PDF signing integrity
-- Network communications (API, TSA, OCSP/CRL)
+- Network communications (API, TSA, update check)
 - Local data storage and settings
 
 ## Security Architecture
 
 - **Local processing:** PDF signing happens entirely on the user's machine. Documents are never uploaded to external servers.
-- **Certificate handling:** Private keys (.key files) are loaded into memory only during signing, never stored by the application.
-- **Network connections:** Limited to certificate validation (OCSP/CRL), TSA timestamping, and optional credit management API.
-- **Settings storage:** API tokens are stored via QSettings (OS-encrypted storage). No passwords are persisted.
+- **Certificate handling:** Private keys (.key files) are loaded into memory when the certificate is validated and are never written to disk by the application.
+- **Network connections:** Limited to TSA timestamping, the optional SelladoMX API (credits, professional timestamps, history, tokens) and the GitHub Releases API (update check).
+- **Settings storage:** API tokens are stored in plaintext via QSettings (plist, INI file or registry, depending on the OS). No passwords are persisted.
 
 ## Verification
 

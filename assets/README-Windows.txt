@@ -5,26 +5,23 @@
 HOW TO RUN:
 -----------
 1. Extract this ZIP file to any folder on your computer
-2. Double-click "SelladoMX.exe" to launch the application
-3. That's it!
+2. Double-click "selladomx.exe" to launch the application
 
 PORTABLE MODE:
 --------------
 - No installation required
 - No admin rights needed
-- No changes to Windows registry
 - Copy this entire folder to a USB drive to run from anywhere
-- All application settings are saved in the system's user profile
+- Settings are saved in the Windows registry of the current user, not in
+  this folder. On first launch the app also registers the selladomx:// link
+  handler there (current user only)
 
 FIRST RUN SECURITY WARNING:
 ---------------------------
-When you first run SelladoMX.exe, Windows may show a security warning:
+When you first run selladomx.exe, Windows may show a security warning:
   "Windows protected your PC" or "Unknown publisher"
 
-This is NORMAL and happens because:
-- The application is not code-signed (requires $400/year certificate)
-- As an open-source project, we keep distribution costs at zero
-- The app is safe to run
+This happens because the application is not code-signed.
 
 To proceed:
 1. Click "More info" on the security warning
@@ -55,10 +52,9 @@ TECHNICAL DETAILS:
 - Built with Python and PySide6 (Qt6)
 - Uses pyhanko for PDF signing
 - Supports Mexican e.firma certificates
-- No telemetry or data collection
+- No telemetry; PDFs never leave your computer
 
 ================================================================================
-Version: 0.2.0
 License: MIT License
 Website: https://github.com/SelladoMX/app
 ================================================================================

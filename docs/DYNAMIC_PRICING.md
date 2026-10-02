@@ -2,11 +2,10 @@
 
 ## Current Implementation
 
-Prices are hardcoded in `src/selladomx/config.py`:
+The price label is hardcoded in `src/selladomx/config.py` and exposed to QML as `creditPriceDisplay` (`main.py`):
 
 ```python
-CREDIT_PRICE_MXN = 2
-CREDIT_PRICE_DISPLAY = f"${CREDIT_PRICE_MXN} MXN"
+CREDIT_PRICE_DISPLAY: Final[str] = "desde $7 MXN"
 ```
 
 **Pros:**

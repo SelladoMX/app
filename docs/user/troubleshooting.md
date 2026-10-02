@@ -6,7 +6,7 @@
 
 1. Verifica que estés usando la contraseña correcta
 2. Asegúrate de que el archivo .key corresponda al certificado .cer
-3. Intenta convertir el formato usando los comandos de conversión
+3. Intenta convertir el formato (ver [certificates.md](certificates.md#conversión-de-formatos))
 4. Verifica que el archivo no esté corrupto
 
 ### Error: "Contraseña incorrecta"
@@ -38,17 +38,11 @@ Asegúrate de que:
 
 ## Problemas de TSA
 
-### Error: "No se pudo conectar al TSA"
+### Error al conectar con el servicio TSA o timeout
 
 - Verifica tu conexión a Internet
-- El servicio FreeTSA puede estar temporalmente no disponible
+- El servicio TSA puede estar temporalmente no disponible
 - Intenta nuevamente en unos minutos
-
-### Error: "Timeout de TSA"
-
-- Tu conexión a Internet puede ser lenta
-- El servicio TSA está experimentando problemas
-- Puedes ajustar el timeout en la configuración
 
 ## Problemas de Instalación
 
@@ -65,41 +59,9 @@ xattr -cr /Applications/SelladoMX.app
 1. Clic en "Más información"
 2. Clic en "Ejecutar de todas formas"
 
-### Linux: "error while loading shared libraries"
-
-Instala las dependencias de Qt:
-
-```bash
-# Ubuntu/Debian
-sudo apt-get install -y \
-    libxcb-cursor0 \
-    libxcb-xinerama0 \
-    libxcb-icccm4 \
-    libxcb-image0 \
-    libxcb-keysyms1 \
-    libxcb-randr0 \
-    libxcb-render-util0 \
-    libxcb-shape0
-
-# Fedora
-sudo dnf install \
-    xcb-util-cursor \
-    xcb-util-image \
-    xcb-util-keysyms \
-    xcb-util-renderutil \
-    xcb-util-wm
-```
-
 ## Problemas de Rendimiento
-
-### La aplicación es lenta al iniciar
-
-- Esto es normal en el primer inicio
-- PyInstaller extrae archivos temporales
-- Los siguientes inicios serán más rápidos
 
 ### La firma de múltiples PDFs es lenta
 
-- La validación OCSP/CRL requiere conexión a Internet
-- Cada PDF se firma secuencialmente
+- Cada PDF se firma secuencialmente y requiere una solicitud de sello de tiempo por Internet
 - El proceso puede tardar dependiendo del tamaño de los archivos

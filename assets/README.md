@@ -1,25 +1,17 @@
 # Assets
 
-This directory contains application resources and icons.
-
 ## Icons
 
-### Source
-- `icon.png` - Original icon downloaded from selladomx.com (280x268)
+- `icon.png` - Source icon
 
-### Generated Icons
-Run `poetry run python scripts/generate-icons.py` to regenerate:
+Regenerate the platform icons from `icon.png` with `python scripts/generate-icons.py` (requires Pillow; `.icns` requires `iconutil` on macOS):
 
-- `icon.ico` - Windows icon (multi-size: 16x16 to 256x256)
-- `icon.icns` - macOS icon bundle (all retina sizes)
-- `icon-linux.png` - Linux icon (280x268)
-
-### Legacy Icons
-- `selladomx.png` - Old placeholder icon
-- `selladomx.svg` - Old vector icon
+- `selladomx.png` - 256x256, Linux (Flatpak) and in-app QML icon
+- `selladomx.ico` - Windows icon (multi-size)
+- `selladomx.icns` - macOS icon bundle (multi-size)
 
 ## Desktop Entry
-- `selladomx.desktop` - Linux desktop integration file
+- `selladomx.desktop` - Linux desktop entry; the Flatpak manifest installs it as `com.selladomx.SelladoMX.desktop`
 
 ## Documentation
-- `README-Windows.txt` - Windows-specific instructions (included in Windows builds)
+- `README-Windows.txt` - Copied into the Windows build as `README.txt`

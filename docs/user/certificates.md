@@ -9,11 +9,8 @@ Los certificados e.firma del SAT típicamente incluyen dos archivos:
 
 ## Formatos Soportados
 
-SelladoMX soporta múltiples formatos de certificados:
-
-- **DER**: Formato binario (extensión .cer/.key)
-- **PEM**: Formato texto con marcadores BEGIN/END
-- **PKCS#12**: Archivo único con certificado y clave (.p12, .pfx)
+- **Certificado**: DER (binario) o PEM (texto con marcadores BEGIN/END)
+- **Clave privada**: DER, PEM o PKCS#12 (.p12, .pfx). Aunque uses un .pfx, el certificado se selecciona por separado.
 
 ## Conversión de Formatos
 
@@ -33,12 +30,9 @@ openssl x509 -in certificado.cer -inform DER -out certificado.pem -outform PEM
 
 ### Crear archivo PKCS#12 (.pfx)
 
-```bash
-# Primero convertir a PEM si es necesario
-openssl pkcs8 -in clave.key -inform DER -out clave.pem -outform PEM
-openssl x509 -in certificado.cer -inform DER -out certificado.pem -outform PEM
+Con la clave y el certificado ya en PEM (ver arriba):
 
-# Luego crear el .pfx
+```bash
 openssl pkcs12 -export -out certificado.pfx -inkey clave.pem -in certificado.pem
 ```
 
@@ -79,4 +73,4 @@ Para problemas con tu certificado e.firma del SAT:
 - Portal: https://www.sat.gob.mx
 
 Para problemas con SelladoMX:
-- Abre un issue en el repositorio del proyecto
+- Abre un [issue](https://github.com/SelladoMX/app/issues) en el repositorio del proyecto

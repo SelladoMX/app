@@ -1,12 +1,12 @@
 # Instalación y Uso
 
-## Descarga del Ejecutable
+## Descarga
 
-Para usuarios que solo desean utilizar la aplicación:
+Descarga desde [GitHub Releases](https://github.com/SelladoMX/app/releases/latest):
 
-- **macOS**: [SelladoMX-macOS.dmg](https://github.com/tu-usuario/selladomx/releases/latest) (Intel y Apple Silicon)
-- **Windows**: [SelladoMX-Windows.zip](https://github.com/tu-usuario/selladomx/releases/latest) (Windows 10+)
-- **Linux**: [SelladoMX-Linux.tar.gz](https://github.com/tu-usuario/selladomx/releases/latest) (Ubuntu, Fedora, Arch)
+- **macOS**: `SelladoMX-macOS.dmg`
+- **Windows**: `SelladoMX-Windows.zip`
+- **Linux**: `SelladoMX-<versión>.flatpak`
 
 ## Primera Ejecución
 
@@ -23,79 +23,43 @@ Como la aplicación no está firmada, verás advertencias de seguridad la primer
 
 **Linux:**
 ```bash
-chmod +x SelladoMX
-./SelladoMX
+flatpak install --user SelladoMX-<versión>.flatpak
+flatpak run com.selladomx.SelladoMX
 ```
 
-## Instalación para Desarrollo
-
-### Requisitos
-
-- Python ≥ 3.11, < 3.14
-- Poetry (gestor de dependencias)
-
-### Instalar Poetry
-
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
-```
-
-### Instalar Dependencias
-
-```bash
-cd /ruta/al/proyecto/client
-poetry install
-```
-
-### Ejecutar desde Código Fuente
-
-```bash
-poetry run selladomx
-```
-
-O en modo desarrollo:
-
-```bash
-poetry shell
-python -m selladomx.main
-```
+Para ejecutar desde el código fuente, consulta [docs/developer/development.md](../developer/development.md).
 
 ## Uso de la Aplicación
 
-SelladoMX te guía a través de un flujo de 3 pasos:
-
 ### Paso 1: Seleccionar PDFs
 
-- Haz clic en "Agregar PDFs..."
-- Selecciona los archivos a firmar
-- Una vez agregados, el paso 1 se marca como completado y se activa el paso 2
+- Arrastra los PDFs a la ventana o haz clic en "Agregar PDFs..."
 
 ### Paso 2: Cargar Certificado
 
 - Selecciona tu archivo `.cer` (certificado e.firma)
 - Selecciona tu archivo `.key` (clave privada e.firma)
 - Ingresa la contraseña de tu clave privada
-- El sistema valida automáticamente tu certificado
-- Una vez validado, el paso 2 se marca como completado y se activa el paso 3
+- SelladoMX valida tu certificado; al terminar se activa el paso 3
 
 ### Paso 3: Firmar
 
-- Haz clic en "Firmar PDFs"
-- Observa el progreso en tiempo real
-- Revisa el log de actividad
+- Opcional: activa "Usar protección mejorada" (TSA profesional, requiere token y créditos)
+- Opcional: en "Guardar en:" elige otra carpeta de destino
+- Haz clic en "Firmar N PDF(s)" y confirma
 
-Los PDFs firmados se guardarán con el sufijo `_firmado` en la misma carpeta que los originales.
+Los PDFs firmados se guardan con el sufijo `_firmado`, en la misma carpeta que los originales salvo que elijas otra.
 
 ## Verificación de Firmas
-
-### Con pyhanko (línea de comandos)
-
-```bash
-poetry run pyhanko sign validate archivo_firmado.pdf
-```
 
 ### Con Adobe Acrobat Reader
 
 1. Abre el PDF firmado
 2. Ve al panel de "Firmas" (menú lateral izquierdo)
 3. Deberías ver la firma digital con estado válido
+
+### Con pyhanko (línea de comandos)
+
+```bash
+pyhanko sign validate archivo_firmado.pdf
+```
