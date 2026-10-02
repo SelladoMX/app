@@ -66,7 +66,6 @@ IS_WINDOWS: Final[bool] = sys.platform == "win32"
 IS_LINUX: Final[bool] = sys.platform == "linux"
 
 # Platform-Specific Design Tokens
-# Windows needs more padding and sharper corners
 BUTTON_HEIGHT: Final[int] = 32 if IS_WINDOWS else 28
 DIALOG_PADDING: Final[int] = 24 if IS_WINDOWS else 20
 BORDER_RADIUS: Final[int] = 4 if IS_WINDOWS else 6

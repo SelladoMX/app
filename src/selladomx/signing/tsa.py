@@ -150,12 +150,10 @@ class APITimeStamper(TimeStamper):
             signer_serial=self.signer_serial,
         )
 
-        # Store response metadata for after-signing use
         self.record_id = response["record_id"]
         self.verification_url = response.get("verification_url", "")
         self.credits_remaining = response.get("credits_remaining")
 
-        # Decode and return the full TimeStampResp
         tsa_resp_bytes = base64.b64decode(response["tsa_resp_b64"])
         return tsp.TimeStampResp.load(tsa_resp_bytes)
 

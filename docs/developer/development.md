@@ -85,7 +85,7 @@ poetry run selladomx
 
 ```bash
 # macOS
-rm ~/Library/Preferences/mx.sellado.SelladoMX.plist
+rm ~/Library/Preferences/com.selladomx.SelladoMX.plist
 
 # Linux
 rm ~/.config/SelladoMX/SelladoMX.conf

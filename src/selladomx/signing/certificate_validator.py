@@ -196,8 +196,8 @@ class CertificateValidator:
 
             logger.info("Checking certificate revocation status")
 
-            # pyhanko-certvalidator valida automáticamente con OCSP y CRL
-            # Si encuentra el certificado revocado, levantará RevokedError
+            # FIXME: el contexto nunca se usa para validar; no se consulta OCSP/CRL
+            # y RevokedError no se puede levantar.
 
         except RevokedError as e:
             logger.error(f"Certificate is revoked: {e}")

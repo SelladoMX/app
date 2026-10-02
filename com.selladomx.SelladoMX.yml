@@ -8,7 +8,7 @@ finish-args:
   # Filesystem - PDFs, certs, output, settings
   - --filesystem=home
 
-  # Network - API, TSA, GitHub, OCSP/CRL
+  # Network - API, TSA, GitHub
   - --share=network
 
   # Display

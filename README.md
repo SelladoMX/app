@@ -11,7 +11,7 @@ Firma documentos PDF con tu e.firma del SAT directamente desde tu computadora.
 - **Firma PAdES** compatible con Adobe Reader y validadores oficiales
 - **Sellado de tiempo (TSA)** básico o profesional con validez legal
 - **100% local** - tus documentos nunca salen de tu equipo
-- **Validación completa** de certificados (OCSP/CRL)
+- **Validación de vigencia** de certificados
 - **Firma por lotes** - procesa múltiples PDFs a la vez
 - **Token management** - comparte acceso con tu equipo
 
@@ -19,7 +19,7 @@ Firma documentos PDF con tu e.firma del SAT directamente desde tu computadora.
 
 No guardamos tus documentos, certificados ni contraseñas. Todo el proceso de firma ocurre en tu computadora. Solo nos conectamos a servidores externos para:
 
-- Validación de certificados (OCSP/CRL estándar)
+- Verificación de actualizaciones (GitHub Releases)
 - Sellado de tiempo TSA (opcional)
 - Gestión de créditos (solo si usas TSA profesional)
 

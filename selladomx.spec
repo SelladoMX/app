@@ -9,11 +9,9 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 block_cipher = None
 
-# Collect all pyhanko data files
 pyhanko_datas = collect_data_files('pyhanko')
 pyhanko_certvalidator_datas = collect_data_files('pyhanko_certvalidator')
 
-# Collect QML files
 from pathlib import Path
 qml_src = Path('src/selladomx/ui/qml')
 qml_datas = []
@@ -99,7 +97,7 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,  # No console window for GUI app
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
