@@ -3,7 +3,6 @@
 import sys
 from pathlib import Path
 
-# Add src to path (go up one level since we're in scripts/)
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from selladomx.utils.settings_manager import SettingsManager
@@ -14,7 +13,6 @@ def main():
     print("✓ Onboarding reseteado")
     print("\nAhora ejecuta: poetry run selladomx")
 
-    # Mostrar ubicación del archivo de configuración
     settings_file = manager.settings.fileName()
     print(f"\nArchivo de configuración: {settings_file}")
     print("(También puedes borrar este archivo manualmente)")

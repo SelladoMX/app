@@ -4,7 +4,7 @@ Generate platform-specific icons from source PNG.
 
 Source: assets/icon.png (any size, will be squared and resized)
 Output:
-  - assets/selladomx.png   (256x256, Linux AppImage + QML in-app icon)
+  - assets/selladomx.png   (256x256, Linux + QML in-app icon)
   - assets/selladomx.ico   (multi-size, Windows)
   - assets/selladomx.icns  (multi-size, macOS — requires iconutil on macOS)
 

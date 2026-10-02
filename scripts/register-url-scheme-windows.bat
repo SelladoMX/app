@@ -1,6 +1,6 @@
 @echo off
 REM Register selladomx:// URL scheme for Windows
-REM This script should be run as part of the Windows installer
+REM Must be placed next to SelladoMX.exe (the command uses %~dp0)
 
 echo Registering selladomx:// URL scheme...
 

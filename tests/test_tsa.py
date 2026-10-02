@@ -30,6 +30,5 @@ class TestTSAClient:
         """Test de conexión al TSA (requiere red)"""
         client = TSAClient()
         # Este test puede fallar si FreeTSA está caído
-        # En producción, usarías pytest.mark.skipif
         result = client.test_connection()
         assert isinstance(result, bool)

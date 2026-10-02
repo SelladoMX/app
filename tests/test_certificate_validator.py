@@ -47,7 +47,3 @@ class TestCertificateValidator:
 
         with pytest.raises(CertificateError, match="No se pudo cargar"):
             validator.validate_all()
-
-
-# Tests más completos requieren certificados de prueba reales
-# que se pueden generar con OpenSSL o usar certificados e.firma de prueba del SAT

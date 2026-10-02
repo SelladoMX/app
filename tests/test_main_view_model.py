@@ -127,7 +127,6 @@ class TestTokenConfiguredViaDeepLink:
 
     def test_signal_exists(self, view_model):
         """tokenConfiguredViaDeepLink signal should exist on MainViewModel."""
-        # Just verify the signal can be connected
         emitted = []
         view_model.tokenConfiguredViaDeepLink.connect(lambda: emitted.append(True))
         view_model.tokenConfiguredViaDeepLink.emit()

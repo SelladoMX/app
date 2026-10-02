@@ -8,11 +8,9 @@ from selladomx.utils.settings_manager import SettingsManager
 def settings_manager():
     """Create a SettingsManager instance for testing."""
     manager = SettingsManager()
-    # Reset state before each test
     manager.reset_onboarding()
     manager.set_onboarding_version(0)
     yield manager
-    # Cleanup after test
     manager.reset_onboarding()
     manager.set_onboarding_version(0)
 
@@ -54,10 +52,8 @@ def test_persistence(settings_manager):
     settings_manager.mark_onboarding_completed()
     settings_manager.set_onboarding_version(1)
 
-    # Create new instance
     new_manager = SettingsManager()
     assert new_manager.has_completed_onboarding() is True
     assert new_manager.get_onboarding_version() == 1
 
-    # Cleanup
     new_manager.reset_onboarding()

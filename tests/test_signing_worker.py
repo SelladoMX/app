@@ -22,7 +22,6 @@ def mock_signer():
         output_path = Path("/tmp/test_firmado.pdf")
         signer.sign_pdf.return_value = output_path
 
-        # Mock output_path.read_bytes() and stat()
         with patch.object(Path, "read_bytes", return_value=b"signed-pdf-content"):
             with patch.object(Path, "stat") as mock_stat:
                 mock_stat.return_value = MagicMock(st_size=1024)
@@ -60,7 +59,6 @@ class TestSigningWorkerNoFallback:
 
         worker = self._create_worker()
 
-        # Collect emitted signals
         completed_calls = []
         worker.file_completed.connect(lambda *args: completed_calls.append(args))
 
@@ -71,14 +69,12 @@ class TestSigningWorkerNoFallback:
             with patch.object(Path, "stat", return_value=MagicMock(st_size=100)):
                 worker.run()
 
-        # Should have emitted file_completed with success=False
         assert len(completed_calls) == 1
         filename, success, message, url = completed_calls[0]
         assert success is False
         assert "créditos" in message.lower()
         assert url == ""
 
-        # Should have errors
         assert len(finished_errors) == 1
 
     @patch("selladomx.signing.worker.SelladoMXAPIClient")
@@ -212,7 +208,6 @@ class TestSigningWorkerNoFallback:
             with patch.object(Path, "stat", return_value=MagicMock(st_size=100)):
                 worker.run()
 
-        # Should only have processed the first file, then stopped
         assert len(completed_calls) == 1
 
     @patch("selladomx.signing.worker.PDFSigner")

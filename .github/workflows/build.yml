@@ -3,8 +3,8 @@ name: Build Executables
 on:
   push:
     tags:
-      - 'v*'  # Triggers on version tags like v0.1.0
-  workflow_dispatch:  # Allows manual trigger from GitHub UI
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   test:
@@ -66,7 +66,7 @@ jobs:
   build:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    needs: test  # Only build if tests pass
+    needs: test
     permissions:
       contents: write       # Required to create releases
       id-token: write       # Required for Sigstore OIDC (attestations)
@@ -143,10 +143,8 @@ jobs:
       - name: Create DMG (macOS)
         if: matrix.platform == 'macos'
         run: |
-          # Install create-dmg
           brew install create-dmg
 
-          # Create DMG
           create-dmg \
             --volname "SelladoMX" \
             --volicon "dist/SelladoMX.app/Contents/Resources/selladomx.icns" \
@@ -212,7 +210,6 @@ jobs:
 
       - name: Export dependencies and download wheels
         run: |
-          # Install export plugin
           poetry self add poetry-plugin-export
 
           # Export from poetry.lock (single source of truth)
@@ -247,7 +244,6 @@ jobs:
 
       - name: Export Flatpak bundle
         run: |
-          # Extract version from tag, or use 'dev' for non-tag builds
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             VERSION=${GITHUB_REF_NAME#v}
           else

@@ -7,7 +7,6 @@ and provides diagnostic information.
 import sys
 from pathlib import Path
 
-# Add src to path for imports
 src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
@@ -25,11 +24,9 @@ def main():
     print("=" * 60)
     print()
 
-    # Detect platform
     print(f"Platform: {sys.platform}")
     print()
 
-    # Check registration status
     print("Checking current registration status...")
     is_registered = is_url_scheme_registered()
 
@@ -42,7 +39,6 @@ def main():
         print("❌ URL scheme is NOT registered")
         print()
 
-        # Ask if user wants to register
         response = input("Would you like to register it now? (y/n): ").strip().lower()
 
         if response == 'y':

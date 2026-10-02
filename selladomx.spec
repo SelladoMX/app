@@ -13,18 +13,16 @@ block_cipher = None
 pyhanko_datas = collect_data_files('pyhanko')
 pyhanko_certvalidator_datas = collect_data_files('pyhanko_certvalidator')
 
-# Collect QML files (for QML UI mode)
+# Collect QML files
 from pathlib import Path
 qml_src = Path('src/selladomx/ui/qml')
 qml_datas = []
 if qml_src.exists():
-    # Collect all QML files recursively
     for qml_file in qml_src.rglob('*.qml'):
         rel_path = qml_file.relative_to('src/selladomx/ui/qml')
         dest_dir = f'selladomx/ui/qml/{rel_path.parent}'
         qml_datas.append((str(qml_file), dest_dir))
 
-    # Also collect qmldir files
     for qmldir_file in qml_src.rglob('qmldir'):
         rel_path = qmldir_file.relative_to('src/selladomx/ui/qml')
         dest_dir = f'selladomx/ui/qml/{rel_path.parent}'

@@ -1,10 +1,9 @@
 #!/bin/bash
 # Create a DMG installer for macOS
-# Requires: brew install create-dmg
+# Requires Homebrew (installs create-dmg if missing)
 
 set -e
 
-# Change to project root directory
 cd "$(dirname "$0")/.."
 
 if [[ "$OSTYPE" != "darwin"* ]]; then
@@ -19,16 +18,13 @@ fi
 
 echo "Creating DMG installer for macOS..."
 
-# Check if create-dmg is installed
 if ! command -v create-dmg &> /dev/null; then
     echo "Installing create-dmg..."
     brew install create-dmg
 fi
 
-# Clean previous DMG
 rm -f dist/SelladoMX-macOS.dmg
 
-# Create DMG with nice layout
 create-dmg \
   --volname "SelladoMX" \
   --window-pos 200 120 \
@@ -41,7 +37,6 @@ create-dmg \
   "dist/SelladoMX-macOS.dmg" \
   "dist/SelladoMX.app" \
   || {
-    # If create-dmg fails, create a simple DMG
     echo "create-dmg failed, creating simple DMG..."
     hdiutil create -volname "SelladoMX" \
       -srcfolder "dist/SelladoMX.app" \

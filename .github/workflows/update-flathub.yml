@@ -1,6 +1,5 @@
 name: Update Flathub
 
-# NOTE: Only enable this workflow AFTER initial Flathub approval
 # Requires: FLATHUB_TOKEN secret with push access to flathub/com.selladomx.SelladoMX
 
 on:
@@ -32,7 +31,6 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           sed -i "s/tag: v.*/tag: ${GITHUB_REF#refs/tags/}/" com.selladomx.SelladoMX.yml
 
-          # Copy updated generated-sources.json
           cp ../main-repo/generated-sources.json .
 
           # Update release in metainfo
