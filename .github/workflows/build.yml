@@ -170,7 +170,7 @@ jobs:
           path: dist/${{ matrix.artifact_file }}
 
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: dist/${{ matrix.artifact_file }}
 
@@ -262,7 +262,7 @@ jobs:
           path: SelladoMX-*.flatpak
 
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: SelladoMX-*.flatpak
 
@@ -295,7 +295,7 @@ jobs:
           cat ../SHA256SUMS.txt
 
       - name: Attest checksums
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: SHA256SUMS.txt
 
