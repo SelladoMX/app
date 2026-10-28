@@ -15,6 +15,7 @@ from pyhanko.pdf_utils.reader import PdfFileReader
 from pyhanko.sign import fields, signers
 from pyhanko.sign.timestamps import TimeStamper
 from pyhanko.sign.validation import validate_pdf_signature
+from pyhanko_certvalidator import ValidationContext
 
 from ..api.exceptions import APIError
 from ..config import SIGNED_SUFFIX
@@ -261,8 +262,16 @@ class PDFSigner:
                 all_valid = True
                 for embedded_sig in embedded_sigs:
                     name = embedded_sig.field_name
+                    # Anchoring on the signer's own certificate checks only
+                    # integrity, without the OS trust list or network fetches.
+                    # With no anchor, pyhanko logs the subject (name and RFC)
+                    # as a path-building warning.
+                    context = ValidationContext(
+                        trust_roots=[embedded_sig.signer_cert],
+                        allow_fetching=False,
+                    )
                     try:
-                        status = validate_pdf_signature(embedded_sig)
+                        status = validate_pdf_signature(embedded_sig, context)
                     except Exception as e:
                         logger.error(f"Error validating signature {name}: {e!r}")
                         all_valid = False

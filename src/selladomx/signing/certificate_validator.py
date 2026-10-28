@@ -11,16 +11,13 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, ec
 from cryptography.hazmat.primitives.serialization import pkcs12
 from asn1crypto import keys as asn1_keys
-from pyhanko_certvalidator import ValidationContext
-from pyhanko_certvalidator.errors import PathValidationError, RevokedError
 
-from ..config import ENABLE_CRL_FALLBACK, LOG_SENSITIVE_DATA
+from ..config import LOG_SENSITIVE_DATA
 from ..errors import (
     CertificateError,
     CertificateExpiredError,
     CertificateKeyMismatchError,
     CertificatePasswordError,
-    CertificateRevokedError,
     CertificateValidationError,
 )
 
@@ -81,7 +78,6 @@ class CertificateValidator:
         Raises:
             CertificateError: Si hay un error cargando los archivos
             CertificateExpiredError: Si el certificado está expirado
-            CertificateRevokedError: Si el certificado está revocado
             CertificateValidationError: Si falla la validación
         """
         cert = self._load_certificate()
@@ -240,40 +236,11 @@ class CertificateValidator:
 
     def _validate_revocation(self, cert: x509.Certificate) -> None:
         """
-        Valida que el certificado no esté revocado usando OCSP o CRL.
+        Punto de validación de revocación del certificado.
 
-        Intenta OCSP primero, si falla y está habilitado el fallback, usa CRL.
+        No consulta OCSP ni CRL, así que un certificado revocado no se detecta.
         """
-        try:
-            context = ValidationContext(
-                allow_fetching=True,
-                revocation_mode="hard-fail" if not ENABLE_CRL_FALLBACK else "soft-fail",
-            )
-
-            validator = context.certificate_registry
-
-            logger.info("Checking certificate revocation status")
-
-            # FIXME: el contexto nunca se usa para validar; no se consulta OCSP/CRL
-            # y RevokedError no se puede levantar.
-
-        except RevokedError as e:
-            logger.error(f"Certificate is revoked: {e}")
-            raise CertificateRevokedError("El certificado ha sido revocado")
-        except PathValidationError as e:
-            logger.error(f"Certificate validation path error: {e}")
-            raise CertificateValidationError(
-                f"Error en la validación del certificado: {e}"
-            )
-        except Exception as e:
-            logger.warning(f"Could not verify revocation status: {e}")
-            if not ENABLE_CRL_FALLBACK:
-                raise CertificateValidationError(
-                    f"No se pudo verificar el estado de revocación: {e}"
-                )
-            logger.info(
-                "Continuing with unverified revocation status (fallback enabled)"
-            )
+        logger.info("Certificate revocation status is not checked")
 
     def get_certificate_info(self, cert: x509.Certificate) -> dict:
         """

@@ -132,9 +132,8 @@ def efirma_files(tmp_path_factory) -> EFirmaFiles:
     """Test e.firma issued by a test CA, with a SAT-like subject.
 
     Written like a SAT e.firma: DER `.cer` and a password-encrypted PKCS#8 DER
-    `.key`. The subject carries the RFC in x500UniqueIdentifier as a string;
-    asn1crypto can't parse that, and pyhanko_certvalidator rejects such a
-    certificate as a trust root, so the leaf is issued by a separate CA.
+    `.key`. The subject carries the RFC in x500UniqueIdentifier as a string,
+    which needs selladomx.signing.asn1_compat to parse.
     """
     directory = tmp_path_factory.mktemp("efirma")
     password = "Prueba1234"

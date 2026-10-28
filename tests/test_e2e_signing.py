@@ -1,5 +1,6 @@
 """End-to-end tests: load an e.firma, sign a PDF and validate the signature."""
 
+import logging
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -58,11 +59,10 @@ def test_certificate_validator_rejects_wrong_password(efirma_files):
 
 
 def test_sign_pdf_without_timestamp(efirma_files, sample_pdf, tmp_path):
-    """Offline signing (no TSA) produces a valid, intact signature.
+    """Offline signing (no TSA) produces a valid, intact, trusted signature.
 
-    Trust (status.bottom_line) is not asserted: asn1crypto types
-    x500UniqueIdentifier as a BIT STRING, so path building fails on a subject
-    that carries the RFC there as a string, as SAT certificates do.
+    Trust depends on selladomx.signing.asn1_compat: without it, path building
+    fails on the RFC string in x500UniqueIdentifier.
     """
     cert, private_key = _load_efirma(efirma_files)
     output_path = tmp_path / "signed.pdf"
@@ -76,7 +76,23 @@ def test_sign_pdf_without_timestamp(efirma_files, sample_pdf, tmp_path):
     status = _validate_single_signature(result_path, efirma_files.ca_cert)
     assert status.intact
     assert status.valid
+    assert status.trusted
     assert status.timestamp_validity is None
+
+
+def test_verify_signature_on_efirma_does_not_log_the_subject(
+    efirma_files, sample_pdf, tmp_path, caplog
+):
+    cert, private_key = _load_efirma(efirma_files)
+    output_path = PDFSigner(cert, private_key).sign_pdf(
+        sample_pdf, tmp_path / "signed.pdf"
+    )
+
+    with caplog.at_level(logging.DEBUG):
+        assert PDFSigner.verify_signature(output_path) is True
+
+    assert "XAXX010101000" not in caplog.text
+    assert not [r for r in caplog.records if r.levelno >= logging.WARNING]
 
 
 @pytest.mark.network
@@ -90,6 +106,7 @@ def test_sign_pdf_with_free_tsa(efirma_files, sample_pdf, tmp_path):
     status = _validate_single_signature(output_path, efirma_files.ca_cert)
     assert status.intact
     assert status.valid
+    assert status.trusted
     assert status.timestamp_validity is not None
     assert status.timestamp_validity.intact
 

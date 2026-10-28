@@ -3,7 +3,9 @@
 import base64
 from datetime import UTC, datetime, timedelta
 from io import BytesIO
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+
+import aiohttp
 
 import pytest
 from asn1crypto import keys as asn1_keys
@@ -26,7 +28,8 @@ from selladomx.signing.pdf_signer import (
     PDFSigner,
     signed_output_path,
 )
-from selladomx.signing.tsa import APITimeStamper
+from selladomx.signing import tsa as tsa_module
+from selladomx.signing.tsa import APITimeStamper, TSAClient
 
 
 def _self_signed(cn: str, eku=None):
@@ -82,6 +85,20 @@ class OfflineTSA(DummyTimeStamper):
 
     async def async_dummy_response(self, md_algorithm):
         raise AssertionError("signature size estimation must not request a timestamp")
+
+
+@pytest.fixture(autouse=True)
+def no_aiohttp_sessions(monkeypatch):
+    """Fail if pyhanko opens an aiohttp session.
+
+    A session is bound to the event loop that created it, and the worker runs a
+    new loop per file.
+    """
+
+    def refuse(*args, **kwargs):
+        raise AssertionError("signing must not create an aiohttp session")
+
+    monkeypatch.setattr(aiohttp.ClientSession, "__init__", refuse)
 
 
 def _blank_pdf(path):
@@ -155,6 +172,25 @@ class TestSigning:
         assert output.name == "contrato_firmado.pdf"
         assert tsa.requests == 1
         assert PDFSigner.verify_signature(output) is True
+
+    def test_free_signing_uses_our_transport_once_per_file(
+        self, signer_identity, tsa_identity, tmp_path
+    ):
+        tsa = OfflineTSA(tsa_identity)
+        posted = []
+
+        def post(url, body, timeout):
+            posted.append(url)
+            return tsa.request_tsa_response(tsp.TimeStampReq.load(body))
+
+        signer = _signer(signer_identity, tsa_client=TSAClient())
+        with patch.object(tsa_module, "_post_timestamp_request", side_effect=post):
+            outputs = [
+                signer.sign_pdf(_blank_pdf(tmp_path / f"doc{i}.pdf")) for i in range(2)
+            ]
+
+        assert len(posted) == 2
+        assert all(PDFSigner.verify_signature(output) for output in outputs)
 
     def test_signature_contents_use_reserved_size(
         self, signer_identity, tsa_identity, pdf
