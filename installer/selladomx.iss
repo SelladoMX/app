@@ -81,7 +81,7 @@ procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   LocalData: String;
 begin
-  { Silent uninstalls keep the settings. }
+  { With /SUPPRESSMSGBOXES the prompt is skipped and the settings are kept. }
   if CurUninstallStep = usUninstall then
     RemoveUserData := SuppressibleMsgBox(CustomMessage('RemoveUserData'),
       mbConfirmation, MB_YESNO or MB_DEFBUTTON2, IDNO) = IDYES;

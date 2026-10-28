@@ -235,3 +235,12 @@ def test_app_mutex_is_visible_to_other_processes():
     handle = kernel32.OpenMutexW(synchronize, False, ph.WINDOWS_APP_MUTEX)
     assert handle
     kernel32.CloseHandle(ctypes.c_void_p(handle))
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="needs the real Windows API")
+def test_registry_reads_work_against_the_real_registry():
+    # Read-only; a fake winreg can't catch API misuse such as unpacking
+    # QueryValue's plain string
+    for value in (ph._read_registered_command(), ph._installed_exe()):
+        assert value is None or isinstance(value, str)
+    assert isinstance(ph.is_url_scheme_registered_windows(), bool)
