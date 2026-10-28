@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "selladomx"
-version = "0.4.3"
+version = "0.4.4"
 description = "Firma digital de PDFs con certificados e.firma del SAT"
 authors = ["SelladoMX Team"]
 readme = "README.md"

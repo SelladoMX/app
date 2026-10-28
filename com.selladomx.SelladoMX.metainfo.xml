@@ -54,6 +54,17 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.4.4" date="2026-10-27">
+      <description>
+        <p>Actualización de componentes</p>
+        <ul>
+          <li>Componentes de firma y de interfaz actualizados; la app ocupa menos espacio</li>
+          <li>Linux: la app funciona con menos permisos dentro de Flatpak</li>
+          <li>Windows: el aviso de nueva versión ya no falla por certificados del sistema</li>
+          <li>Windows: la versión ZIP deja de publicarse; usa el instalador</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.4.3" date="2026-10-27">
       <description>
         <p>Instalador para Windows</p>
