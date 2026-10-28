@@ -1,60 +1,26 @@
-================================================================================
-  SelladoMX - Portable Version for Windows
-================================================================================
+SelladoMX - versión portable para Windows
+=========================================
 
-HOW TO RUN:
+Te recomendamos usar el instalador (SelladoMX-Windows-Setup.exe) en lugar
+de esta versión. Se descarga desde https://www.selladomx.com
+
+Esta versión portable (ZIP) solo se publica para la versión 0.4.3. A partir
+de la 0.4.4 SelladoMX para Windows se distribuye únicamente con instalador.
+
+CÓMO USARLA
 -----------
-1. Extract this ZIP file to any folder on your computer
-2. Double-click "selladomx.exe" to launch the application
+1. Descomprime el ZIP en una carpeta.
+2. Abre "selladomx.exe".
+3. Si Windows muestra "Windows protegió tu PC", haz clic en
+   "Más información" y luego en "Ejecutar de todas formas".
 
-PORTABLE MODE:
---------------
-- No installation required
-- No admin rights needed
-- Copy this entire folder to a USB drive to run from anywhere
-- Settings are saved in the Windows registry of the current user, not in
-  this folder. On first launch the app also registers the selladomx:// link
-  handler there (current user only)
+Tu configuración y tu token se guardan en tu usuario de Windows, no en esta
+carpeta, así que los conservas si después instalas SelladoMX.
 
-FIRST RUN SECURITY WARNING:
----------------------------
-When you first run selladomx.exe, Windows may show a security warning:
-  "Windows protected your PC" or "Unknown publisher"
+Si ya tienes SelladoMX instalado, los enlaces del correo seguirán abriendo
+la versión instalada.
 
-This happens because the application is not code-signed.
-
-To proceed:
-1. Click "More info" on the security warning
-2. Click "Run anyway" button
-3. The app will launch normally
-4. You may need to do this only once
-
-WHAT IS SELLADOMX?
-------------------
-SelladoMX is a PDF signing application designed for Mexican digital
-signature requirements. It allows you to digitally sign PDF documents
-using your electronic signature certificate (e.firma).
-
-SYSTEM REQUIREMENTS:
---------------------
-- Windows 10 or later
-- 200 MB of free disk space
-- Your e.firma certificate files (.cer and .key)
-
-NEED HELP?
-----------
-- Report issues: https://github.com/SelladoMX/app/issues
-- Open source: Licensed under MIT
-- Documentation: See README.md in the GitHub repository
-
-TECHNICAL DETAILS:
-------------------
-- Built with Python and PySide6 (Qt6)
-- Uses pyhanko for PDF signing
-- Supports Mexican e.firma certificates
-- No telemetry; PDFs never leave your computer
-
-================================================================================
-License: MIT License
-Website: https://github.com/SelladoMX/app
-================================================================================
+AYUDA
+-----
+soporte@selladomx.com
+https://www.selladomx.com
