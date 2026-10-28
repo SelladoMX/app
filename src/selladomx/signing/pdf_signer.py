@@ -154,8 +154,10 @@ class PDFSigner:
             with open(pdf_path, "rb") as f:
                 pdf_data = BytesIO(f.read())
 
-            # Escritura incremental: preserva el PDF original
-            writer = IncrementalPdfFileWriter(pdf_data)
+            # Escritura incremental: preserva el PDF original. strict=False
+            # porque Word y otros exportadores de Office generan tablas xref
+            # híbridas, que pyhanko se niega a firmar en modo estricto.
+            writer = IncrementalPdfFileWriter(pdf_data, strict=False)
 
             # pyhanko requiere objetos asn1crypto, no de cryptography
             cert_bytes = self.cert.public_bytes(encoding=serialization.Encoding.DER)
@@ -250,7 +252,7 @@ class PDFSigner:
 
         try:
             with open(pdf_path, "rb") as f:
-                reader = PdfFileReader(f)
+                reader = PdfFileReader(f, strict=False)
                 embedded_sigs = reader.embedded_signatures
                 if not embedded_sigs:
                     logger.info(f"No signatures found in {pdf_path.name}")
