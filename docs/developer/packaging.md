@@ -44,22 +44,29 @@ CI copia `assets/README-Windows.txt` como `dist/selladomx/README.txt` y comprime
 
 ## Linux (Flatpak)
 
-Runtime: `org.kde.Platform//6.9` / `org.kde.Sdk//6.9`. El build es offline: las dependencias y el wheel de la app deben estar en `flatpak-python-deps/`, y `requirements.txt` debe existir en la raíz (ambos se generan a partir de `poetry.lock`, igual que en CI):
+Runtime: `org.kde.Platform//6.11` / `org.kde.Sdk//6.11` (Freedesktop 25.08, Python 3.13). PySide6 no usa el Qt del runtime: el wheel trae su propio Qt. El build es offline: las dependencias y el wheel de la app deben estar en `flatpak-python-deps/`, y `requirements.txt` debe existir en la raíz (ambos se generan a partir de `poetry.lock`, igual que en CI):
 
 ```bash
 poetry self add "poetry-plugin-export==1.10.1"
 poetry export -f requirements.txt --output requirements.txt
 mkdir -p flatpak-python-deps
-pip download --require-hashes -r requirements.txt -d flatpak-python-deps
+# Con Python 3.13, la versión del runtime; pip elige los wheels para ella
+pip download --require-hashes --only-binary=:all: -r requirements.txt -d flatpak-python-deps
 poetry build && cp dist/*.whl flatpak-python-deps/
 
-flatpak install -y flathub org.kde.Platform//6.9 org.kde.Sdk//6.9
+flatpak install -y flathub org.kde.Platform//6.11 org.kde.Sdk//6.11
 flatpak-builder --force-clean --repo=repo build-dir com.selladomx.SelladoMX.yml
 flatpak build-bundle repo SelladoMX-dev.flatpak com.selladomx.SelladoMX \
   --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
 ```
 
 `make build` en Linux genera `dist/selladomx/`, pero ese build no se distribuye.
+
+### Permisos
+
+- `--filesystem=home`: la app guarda `<nombre>_firmado.pdf` junto a cada original, así que necesita escribir en la carpeta del PDF. Con el portal de documentos, un archivo elegido llega sin su carpeta y esa escritura falla. Pasar a un diseño solo con portales obligaría a elegir siempre una carpeta de destino (o un diálogo de guardar por archivo), un cambio de flujo que no se puede probar en CI. Mientras el destino por omisión sea junto al original, se mantiene el acceso a home.
+- Un PDF fuera de home (por ejemplo, una USB en `/run/media`) llega por el portal de documentos, en una carpeta que no es la del original, así que la copia firmada no queda junto a él: para esos archivos hay que elegir una carpeta de destino dentro de home.
+- Sin `--socket=session-bus`: los diálogos de archivos, abrir enlaces y el tema claro/oscuro usan `org.freedesktop.portal.Desktop`, que el bus filtrado de Flatpak permite. `org.freedesktop.portal.OpenURI` es una interfaz de ese servicio, no un nombre de bus, así que no se declara.
 
 ## GitHub Actions
 

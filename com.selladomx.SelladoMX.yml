@@ -1,11 +1,13 @@
 app-id: com.selladomx.SelladoMX
 runtime: org.kde.Platform
-runtime-version: '6.9'
+runtime-version: '6.11'
 sdk: org.kde.Sdk
 command: selladomx
 
 finish-args:
-  # Filesystem - PDFs, certs, output, settings
+  # The signed copy is written next to each original (<name>_firmado.pdf),
+  # which needs write access to the original's folder; a file picked through
+  # the document portal comes without it. See docs/developer/packaging.md.
   - --filesystem=home
 
   # Network - API, TSA, GitHub
@@ -16,10 +18,9 @@ finish-args:
   - --socket=fallback-x11
   - --share=ipc
 
-  # D-Bus for desktop integration
-  - --socket=session-bus
+  # Qt's portal integration (file dialogs, opening links, color scheme) only
+  # needs org.freedesktop.portal.*, which the filtered session bus allows
   - --talk-name=org.freedesktop.portal.Desktop
-  - --talk-name=org.freedesktop.portal.OpenURI
 
   # Settings persistence
   - --persist=.config/SelladoMX
