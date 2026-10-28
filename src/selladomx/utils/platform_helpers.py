@@ -67,7 +67,7 @@ def is_url_scheme_registered_windows():
 
         key_path = r"Software\Classes\selladomx\shell\open\command"
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path) as key:
-            value, _ = winreg.QueryValue(key, "")
+            value = winreg.QueryValue(key, "")
     except OSError:
         return False
     return value.lower() == _windows_handler_command().lower()

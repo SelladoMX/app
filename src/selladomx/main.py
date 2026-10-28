@@ -160,7 +160,12 @@ def main():
         logger.info("Checking URL scheme registration...")
         from .utils.platform_helpers import register_url_scheme
 
-        success = register_url_scheme()
+        # Link registration is optional; nothing in it may stop the app starting
+        try:
+            success = register_url_scheme()
+        except Exception:
+            logger.exception("URL scheme registration crashed")
+            success = False
         if success:
             logger.info("URL scheme registered successfully")
         else:
