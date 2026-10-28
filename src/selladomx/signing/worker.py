@@ -1,4 +1,5 @@
 """Background worker for PDF signing operations."""
+
 import hashlib
 import logging
 from pathlib import Path
@@ -12,11 +13,12 @@ from ..api.exceptions import (
     InsufficientCreditsError,
     NetworkError,
     APIError,
+    TokenExpiredError,
+    TokenRevokedError,
 )
-from ..config import SIGNED_SUFFIX
-from .pdf_signer import PDFSigner
+from ..errors import SelladoMXError, TSAError
+from .pdf_signer import PDFSigner, signed_output_path
 from .tsa import APITimeStamper, TSAClient
-
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +72,16 @@ class SigningWorker(QThread):
         self.signer_serial = signer_serial
         self.errors = []
 
+    def _fail(self, pdf_path: Path, error_msg: str, remaining: int = 0):
+        """Report a failed file; ``remaining`` > 0 means the batch is stopping."""
+        if remaining:
+            error_msg = (
+                f"{error_msg} Se detuvo la firma: {remaining} documento(s) "
+                "pendiente(s) no se firmaron."
+            )
+        self.errors.append(f"{pdf_path.name}: {error_msg}")
+        self.file_completed.emit(pdf_path.name, False, error_msg, "")
+
     def run(self):
         """Execute signing process."""
         total = len(self.pdf_paths)
@@ -80,15 +92,10 @@ class SigningWorker(QThread):
 
         for i, pdf_path in enumerate(self.pdf_paths, 1):
             self.progress.emit(i, total)
+            remaining = total - i
 
             try:
-                if self.output_dir:
-                    output_path = (
-                        self.output_dir
-                        / f"{pdf_path.stem}{SIGNED_SUFFIX}{pdf_path.suffix}"
-                    )
-                else:
-                    output_path = None  # Use default (same folder as source)
+                output_path = signed_output_path(pdf_path, self.output_dir)
 
                 api_timestamper = None
                 if api_client and self.use_professional_tsa:
@@ -127,20 +134,40 @@ class SigningWorker(QThread):
                 self.file_completed.emit(
                     pdf_path.name,
                     True,
-                    f"Signed successfully: {output_path.name}",
+                    f"Firmado: {output_path.name}",
                     verification_url,
                 )
             except InsufficientCreditsError:
-                error_msg = "No tienes créditos suficientes. Compra más en selladomx.com/precios"
-                self.errors.append(f"{pdf_path.name}: {error_msg}")
-                self.file_completed.emit(pdf_path.name, False, error_msg, "")
                 logger.error(f"Insufficient credits for {pdf_path.name}")
+                self._fail(
+                    pdf_path,
+                    "No tienes créditos suficientes. Compra más en selladomx.com/precios",
+                    remaining,
+                )
+                break
+            except TokenExpiredError:
+                logger.error(f"Expired token while signing {pdf_path.name}")
+                self._fail(
+                    pdf_path,
+                    "Tu token expiró. Genera uno nuevo en selladomx.com y reconfigúralo.",
+                    remaining,
+                )
+                break
+            except TokenRevokedError:
+                logger.error(f"Inactive token while signing {pdf_path.name}")
+                self._fail(
+                    pdf_path,
+                    "Tu token está desactivado. Reconfigura un token activo.",
+                    remaining,
+                )
                 break
             except AuthenticationError:
-                error_msg = "Token inválido o expirado. Reconfigura tu token."
-                self.errors.append(f"{pdf_path.name}: {error_msg}")
-                self.file_completed.emit(pdf_path.name, False, error_msg, "")
                 logger.error(f"Auth error for {pdf_path.name}")
+                self._fail(
+                    pdf_path,
+                    "Token inválido o expirado. Reconfigura tu token.",
+                    remaining,
+                )
                 break
             except (NetworkError, APIError) as e:
                 error_msg = (
@@ -148,14 +175,24 @@ class SigningWorker(QThread):
                     if hasattr(e, "message") and e.message
                     else "Servicio no disponible. Intenta más tarde."
                 )
-                self.errors.append(f"{pdf_path.name}: {error_msg}")
-                self.file_completed.emit(pdf_path.name, False, error_msg, "")
                 logger.error(f"TSA service error for {pdf_path.name}: {error_msg}")
+                self._fail(pdf_path, error_msg, remaining)
                 break
+            except TSAError as e:
+                # Every free provider (or the professional TSA) already failed
+                # for this file; the next one would fail the same way.
+                logger.error(
+                    f"Timestamp failed for {pdf_path.name}: {type(e).__name__}"
+                )
+                self._fail(pdf_path, str(e), remaining)
+                break
+            except SelladoMXError as e:
+                logger.error(f"Error signing {pdf_path.name}: {type(e).__name__}")
+                self._fail(pdf_path, str(e))
             except Exception as e:
-                error_msg = str(e)
-                self.errors.append(f"{pdf_path.name}: {error_msg}")
-                self.file_completed.emit(pdf_path.name, False, error_msg, "")
-                logger.error(f"Error signing {pdf_path.name}: {e}")
+                logger.error(
+                    f"Unexpected error signing {pdf_path.name}: {type(e).__name__}"
+                )
+                self._fail(pdf_path, f"No se pudo firmar el PDF: {e}")
 
         self.finished.emit(self.errors)

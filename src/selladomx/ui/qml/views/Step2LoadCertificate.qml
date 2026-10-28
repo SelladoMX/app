@@ -179,9 +179,18 @@ StepIndicator {
                         visible: !parent.text && parent.enabled
                         anchors.fill: parent
                         verticalAlignment: Text.AlignVCenter
-                        text: "Ingresa tu contraseña..."
+                        text: mainViewModel.step2Complete ? "Certificado cargado" : "Ingresa tu contraseña..."
                         color: DesignTokens.textTertiary
                         font.pixelSize: DesignTokens.fontBase
+                    }
+
+                    // The key is already decrypted in memory; don't keep the password around
+                    Connections {
+                        target: mainViewModel
+                        function onCertificateLoaded() {
+                            validateTimer.stop()
+                            passwordField.clear()
+                        }
                     }
 
                     // Timer to debounce validation

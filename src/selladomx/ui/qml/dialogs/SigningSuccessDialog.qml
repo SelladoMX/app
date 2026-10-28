@@ -11,6 +11,7 @@ Dialog {
     property int totalCount: 0
     property bool usedProfessionalTSA: false
     property var verificationUrls: []
+    property var failedFiles: []
 
     title: signedCount === 0 ? "Error en la Firma" : (usedProfessionalTSA ? "Firma Completa" : "Firmados " + signedCount + " documento(s)")
     modal: true
@@ -28,6 +29,7 @@ Dialog {
     onClosed: {
         var hadSignedDocs = signedCount > 0
         verificationUrls = []
+        failedFiles = []
         signedCount = 0
         totalCount = 0
         usedProfessionalTSA = false
@@ -72,7 +74,15 @@ Dialog {
                     spacing: DesignTokens.sm
 
                     Text {
-                        text: "El servicio de sellado de tiempo no está disponible en este momento."
+                        text: {
+                            var failed = successDialog.failedFiles
+                            if (failed.length === 1)
+                                return failed[0].message
+                            if (failed.length > 1)
+                                return "No se pudo firmar ningún documento. Abajo está el motivo de cada uno."
+                            return "Ocurrió un error inesperado al firmar."
+                        }
+                        textFormat: Text.PlainText
                         font.pixelSize: DesignTokens.fontBase
                         font.weight: DesignTokens.weightMedium
                         color: DesignTokens.error
@@ -81,7 +91,7 @@ Dialog {
                     }
 
                     Text {
-                        text: "• No se consumieron créditos\n• Tus documentos no fueron modificados\n• Intenta de nuevo más tarde"
+                        text: "• Tus documentos originales no fueron modificados\n• Revisa el mensaje e intenta de nuevo"
                         font.pixelSize: DesignTokens.fontBase
                         color: DesignTokens.textPrimary
                         lineHeight: 1.8
@@ -90,6 +100,88 @@ Dialog {
                     }
                 }
             }
+        }
+
+        // Per-file errors (all files failed with different errors, or partial failure)
+        ColumnLayout {
+            visible: successDialog.failedFiles.length > 0
+                     && (signedCount > 0 || successDialog.failedFiles.length > 1)
+            spacing: DesignTokens.sm
+            Layout.fillWidth: true
+
+            Text {
+                text: signedCount > 0
+                      ? "No se pudieron firmar " + successDialog.failedFiles.length + " documento(s):"
+                      : "Detalle por documento:"
+                font.pixelSize: DesignTokens.fontLg
+                font.weight: DesignTokens.weightSemiBold
+                color: DesignTokens.error
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.min(failedColumn.implicitHeight, 160) + DesignTokens.md * 2
+                radius: DesignTokens.radiusLg
+                color: DesignTokens.errorLight
+                border.width: 1
+                border.color: DesignTokens.error
+
+                Flickable {
+                    anchors.fill: parent
+                    anchors.margins: DesignTokens.md
+                    contentHeight: failedColumn.implicitHeight
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+
+                    ColumnLayout {
+                        id: failedColumn
+                        width: parent.width
+                        spacing: DesignTokens.sm
+
+                        Repeater {
+                            model: successDialog.failedFiles
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 2
+
+                                Text {
+                                    text: modelData.filename
+                                    textFormat: Text.PlainText
+                                    font.pixelSize: DesignTokens.fontSm
+                                    font.weight: DesignTokens.weightSemiBold
+                                    color: DesignTokens.textPrimary
+                                    elide: Text.ElideMiddle
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: modelData.message
+                                    textFormat: Text.PlainText
+                                    font.pixelSize: DesignTokens.fontSm
+                                    color: DesignTokens.textSecondary
+                                    wrapMode: Text.WordWrap
+                                    Layout.fillWidth: true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Where to find the log when asking for help
+        Text {
+            visible: successDialog.failedFiles.length > 0
+            text: "Si el problema continúa, escríbenos a soporte@selladomx.com y adjunta el archivo de registro (selladomx.log). Para encontrarlo, usa «Abrir carpeta de registros» en el menú ⚙️."
+            font.pixelSize: DesignTokens.fontSm
+            color: DesignTokens.textSecondary
+            lineHeight: 1.4
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
         }
 
         // Success with Professional TSA
@@ -184,6 +276,7 @@ Dialog {
 
                                 Text {
                                     text: modelData.filename
+                                    textFormat: Text.PlainText
                                     font.pixelSize: DesignTokens.fontSm
                                     font.weight: DesignTokens.weightSemiBold
                                     color: DesignTokens.textPrimary
@@ -192,21 +285,19 @@ Dialog {
                                 }
 
                                 Text {
-                                    text: "<a href='" + modelData.url + "'>" + modelData.url + "</a>"
-                                    textFormat: Text.RichText
+                                    text: modelData.url
+                                    textFormat: Text.PlainText
                                     font.pixelSize: DesignTokens.fontSm
                                     font.family: DesignTokens.fontFamilyMono
+                                    font.underline: true
                                     color: DesignTokens.info
                                     elide: Text.ElideRight
                                     Layout.fillWidth: true
-                                    onLinkActivated: function(link) {
-                                        Qt.openUrlExternally(link)
-                                    }
 
                                     MouseArea {
                                         anchors.fill: parent
-                                        cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                        acceptedButtons: Qt.NoButton
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: mainViewModel.openTrustedUrl(modelData.url)
                                     }
                                 }
                             }
@@ -293,8 +384,16 @@ Dialog {
 
             ModernButton {
                 visible: signedCount === 0
-                text: "Cerrar"
+                text: "Abrir carpeta de registros"
                 variant: "secondary"
+                Layout.fillWidth: true
+                onClicked: mainViewModel.openLogFolder()
+            }
+
+            ModernButton {
+                visible: signedCount === 0
+                text: "Cerrar"
+                variant: "primary"
                 Layout.fillWidth: true
                 onClicked: successDialog.accept()
             }

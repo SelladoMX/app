@@ -17,16 +17,17 @@ This will:
 
 ## Automatic Registration
 
-SelladoMX attempts registration once, on first launch; the attempt is recorded in QSettings (`system/url_scheme_registered`) whether or not it succeeded.
+On Linux, SelladoMX attempts registration once, on first launch; the attempt is recorded in QSettings (`system/url_scheme_registered`) whether or not it succeeded. On Windows it checks on every launch.
 
 ### Windows
 - Registers in `HKEY_CURRENT_USER\Software\Classes\selladomx`
 - No administrator rights required
-- Stores the path of the running `selladomx.exe`; if the folder is moved, the registered path is stale and must be re-registered
+- Stores the path of the running `selladomx.exe`; on every launch the app rewrites the handler if it points at a different exe (e.g. a copy extracted to another folder)
 
 ### Linux
 - The Flatpak exports `com.selladomx.SelladoMX.desktop` (with `MimeType=x-scheme-handler/selladomx`) to `/var/lib/flatpak/exports/share/applications/` (system install) or `~/.local/share/flatpak/exports/share/applications/` (user install)
-- On first launch the app also writes `~/.local/share/applications/selladomx.desktop` and runs `xdg-mime default selladomx.desktop x-scheme-handler/selladomx`
+- Inside the Flatpak (`FLATPAK_ID` set) the app relies on that export and writes nothing
+- Run outside the Flatpak (e.g. from source), on first launch the app writes `~/.local/share/applications/selladomx.desktop` and runs `xdg-mime default selladomx.desktop x-scheme-handler/selladomx`
 
 ### macOS
 - Registration handled by `CFBundleURLTypes` in the .app bundle's `Info.plist`, set in `selladomx.spec`

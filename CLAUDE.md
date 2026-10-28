@@ -31,7 +31,7 @@ make reset-onboarding              # show the first-run onboarding again
 - Free timestamps go directly to the TSAs in `TSA_FREE_PROVIDERS`. Professional timestamps go through the API (`APITimeStamper`), which forwards to Certum. Each signed document costs one credit.
 - QSettings (`QSettings("SelladoMX", "SelladoMX")`) stores the API token in plaintext. Never log or display the full token.
 - The `COLOR_*` constants in `config.py` must match `DesignTokens.qml`.
-- The version appears in `pyproject.toml`, `src/selladomx/__init__.py`, `selladomx.spec` (`CFBundle*Version`) and `com.selladomx.SelladoMX.metainfo.xml`. The release checklist is in `docs/developer/packaging.md`.
+- The version appears in `pyproject.toml`, `src/selladomx/__init__.py`, `selladomx.spec` (`CFBundle*Version`, read from `__init__.py`) and the newest `<release>` in `com.selladomx.SelladoMX.metainfo.xml`. `tests/test_version_consistency.py` fails if they differ, so a version bump means editing `pyproject.toml` and `__init__.py` and adding a `<release>` entry. The release checklist is in `docs/developer/packaging.md`.
 - User-facing strings are in Spanish; log messages are in English. The docs are in Spanish.
 - CI (`.github/workflows/build.yml`) runs on `v*` tags and manual dispatch. It builds the Windows zip, the macOS DMG and the Flatpak bundle, with build-provenance attestations.
 

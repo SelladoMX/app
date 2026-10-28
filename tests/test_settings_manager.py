@@ -1,18 +1,25 @@
 """Tests for SettingsManager."""
+
+from pathlib import Path
+
 import pytest
-from PySide6.QtCore import QSettings
 from selladomx.utils.settings_manager import SettingsManager
 
 
 @pytest.fixture
 def settings_manager():
-    """Create a SettingsManager instance for testing."""
-    manager = SettingsManager()
-    manager.reset_onboarding()
-    manager.set_onboarding_version(0)
-    yield manager
-    manager.reset_onboarding()
-    manager.set_onboarding_version(0)
+    """SettingsManager backed by the per-test settings dir from conftest."""
+    return SettingsManager()
+
+
+def test_settings_are_isolated(settings_manager, isolated_settings):
+    """Settings are written under the test's tmp dir, not the user's profile."""
+    settings_manager.mark_onboarding_completed()
+    settings_manager.settings.sync()
+
+    settings_file = Path(settings_manager.settings.fileName())
+    assert settings_file.is_relative_to(isolated_settings)
+    assert settings_file.exists()
 
 
 def test_initial_state(settings_manager):
@@ -55,5 +62,3 @@ def test_persistence(settings_manager):
     new_manager = SettingsManager()
     assert new_manager.has_completed_onboarding() is True
     assert new_manager.get_onboarding_version() == 1
-
-    new_manager.reset_onboarding()

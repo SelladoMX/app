@@ -54,6 +54,23 @@
   <content_rating type="oars-1.1" />
 
   <releases>
+    <release version="0.4.2" date="2026-10-27">
+      <description>
+        <p>Correcciones de confiabilidad y seguridad</p>
+        <ul>
+          <li>Sellado de tiempo más confiable: si un servicio falla, se intenta con otros, siempre por HTTPS</li>
+          <li>El sello de tiempo profesional ya no depende de un servicio de terceros</li>
+          <li>Archivo de registro (log) para diagnosticar problemas</li>
+          <li>Mensajes de error más claros</li>
+          <li>Actualización de dependencias con correcciones de seguridad</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.4.1" date="2026-02-16">
+      <description>
+        <p>Corrección del arranque de la versión Flatpak en Linux</p>
+      </description>
+    </release>
     <release version="0.4.0" date="2026-02-15">
       <description>
         <p>Migración a Flatpak para distribución en Linux</p>

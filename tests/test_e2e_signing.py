@@ -1,98 +1,97 @@
-"""End-to-end integration test for PDF signing workflow."""
+"""End-to-end tests: load an e.firma, sign a PDF and validate the signature."""
+
+from datetime import UTC, datetime, timedelta
+
 import pytest
-from pathlib import Path
+from asn1crypto import x509 as asn1_x509
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from pyhanko.pdf_utils.reader import PdfFileReader
+from pyhanko.sign.validation import validate_pdf_signature
+from pyhanko_certvalidator import ValidationContext
 
-try:
-    from selladomx.signing.pdf_signer import PDFSigner
-    from selladomx.signing.tsa import TSAClient
-    from selladomx.signing.certificate_validator import CertificateValidator
-    from selladomx.errors import CertificateError
-except ImportError:
-    pytest.skip("Application modules not available", allow_module_level=True)
-
-
-@pytest.fixture
-def test_cert_path():
-    """Path to test certificate."""
-    return Path(__file__).parent / "fixtures" / "certs" / "test_cert.cer"
+from selladomx.errors import CertificateError
+from selladomx.signing.certificate_validator import CertificateValidator
+from selladomx.signing.pdf_signer import PDFSigner
+from selladomx.signing.tsa import TSAClient
 
 
-@pytest.fixture
-def test_key_path():
-    """Path to test private key."""
-    return Path(__file__).parent / "fixtures" / "certs" / "test_key.key"
+def _load_efirma(efirma_files):
+    validator = CertificateValidator(
+        efirma_files.cert_path, efirma_files.key_path, efirma_files.password
+    )
+    return validator.validate_all()
 
 
-@pytest.fixture
-def test_pdf_path():
-    """Path to test PDF."""
-    return Path(__file__).parent / "fixtures" / "pdfs" / "sample.pdf"
+def _validate_single_signature(pdf_path, ca_cert):
+    """Validate the only signature in pdf_path, trusting the test CA."""
+    trust_root = asn1_x509.Certificate.load(
+        ca_cert.public_bytes(serialization.Encoding.DER)
+    )
+    with open(pdf_path, "rb") as f:
+        reader = PdfFileReader(f)
+        assert len(reader.embedded_signatures) == 1
+        return validate_pdf_signature(
+            reader.embedded_signatures[0],
+            signer_validation_context=ValidationContext(trust_roots=[trust_root]),
+        )
 
 
-@pytest.fixture
-def test_password():
-    """Test certificate password (empty for self-signed test certs)."""
-    return ""
+def test_certificate_validator_loads_efirma(efirma_files):
+    """The DER .cer and encrypted PKCS#8 .key load with the right password."""
+    cert, private_key = _load_efirma(efirma_files)
+
+    serial = cert.subject.get_attributes_for_oid(x509.NameOID.SERIAL_NUMBER)
+    assert serial[0].value == "XAXX010101HDFXXX01"
+    assert private_key.public_key().public_numbers() == (
+        cert.public_key().public_numbers()
+    )
 
 
-@pytest.mark.skipif(
-    not (Path(__file__).parent / "fixtures" / "certs" / "test_cert.cer").exists(),
-    reason="Test certificate not available - run setup instructions in tests/fixtures/README.md",
-)
-@pytest.mark.skipif(
-    not (Path(__file__).parent / "fixtures" / "pdfs" / "sample.pdf").exists(),
-    reason="Test PDF not available - add sample.pdf to tests/fixtures/pdfs/",
-)
-def test_complete_signing_workflow(
-    test_cert_path, test_key_path, test_pdf_path, test_password, tmp_path
-):
-    """Test complete signing workflow with free TSA.
+def test_certificate_validator_rejects_wrong_password(efirma_files):
+    validator = CertificateValidator(
+        efirma_files.cert_path, efirma_files.key_path, "incorrecta"
+    )
+    with pytest.raises(CertificateError):
+        validator.validate_all()
 
-    This test verifies:
-    1. Certificate loading and validation
-    2. PDF signing with TSA timestamp
-    3. Output file creation and validity
+
+def test_sign_pdf_without_timestamp(efirma_files, sample_pdf, tmp_path):
+    """Offline signing (no TSA) produces a valid, intact signature.
+
+    Trust (status.bottom_line) is not asserted: asn1crypto types
+    x500UniqueIdentifier as a BIT STRING, so path building fails on a subject
+    that carries the RFC there as a string, as SAT certificates do.
     """
-    validator = CertificateValidator(test_cert_path, test_key_path, test_password)
+    cert, private_key = _load_efirma(efirma_files)
+    output_path = tmp_path / "signed.pdf"
 
-    try:
-        cert, private_key = validator.validate_all()
-    except CertificateError as e:
-        pytest.skip(f"Certificate validation failed (expected for test certs): {e}")
+    result_path = PDFSigner(cert, private_key).sign_pdf(sample_pdf, output_path)
 
-    tsa_client = TSAClient()
-    output_path = tmp_path / "signed_output.pdf"
+    assert result_path == output_path
+    assert result_path.read_bytes().startswith(b"%PDF")
+    assert result_path.stat().st_size > sample_pdf.stat().st_size
 
-    signer = PDFSigner(cert, private_key, tsa_client)
-    result_path = signer.sign_pdf(test_pdf_path, output_path)
-
-    assert result_path.exists(), "Signed PDF was not created"
-    assert result_path.stat().st_size > 0, "Signed PDF is empty"
-
-    # PDF magic number
-    with open(result_path, "rb") as f:
-        header = f.read(4)
-        assert header == b"%PDF", "Output is not a valid PDF file"
-
-    # The signature adds data
-    original_size = test_pdf_path.stat().st_size
-    signed_size = result_path.stat().st_size
-    assert signed_size > original_size, "Signed PDF should be larger than original"
+    status = _validate_single_signature(result_path, efirma_files.ca_cert)
+    assert status.intact
+    assert status.valid
+    assert status.timestamp_validity is None
 
 
-@pytest.mark.skipif(
-    not (Path(__file__).parent / "fixtures" / "certs" / "test_cert.cer").exists(),
-    reason="Test certificate not available",
-)
-def test_certificate_validator_loads_files(
-    test_cert_path, test_key_path, test_password
-):
-    """Test that certificate validator can load certificate and key files."""
-    validator = CertificateValidator(test_cert_path, test_key_path, test_password)
+@pytest.mark.network
+def test_sign_pdf_with_free_tsa(efirma_files, sample_pdf, tmp_path):
+    """Signing with the free TSA providers embeds a signature timestamp."""
+    cert, private_key = _load_efirma(efirma_files)
+    output_path = tmp_path / "signed_tsa.pdf"
 
-    # Only checks the files load; validate_all() is not called.
-    assert validator.cert_path.exists()
-    assert validator.key_path.exists()
+    PDFSigner(cert, private_key, TSAClient()).sign_pdf(sample_pdf, output_path)
+
+    status = _validate_single_signature(output_path, efirma_files.ca_cert)
+    assert status.intact
+    assert status.valid
+    assert status.timestamp_validity is not None
+    assert status.timestamp_validity.intact
 
 
 def test_tsa_client_initialization():
@@ -108,15 +107,7 @@ def test_tsa_client_initialization():
 def test_pdf_signer_requires_certificate():
     """Test that PDF signer requires valid certificate and key."""
     # Constructor only; signing would need a valid cert/key.
-    from cryptography import x509
-    from cryptography.hazmat.primitives import hashes, serialization
-    from cryptography.hazmat.primitives.asymmetric import rsa
-    from cryptography.hazmat.backends import default_backend
-    from datetime import datetime, timedelta, UTC
-
-    private_key = rsa.generate_private_key(
-        public_exponent=65537, key_size=2048, backend=default_backend()
-    )
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
     subject = issuer = x509.Name(
         [
@@ -132,7 +123,7 @@ def test_pdf_signer_requires_certificate():
         .serial_number(x509.random_serial_number())
         .not_valid_before(datetime.now(UTC))
         .not_valid_after(datetime.now(UTC) + timedelta(days=1))
-        .sign(private_key, hashes.SHA256(), default_backend())
+        .sign(private_key, hashes.SHA256())
     )
 
     tsa_client = TSAClient()

@@ -1,13 +1,18 @@
 """MainViewModel - Central bridge between Python backend and QML UI."""
+
+import html
 import logging
 from pathlib import Path
 from typing import List, Optional
 
 from PySide6.QtCore import QObject, Signal, Slot, Property, QUrl
+from PySide6.QtGui import QDesktopServices
 
 from ...signing.certificate_validator import CertificateValidator
 from ...errors import CertificateError, CertificateExpiredError, CertificateRevokedError
 from ...utils.settings_manager import SettingsManager
+from ...utils.logging_setup import get_log_dir
+from ...utils.urls import is_trusted_api_url, verification_page_url
 from ...config import (
     COLOR_SUCCESS,
     COLOR_ERROR,
@@ -62,6 +67,10 @@ class MainViewModel(QObject):
         int, bool, int
     )  # file_count, use_professional_tsa, credit_balance
     tokenConfiguredViaDeepLink = Signal()
+    # {email, credits_remaining, is_primary, alias, expires_at, replaces_existing}
+    deepLinkTokenConfirmationRequested = Signal(dict)
+    certificateLoaded = Signal()
+    failedFilesReady = Signal(list)  # list of {filename, message} dicts
     verificationUrlsReady = Signal(list)  # list of {filename, url} dicts
     formReset = Signal()
 
@@ -108,7 +117,11 @@ class MainViewModel(QObject):
 
         # Verification URLs collected during signing
         self._verification_urls: list[dict] = []
+        self._failed_files: list[dict] = []
         self._success_count: int = 0
+
+        self._pending_deep_link_token: Optional[str] = None
+        self._pending_deep_link_response: Optional[dict] = None
 
         self.coordinator.progressChanged.connect(self._on_signing_progress)
         self.coordinator.fileCompleted.connect(self._on_file_completed)
@@ -128,7 +141,8 @@ class MainViewModel(QObject):
         saved_output_dir = self.settings.get_output_dir()
         if saved_output_dir and not Path(saved_output_dir).is_dir():
             logger.warning(
-                f"Saved output directory no longer exists: {saved_output_dir}"
+                "Saved output directory no longer exists: "
+                f"{Path(saved_output_dir).name}"
             )
             self.settings.clear_output_dir()
             saved_output_dir = ""
@@ -160,7 +174,7 @@ class MainViewModel(QObject):
             path = url.toLocalFile()
             if path and path not in self._pdf_files:
                 self._pdf_files.append(path)
-                logger.info(f"Added PDF: {path}")
+                logger.info(f"Added PDF: {Path(path).name}")
 
         self._step1_complete = len(self._pdf_files) > 0
         self.pdfFilesChanged.emit()
@@ -189,7 +203,7 @@ class MainViewModel(QObject):
         """
         if 0 <= index < len(self._pdf_files):
             removed = self._pdf_files.pop(index)
-            logger.info(f"Removed PDF: {removed}")
+            logger.info(f"Removed PDF: {Path(removed).name}")
             self._step1_complete = len(self._pdf_files) > 0
             self.pdfFilesChanged.emit()
             self.step1CompleteChanged.emit()
@@ -238,7 +252,7 @@ class MainViewModel(QObject):
             self._output_dir = path
             self.settings.set_output_dir(path)
             self.outputDirChanged.emit()
-            logger.info(f"Output directory set: {path}")
+            logger.info(f"Output directory set: {Path(path).name}")
 
     @Slot()
     def clearOutputDir(self):
@@ -320,8 +334,9 @@ class MainViewModel(QObject):
             self._append_status_log(
                 f"✓ Certificado válido: {self.signer_cn}", COLOR_SUCCESS
             )
+            self.certificateLoaded.emit()
 
-            logger.info(f"Certificate validated: {self.signer_cn}")
+            logger.info("Certificate validated")
 
         except CertificateExpiredError as e:
             self._handle_cert_error(f"✗ Certificado expirado: {e}", COLOR_WARNING)
@@ -413,6 +428,7 @@ class MainViewModel(QObject):
         self._current_progress = 0
         self._status_log = ""
         self._verification_urls = []
+        self._failed_files = []
         self._success_count = 0
         self.isSigningChanged.emit()
         self.signingSuccessfulChanged.emit()
@@ -477,12 +493,17 @@ class MainViewModel(QObject):
 
         if success:
             self._success_count += 1
+        else:
+            self._failed_files.append({"filename": filename, "message": message})
 
-        # Collect verification URLs for the success dialog
         if verification_url:
-            self._verification_urls.append(
-                {"filename": filename, "url": verification_url}
-            )
+            if is_trusted_api_url(verification_url):
+                self._verification_urls.append(
+                    {"filename": filename, "url": verification_url}
+                )
+            else:
+                logger.warning("Ignoring verification URL outside the API host")
+                verification_url = ""
 
         self.fileCompleted.emit(filename, success, message, verification_url)
 
@@ -512,6 +533,7 @@ class MainViewModel(QObject):
 
         if self._verification_urls:
             self.verificationUrlsReady.emit(self._verification_urls)
+        self.failedFilesReady.emit(self._failed_files)
 
         self.signingCompleted.emit(
             success_count, total_count, self._use_professional_tsa
@@ -524,12 +546,11 @@ class MainViewModel(QObject):
         """Append message to status log with color.
 
         Args:
-            message: Message to append
+            message: Plain-text message (escaped before being rendered as HTML)
             color: HTML color code
         """
-        timestamp = ""
-        html = f'<span style="color: {color};">{message}</span><br>'
-        self._status_log += html
+        safe_message = html.escape(message).replace("\n", "<br>")
+        self._status_log += f'<span style="color: {color};">{safe_message}</span><br>'
         self.statusLogChanged.emit()
 
         self.statusMessage.emit(message, color)
@@ -577,6 +598,7 @@ class MainViewModel(QObject):
         self._signing_progress = 0
         self._status_log = ""
         self._verification_urls = []
+        self._failed_files = []
         self._success_count = 0
 
         self.pdfFilesChanged.emit()
@@ -668,20 +690,7 @@ class MainViewModel(QObject):
             client = SelladoMXAPIClient(api_key=token)
             response = client.get_balance()
 
-            self.settings.set_token(token)
-            if "token_info" in response:
-                self.settings.set_token_info(response["token_info"])
-                self._is_primary_token = response["token_info"].get("is_primary", False)
-                self.isPrimaryTokenChanged.emit()
-            self.settings.set_last_credit_balance(response["credits_remaining"])
-
-            self._credit_balance = response["credits_remaining"]
-            self.creditBalanceChanged.emit()
-
-            # Reset history view model to force re-creation with new token
-            self._api_client = None
-            self._history_view_model = None
-            self.hasProfessionalTSAChanged.emit()
+            self._apply_token(token, response)
 
             message = f"✅ Token configurado exitosamente\n{response['credits_remaining']} créditos disponibles"
             self.tokenValidationResult.emit(True, message)
@@ -706,6 +715,172 @@ class MainViewModel(QObject):
             message = f"❌ Error inesperado: {str(e)}"
             self.tokenValidationResult.emit(False, message)
             logger.error(f"Unexpected error during token validation: {e}")
+
+    def _apply_token(self, token: str, balance_response: dict):
+        """Store a validated token and update the dependent state.
+
+        Args:
+            token: Token that the API accepted
+            balance_response: Response of get_balance() for that token
+        """
+        self.settings.set_token(token)
+        if "token_info" in balance_response:
+            self.settings.set_token_info(balance_response["token_info"])
+            self._is_primary_token = balance_response["token_info"].get(
+                "is_primary", False
+            )
+            self.isPrimaryTokenChanged.emit()
+        credits = balance_response.get("credits_remaining", 0)
+        self.settings.set_last_credit_balance(credits)
+
+        self._credit_balance = credits
+        self.creditBalanceChanged.emit()
+
+        # The history view model holds an API client bound to the old token
+        self._api_client = None
+        self._history_view_model = None
+        self.hasProfessionalTSAChanged.emit()
+
+    # ========================================================================
+    # DEEP LINK TOKEN
+    # ========================================================================
+
+    @Slot(str)
+    def handleDeepLinkToken(self, token: str):
+        """Validate a token received via deep link and ask the user to confirm it.
+
+        Nothing is stored here: any web page can open a selladomx:// link, so the
+        token is saved only after the user accepts it in the confirmation dialog.
+
+        Args:
+            token: Token extracted from the deep link
+        """
+        from ...api.client import SelladoMXAPIClient
+        from ...api.exceptions import APIError
+
+        current_token = self.settings.get_token()
+        if current_token and current_token == token:
+            logger.info("Deep link token is already configured")
+            self._append_status_log("El token ya estaba configurado", COLOR_INFO)
+            self._refresh_credit_balance()
+            return
+
+        try:
+            client = SelladoMXAPIClient(api_key=token)
+            response = client.get_balance()
+        except APIError as e:
+            self._append_status_log(
+                f"❌ Error al configurar token: {e.message}", COLOR_ERROR
+            )
+            logger.error(f"Failed to validate deep link token: {e}")
+            return
+
+        self._pending_deep_link_token = token
+        self._pending_deep_link_response = response
+
+        token_info = response.get("token_info") or {}
+        self.deepLinkTokenConfirmationRequested.emit(
+            {
+                "email": response.get("email") or "",
+                "credits_remaining": response.get("credits_remaining", 0),
+                "is_primary": bool(token_info.get("is_primary", False)),
+                "alias": token_info.get("alias") or "",
+                "expires_at": token_info.get("expires_at") or "",
+                "replaces_existing": bool(current_token),
+            }
+        )
+        logger.info("Deep link token validated, waiting for user confirmation")
+
+    @Slot()
+    def confirmDeepLinkToken(self):
+        """Save the pending deep link token after the user accepted it."""
+        token = self._pending_deep_link_token
+        response = self._pending_deep_link_response
+        self._pending_deep_link_token = None
+        self._pending_deep_link_response = None
+        if not token or response is None:
+            logger.warning("No pending deep link token to confirm")
+            return
+
+        self._apply_token(token, response)
+
+        self._append_status_log(
+            "✅ Token configurado exitosamente - "
+            f"{response.get('credits_remaining', 0)} créditos disponibles",
+            COLOR_SUCCESS,
+        )
+        self.tokenConfiguredViaDeepLink.emit()
+        logger.info("Token configured successfully via deep link")
+
+    @Slot()
+    def cancelDeepLinkToken(self):
+        """Discard the pending deep link token without saving anything."""
+        if self._pending_deep_link_token is None:
+            return
+        self._pending_deep_link_token = None
+        self._pending_deep_link_response = None
+        self._append_status_log(
+            "Configuración de token cancelada. No se hizo ningún cambio.",
+            COLOR_MUTED,
+        )
+        logger.info("Deep link token rejected by the user")
+
+    # ========================================================================
+    # EXTERNAL LINKS AND LOGS
+    # ========================================================================
+
+    @Slot(str, result=bool)
+    def openTrustedUrl(self, url: str) -> bool:
+        """Open a server-supplied URL only if it points at the SelladoMX API host.
+
+        Args:
+            url: URL to open
+
+        Returns:
+            True if the URL was handed to the browser
+        """
+        if not is_trusted_api_url(url):
+            logger.warning("Refused to open a URL outside the API host")
+            return False
+        return QDesktopServices.openUrl(QUrl(url))
+
+    @Slot(str, result=bool)
+    def openVerificationPage(self, verification_token: str) -> bool:
+        """Open the public verification page for a document from the history.
+
+        Args:
+            verification_token: Verification token returned by the API
+
+        Returns:
+            True if the URL was handed to the browser
+        """
+        url = verification_page_url(verification_token)
+        if not url:
+            return False
+        return self.openTrustedUrl(url)
+
+    @Property(str, constant=True)
+    def logDirPath(self) -> str:
+        """Folder that contains the log files (property for QML)."""
+        return str(get_log_dir())
+
+    @Slot(result=bool)
+    def openLogFolder(self) -> bool:
+        """Open the log folder in the system file manager.
+
+        Returns:
+            True if the folder was handed to the file manager
+        """
+        log_dir = get_log_dir()
+        try:
+            log_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            logger.warning(f"Could not create log folder: {e}")
+            return False
+        opened = QDesktopServices.openUrl(QUrl.fromLocalFile(str(log_dir)))
+        if not opened:
+            logger.warning("Could not open the log folder")
+        return opened
 
     # ========================================================================
     # TOKEN MANAGEMENT (SUBTOKENS)
@@ -808,17 +983,3 @@ class MainViewModel(QObject):
         except APIError as e:
             logger.error(f"Failed to revoke token: {e}")
             self.tokenError.emit(f"Error al revocar subtoken: {e.message}")
-
-    # ========================================================================
-    # DEEP LINK HANDLING
-    # ========================================================================
-
-    @Slot(str)
-    def handleDeepLink(self, url: str):
-        """Handle deep link URL.
-
-        Args:
-            url: Deep link URL (selladomx://token?value=xxx)
-        """
-        logger.info(f"Handling deep link: {url}")
-        self._append_status_log("Deep link recibido - procesando...", COLOR_INFO)

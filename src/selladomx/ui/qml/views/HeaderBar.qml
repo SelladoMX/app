@@ -43,6 +43,12 @@ Rectangle {
                     font.pixelSize: DesignTokens.fontSm
                     color: DesignTokens.textSecondary
                 }
+
+                Text {
+                    text: "Versión " + Qt.application.version
+                    font.pixelSize: DesignTokens.fontXs
+                    color: DesignTokens.textTertiary
+                }
             }
         }
 
@@ -157,7 +163,6 @@ Rectangle {
 
         // Settings button
         Button {
-            visible: mainViewModel.hasProfessionalTSA
             text: "⚙️"
             font.pixelSize: DesignTokens.fontXl
 
@@ -194,6 +199,18 @@ Rectangle {
                 MenuItem {
                     text: "Comprar créditos"
                     onTriggered: Qt.openUrlExternally(buyCreditsUrl)
+                }
+
+                MenuSeparator {}
+
+                MenuItem {
+                    text: "Abrir carpeta de registros"
+                    onTriggered: mainViewModel.openLogFolder()
+                }
+
+                MenuItem {
+                    text: "SelladoMX versión " + Qt.application.version
+                    enabled: false
                 }
             }
         }

@@ -26,16 +26,16 @@ class InsufficientCreditsError(APIError):
     """Raised when user doesn't have enough credits for the operation."""
 
     def __init__(
-        self, message: str = "Sin créditos disponibles", available_credits: int = 0
+        self, message: str = "Sin créditos disponibles", credits_remaining: int = 0
     ):
         """Initialize insufficient credits error.
 
         Args:
             message: Error message
-            available_credits: Number of credits currently available
+            credits_remaining: Credits left on the account, as reported by the API
         """
-        self.available_credits = available_credits
-        super().__init__(message)
+        self.credits_remaining = credits_remaining
+        super().__init__(message, status_code=402)
 
 
 class NetworkError(APIError):

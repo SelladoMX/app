@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 from typing import Final
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -11,10 +12,43 @@ logger = logging.getLogger(__name__)
 # ENVIRONMENT-BASED CONFIGURATION
 # ============================================================================
 
-API_BASE_URL: str = os.environ.get(
-    "SELLADOMX_API_URL",
-    "https://www.selladomx.com",
-)
+DEFAULT_API_BASE_URL: Final[str] = "https://www.selladomx.com"
+_LOCAL_HOSTS: Final[frozenset[str]] = frozenset({"localhost", "127.0.0.1"})
+
+
+def resolve_api_base_url(value: str | None) -> str:
+    """Validate a SELLADOMX_API_URL override.
+
+    The API receives the user's token, so only https URLs are accepted, plus
+    plain http on localhost for local development.
+
+    Args:
+        value: Raw value of SELLADOMX_API_URL, or None if unset
+
+    Returns:
+        The override without a trailing slash, or DEFAULT_API_BASE_URL if it is
+        unset or not allowed
+    """
+    if not value:
+        return DEFAULT_API_BASE_URL
+    try:
+        parsed = urlparse(value.strip())
+        host = parsed.hostname
+    except ValueError:
+        parsed, host = None, None
+    if parsed is not None and host:
+        if parsed.scheme == "https" or (
+            parsed.scheme == "http" and host in _LOCAL_HOSTS
+        ):
+            return value.strip().rstrip("/")
+    logger.warning(
+        "Ignoring SELLADOMX_API_URL: only https URLs (or http on localhost) "
+        f"are allowed; using {DEFAULT_API_BASE_URL}"
+    )
+    return DEFAULT_API_BASE_URL
+
+
+API_BASE_URL: str = resolve_api_base_url(os.environ.get("SELLADOMX_API_URL"))
 
 logger.info(f"Using API base URL: {API_BASE_URL}")
 
@@ -22,15 +56,26 @@ logger.info(f"Using API base URL: {API_BASE_URL}")
 # TSA CONFIGURATION
 # ============================================================================
 
-# Free tier, in fallback order
-_DEFAULT_FREE_TSA = "http://timestamp.digicert.com"
-TSA_FREE_PROVIDERS: Final[list[str]] = [
-    os.environ.get("SELLADOMX_FREE_TSA_URL", _DEFAULT_FREE_TSA),
+# Free tier, in fallback order. Providers whose TSA certificates Adobe trusts
+# come before freetsa, which it doesn't, even though that puts DigiCert's plain
+# http (it refuses connections on port 443) ahead of freetsa's https.
+_DEFAULT_FREE_TSA_PROVIDERS = [
+    "https://timestamp.sectigo.com",
+    "http://timestamp.digicert.com",
     "http://timestamp.sectigo.com",
     "https://freetsa.org/tsr",
+    "http://freetsa.org/tsr",
 ]
+_FREE_TSA_OVERRIDE = os.environ.get("SELLADOMX_FREE_TSA_URL")
+TSA_FREE_PROVIDERS: Final[list[str]] = (
+    [_FREE_TSA_OVERRIDE] if _FREE_TSA_OVERRIDE else []
+) + [url for url in _DEFAULT_FREE_TSA_PROVIDERS if url != _FREE_TSA_OVERRIDE]
 TSA_URL: Final[str] = TSA_FREE_PROVIDERS[0]
-TSA_TIMEOUT: Final[int] = 30
+# Seconds to connect, per provider attempt, and for all attempts of one
+# timestamp combined
+TSA_CONNECT_TIMEOUT: Final[int] = 5
+TSA_TIMEOUT: Final[int] = 10
+TSA_TOTAL_TIMEOUT: Final[int] = 45
 
 # Paid tier
 PAID_TSA_PROVIDER: Final[str] = os.environ.get(

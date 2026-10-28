@@ -1,119 +1,204 @@
 """Cliente TSA para sellado de tiempo"""
+
+import asyncio
 import base64
 import logging
-from typing import Optional
+from concurrent.futures import ThreadPoolExecutor
+from typing import Optional, Sequence
 
 import requests
-from asn1crypto import tsp
-from pyhanko.sign import timestamps
+from asn1crypto import cms, tsp
 from pyhanko.sign.timestamps import TimeStamper
-from pyhanko.sign.timestamps.api import dummy_digest
+from pyhanko.sign.timestamps.common_utils import (
+    TimestampRequestError,
+    handle_tsp_response,
+)
 
-from ..config import TSA_URL, TSA_TIMEOUT, TSA_FREE_PROVIDERS
-from ..errors import TSAError
+from ..config import (
+    TSA_CONNECT_TIMEOUT,
+    TSA_FREE_PROVIDERS,
+    TSA_TIMEOUT,
+    TSA_TOTAL_TIMEOUT,
+)
+from ..errors import (
+    TSAError,
+    TSAResponseError,
+    TSATimeoutError,
+    TSAUnavailableError,
+)
 
 logger = logging.getLogger(__name__)
 
+FAILURE_UNREACHABLE = "unreachable"
+FAILURE_TIMEOUT = "timeout"
+FAILURE_REJECTED = "rejected"
+
+_TSA_REPLY_CONTENT_TYPES = (
+    "application/timestamp-reply",
+    "application/timestamp-response",
+)
+
+# A dedicated pool instead of asyncio's default executor: asyncio.run() joins
+# the default executor on exit, so a request that outlived its wait_for()
+# would keep blocking the signing call.
+_REQUEST_EXECUTOR = ThreadPoolExecutor(max_workers=4, thread_name_prefix="tsa")
+
+
+class _BadTSAResponse(Exception):
+    pass
+
+
+def _post_timestamp_request(url: str, body: bytes, timeout: float) -> tsp.TimeStampResp:
+    response = requests.post(
+        url,
+        data=body,
+        headers={
+            "Content-Type": "application/timestamp-query",
+            "Accept": "application/timestamp-reply",
+        },
+        # A short connect timeout moves past hosts whose packets are dropped
+        timeout=(min(TSA_CONNECT_TIMEOUT, timeout), timeout),
+    )
+    if response.status_code != 200:
+        raise _BadTSAResponse(f"HTTP {response.status_code}")
+    content_type = response.headers.get("Content-Type", "").split(";")[0].strip()
+    if content_type.lower() not in _TSA_REPLY_CONTENT_TYPES:
+        raise _BadTSAResponse(f"unexpected Content-Type {content_type!r}")
+    return tsp.TimeStampResp.load(response.content)
+
+
+def _error_for_failures(kinds: Sequence[str]) -> TSAError:
+    if kinds and all(kind == FAILURE_REJECTED for kind in kinds):
+        return TSAResponseError()
+    if kinds and all(kind == FAILURE_TIMEOUT for kind in kinds):
+        return TSATimeoutError()
+    return TSAUnavailableError()
+
+
+class FailoverTimeStamper(TimeStamper):
+    """Timestamper that tries several RFC 3161 providers in order.
+
+    The provider that last succeeded is tried first on the next request, so a
+    batch doesn't wait on a blocked provider for every document.
+    """
+
+    def __init__(
+        self,
+        urls: Sequence[str],
+        attempt_timeout: float = TSA_TIMEOUT,
+        total_timeout: float = TSA_TOTAL_TIMEOUT,
+    ):
+        """
+        Args:
+            urls: Provider URLs in order of preference
+            attempt_timeout: Seconds allowed per provider attempt
+            total_timeout: Seconds allowed for all attempts of one timestamp
+        """
+        if not urls:
+            raise ValueError("At least one TSA URL is required")
+        super().__init__()
+        self.urls = list(urls)
+        self.attempt_timeout = attempt_timeout
+        self.total_timeout = total_timeout
+        self._preferred_index = 0
+
+    @property
+    def preferred_url(self) -> str:
+        return self.urls[self._preferred_index]
+
+    async def async_timestamp(self, message_digest, md_algorithm) -> cms.ContentInfo:
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + self.total_timeout
+        start = self._preferred_index
+        order = list(range(start, len(self.urls))) + list(range(start))
+        failures: list[str] = []
+
+        for index in order:
+            url = self.urls[index]
+            remaining = deadline - loop.time()
+            if remaining <= 0:
+                logger.warning(
+                    f"TSA time budget of {self.total_timeout}s exhausted, "
+                    f"skipping {url} and any remaining providers"
+                )
+                break
+            timeout = min(self.attempt_timeout, remaining)
+            nonce, req = self.request_cms(message_digest, md_algorithm)
+            try:
+                response = await asyncio.wait_for(
+                    loop.run_in_executor(
+                        _REQUEST_EXECUTOR,
+                        _post_timestamp_request,
+                        url,
+                        req.dump(),
+                        timeout,
+                    ),
+                    timeout,
+                )
+                token = handle_tsp_response(response, nonce)
+            except (asyncio.TimeoutError, requests.Timeout) as e:
+                kind, reason = FAILURE_TIMEOUT, f"no response within {timeout:.0f}s"
+                logger.debug(f"Timeout detail for {url}: {e!r}")
+            except requests.RequestException as e:
+                kind, reason = FAILURE_UNREACHABLE, f"{type(e).__name__}: {e}"
+            except (_BadTSAResponse, TimestampRequestError) as e:
+                kind, reason = FAILURE_REJECTED, str(e)
+            except Exception as e:
+                kind, reason = FAILURE_REJECTED, f"malformed response ({e!r})"
+            else:
+                if index != self._preferred_index:
+                    logger.info(f"Switching preferred TSA to {url}")
+                self._preferred_index = index
+                logger.info(f"Timestamp obtained from {url}")
+                return token
+
+            failures.append(kind)
+            logger.warning(f"TSA {url} failed ({kind}): {reason}")
+
+        error = _error_for_failures(failures)
+        logger.error(
+            f"All TSA providers failed ({len(failures)} attempted): "
+            f"{type(error).__name__}"
+        )
+        raise error
+
 
 class TSAClient:
-    """Cliente para servicios de sellado de tiempo (TSA) con soporte multi-provider y fallback"""
+    """Free timestamping with HTTPS-first failover across public providers."""
 
     def __init__(
         self,
         tsa_url: Optional[str] = None,
-        timeout: int = TSA_TIMEOUT,
+        timeout: float = TSA_TIMEOUT,
         enable_fallback: bool = True,
     ):
         """
         Inicializa el cliente TSA.
 
         Args:
-            tsa_url: URL del servicio TSA (None = usar lista de providers con fallback)
-            timeout: Timeout en segundos para las peticiones
-            enable_fallback: Si True, intenta fallback a otros TSAs en caso de falla
+            tsa_url: Provider to try first (None = first of TSA_FREE_PROVIDERS)
+            timeout: Seconds allowed per provider attempt
+            enable_fallback: If False, only ``tsa_url`` (or the first provider) is used
         """
-        self.primary_url = tsa_url or TSA_URL
-        self.timeout = timeout
-        self.enable_fallback = enable_fallback
-        self.fallback_providers = (
-            TSA_FREE_PROVIDERS if enable_fallback else [self.primary_url]
-        )
-        logger.info(f"TSA client initialized with primary URL: {self.primary_url}")
+        self.primary_url = tsa_url or TSA_FREE_PROVIDERS[0]
         if enable_fallback:
-            logger.info(
-                f"Fallback enabled with {len(self.fallback_providers)} providers"
-            )
+            self.providers = [self.primary_url] + [
+                url for url in TSA_FREE_PROVIDERS if url != self.primary_url
+            ]
+        else:
+            self.providers = [self.primary_url]
+        self._timestamper = FailoverTimeStamper(self.providers, attempt_timeout=timeout)
+        logger.info(f"TSA client initialized with providers: {self.providers}")
 
-    def get_timestamper(self) -> timestamps.HTTPTimeStamper:
+    def get_timestamper(self) -> FailoverTimeStamper:
         """
-        Obtiene un timestamper configurado para pyhanko con fallback automático.
+        Returns the shared timestamper, so the provider that worked last is
+        reused for the rest of the batch.
 
         Returns:
-            Instancia de HTTPTimeStamper lista para usar
-
-        Raises:
-            TSAError: Si ningún servicio TSA está disponible
+            FailoverTimeStamper over the configured providers
         """
-        last_error = None
-
-        # FIXME: crear HTTPTimeStamper no contacta al servidor, así que el primer
-        # provider siempre "funciona" y el fallback nunca se activa.
-        for tsa_url in self.fallback_providers:
-            try:
-                logger.info(f"Attempting to create timestamper with: {tsa_url}")
-                timestamper = timestamps.HTTPTimeStamper(tsa_url, timeout=self.timeout)
-                logger.info(f"Successfully created timestamper with: {tsa_url}")
-                return timestamper
-            except Exception as e:
-                last_error = e
-                logger.warning(f"Failed to create timestamper with {tsa_url}: {e}")
-                continue
-
-        logger.error(f"All TSA providers failed. Last error: {last_error}")
-        raise TSAError(
-            f"No se pudo conectar a ningún servicio TSA. "
-            f"Intentamos {len(self.fallback_providers)} proveedores. "
-            f"Último error: {last_error}"
-        )
-
-    def test_connection(self, url: Optional[str] = None) -> bool:
-        """
-        Prueba la conexión con el servicio TSA.
-
-        Args:
-            url: URL a probar (None = usar primary_url)
-
-        Returns:
-            True si la conexión es exitosa, False en caso contrario
-        """
-        test_url = url or self.primary_url
-        try:
-            response = requests.head(
-                test_url, timeout=self.timeout, allow_redirects=True
-            )
-            success = response.status_code < 500
-            if success:
-                logger.info(f"TSA connection test successful for {test_url}")
-            else:
-                logger.warning(
-                    f"TSA connection test failed for {test_url} with status {response.status_code}"
-                )
-            return success
-        except requests.RequestException as e:
-            logger.warning(f"TSA connection test failed for {test_url}: {e}")
-            return False
-
-    def test_all_providers(self) -> dict[str, bool]:
-        """
-        Prueba la conexión con todos los proveedores TSA disponibles.
-
-        Returns:
-            Diccionario con URL del TSA como key y resultado del test como value
-        """
-        results = {}
-        for tsa_url in self.fallback_providers:
-            results[tsa_url] = self.test_connection(tsa_url)
-        return results
+        return self._timestamper
 
 
 class APITimeStamper(TimeStamper):
@@ -159,14 +244,20 @@ class APITimeStamper(TimeStamper):
         tsa_resp_bytes = base64.b64decode(response["tsa_resp_b64"])
         return tsp.TimeStampResp.load(tsa_resp_bytes)
 
-    async def async_dummy_response(self, md_algorithm):
-        """Use a free TSA for size estimation to avoid consuming credits."""
+    async def async_timestamp(self, message_digest, md_algorithm) -> cms.ContentInfo:
         try:
-            return self._dummy_response_cache[md_algorithm]
-        except KeyError:
-            free_ts = timestamps.HTTPTimeStamper(TSA_URL, timeout=10)
-            dummy = await free_ts.async_timestamp(
-                dummy_digest(md_algorithm), md_algorithm
-            )
-        self._register_dummy(md_algorithm, dummy)
-        return dummy
+            return await super().async_timestamp(message_digest, md_algorithm)
+        except (TimestampRequestError, KeyError, TypeError, ValueError) as e:
+            logger.error(f"Professional TSA returned an invalid response: {e!r}")
+            raise TSAResponseError(
+                "El servicio de sellado profesional envió una respuesta no válida. "
+                "Inténtalo de nuevo más tarde."
+            ) from e
+
+    async def async_dummy_response(self, md_algorithm):
+        # pyhanko's default implementation requests a real timestamp, which
+        # here would spend a credit. PDFSigner always passes bytes_reserved, so
+        # pyhanko never needs a dummy.
+        raise RuntimeError(
+            "APITimeStamper cannot produce dummy responses; pass bytes_reserved"
+        )
