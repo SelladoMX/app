@@ -12,14 +12,14 @@ jobs:
     if: false  # Disabled until Flathub approval and FLATHUB_TOKEN is configured
     steps:
       - name: Checkout Flathub repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: flathub/com.selladomx.SelladoMX
           token: ${{ secrets.FLATHUB_TOKEN }}
           path: flathub-repo
 
       - name: Checkout main repo (for manifest)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: main-repo
 
