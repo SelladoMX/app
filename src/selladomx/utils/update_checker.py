@@ -1,9 +1,8 @@
 """Update checker for SelladoMX using GitHub releases API."""
-import logging
-from urllib.request import urlopen, Request
-from urllib.error import URLError
-import json
 
+import logging
+
+import requests
 from PySide6.QtCore import QObject, Signal, Slot, QThread
 
 logger = logging.getLogger(__name__)
@@ -26,16 +25,21 @@ class _CheckWorker(QThread):
 
     def run(self):
         try:
-            url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
-            req = Request(url, headers={"Accept": "application/vnd.github+json"})
-            with urlopen(req, timeout=10) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-            tag = data.get("tag_name", "")
+            # requests verifies against certifi's CA bundle; urllib uses the
+            # Windows store, which may not have GitHub's root until a browser
+            # has fetched it
+            response = requests.get(
+                f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest",
+                headers={"Accept": "application/vnd.github+json"},
+                timeout=10,
+            )
+            response.raise_for_status()
+            tag = response.json().get("tag_name", "")
             if tag:
                 self.result.emit(tag.lstrip("v"))
             else:
                 self.error.emit("No tag found in latest release")
-        except (URLError, json.JSONDecodeError, OSError) as e:
+        except (requests.RequestException, ValueError) as e:
             self.error.emit(str(e))
 
 
