@@ -1,10 +1,31 @@
 """Deep link handler for SelladoMX magic links."""
+
 from PySide6.QtCore import QObject, Signal
 from urllib.parse import urlparse, parse_qs
 from typing import Optional
 import logging
 
+from .logging_setup import redact_tokens
+
 logger = logging.getLogger(__name__)
+
+
+def describe_deep_link(url: str) -> str:
+    """Return only the scheme and host of a deep link, safe to log.
+
+    Args:
+        url: Deep link URL, which may carry a token in its query string
+
+    Returns:
+        ``scheme://host`` (e.g. ``selladomx://auth``), or ``<invalid>``
+    """
+    try:
+        parsed = urlparse(url)
+    except (ValueError, TypeError):
+        return "<invalid>"
+    if not parsed.scheme:
+        return "<invalid>"
+    return redact_tokens(f"{parsed.scheme}://{parsed.netloc}")
 
 
 class DeepLinkHandler(QObject):
@@ -41,11 +62,11 @@ class DeepLinkHandler(QObject):
             parsed = urlparse(url)
 
             if parsed.scheme != "selladomx":
-                logger.error(f"Invalid scheme: {parsed.scheme}")
+                logger.error(f"Invalid deep link scheme: {parsed.scheme[:32]}")
                 return None
 
             if parsed.netloc != "auth" and parsed.path.strip("/") != "auth":
-                logger.error(f"Invalid path: {parsed.netloc or parsed.path}")
+                logger.error("Invalid deep link target")
                 return None
 
             params = parse_qs(parsed.query)
@@ -64,5 +85,5 @@ class DeepLinkHandler(QObject):
             return token
 
         except Exception as e:
-            logger.error(f"Error parsing deep link: {e}")
+            logger.error(f"Error parsing deep link: {type(e).__name__}")
             return None

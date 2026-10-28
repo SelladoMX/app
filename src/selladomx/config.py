@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 from typing import Final
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -11,10 +12,43 @@ logger = logging.getLogger(__name__)
 # ENVIRONMENT-BASED CONFIGURATION
 # ============================================================================
 
-API_BASE_URL: str = os.environ.get(
-    "SELLADOMX_API_URL",
-    "https://www.selladomx.com",
-)
+DEFAULT_API_BASE_URL: Final[str] = "https://www.selladomx.com"
+_LOCAL_HOSTS: Final[frozenset[str]] = frozenset({"localhost", "127.0.0.1"})
+
+
+def resolve_api_base_url(value: str | None) -> str:
+    """Validate a SELLADOMX_API_URL override.
+
+    The API receives the user's token, so only https URLs are accepted, plus
+    plain http on localhost for local development.
+
+    Args:
+        value: Raw value of SELLADOMX_API_URL, or None if unset
+
+    Returns:
+        The override without a trailing slash, or DEFAULT_API_BASE_URL if it is
+        unset or not allowed
+    """
+    if not value:
+        return DEFAULT_API_BASE_URL
+    try:
+        parsed = urlparse(value.strip())
+        host = parsed.hostname
+    except ValueError:
+        parsed, host = None, None
+    if parsed is not None and host:
+        if parsed.scheme == "https" or (
+            parsed.scheme == "http" and host in _LOCAL_HOSTS
+        ):
+            return value.strip().rstrip("/")
+    logger.warning(
+        "Ignoring SELLADOMX_API_URL: only https URLs (or http on localhost) "
+        f"are allowed; using {DEFAULT_API_BASE_URL}"
+    )
+    return DEFAULT_API_BASE_URL
+
+
+API_BASE_URL: str = resolve_api_base_url(os.environ.get("SELLADOMX_API_URL"))
 
 logger.info(f"Using API base URL: {API_BASE_URL}")
 

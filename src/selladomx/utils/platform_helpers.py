@@ -1,4 +1,5 @@
 """Platform-specific helpers for URL scheme registration and other OS operations."""
+
 import sys
 import os
 import logging
@@ -67,6 +68,30 @@ def is_url_scheme_registered_windows():
         return False
 
 
+_DESKTOP_EXEC_RESERVED = set(" \t\n\"'\\><~|&;$*?#()`")
+
+
+def quote_desktop_exec_arg(arg: str) -> str:
+    """Quote one argument for the Exec key of a .desktop file.
+
+    Follows the Desktop Entry spec: arguments with reserved characters are
+    double-quoted with ``"`` ``\\`` ``$`` and backtick backslash-escaped; then
+    the string-value escaping doubles every backslash, and ``%`` becomes ``%%``
+    so it isn't read as a field code.
+
+    Args:
+        arg: Raw argument (e.g. the executable path)
+
+    Returns:
+        The argument as it must appear in the Exec value
+    """
+    if arg and not any(c in _DESKTOP_EXEC_RESERVED for c in arg):
+        return arg.replace("%", "%%")
+    quoted = "".join("\\" + c if c in '"`$\\' else c for c in arg)
+    quoted = f'"{quoted}"'
+    return quoted.replace("\\", "\\\\").replace("%", "%%")
+
+
 def register_url_scheme_linux():
     """Register selladomx:// URL scheme on Linux.
 
@@ -75,6 +100,13 @@ def register_url_scheme_linux():
     """
     if sys.platform != "linux":
         return False
+
+    # The Flatpak exports its own .desktop file with the URL handler; one
+    # written from inside the sandbox would point at a path that only exists
+    # inside it.
+    if os.environ.get("FLATPAK_ID"):
+        logger.info("Running inside Flatpak, URL scheme handled by the export")
+        return True
 
     try:
         home = Path.home()
@@ -92,7 +124,7 @@ def register_url_scheme_linux():
 Type=Application
 Name=SelladoMX
 Comment=Firma digital de documentos PDF con e.firma
-Exec={appimage_path} %u
+Exec={quote_desktop_exec_arg(appimage_path)} %u
 Icon=selladomx
 Terminal=false
 Categories=Office;
