@@ -56,14 +56,14 @@ logger.info(f"Using API base URL: {API_BASE_URL}")
 # TSA CONFIGURATION
 # ============================================================================
 
-# Free tier, in fallback order. Plain http is a last resort for networks that
-# block TLS to these hosts; DigiCert refuses connections on port 443, so it only
-# appears over http.
+# Free tier, in fallback order. Providers whose TSA certificates Adobe trusts
+# come before freetsa, which it doesn't, even though that puts DigiCert's plain
+# http (it refuses connections on port 443) ahead of freetsa's https.
 _DEFAULT_FREE_TSA_PROVIDERS = [
     "https://timestamp.sectigo.com",
-    "https://freetsa.org/tsr",
     "http://timestamp.digicert.com",
     "http://timestamp.sectigo.com",
+    "https://freetsa.org/tsr",
     "http://freetsa.org/tsr",
 ]
 _FREE_TSA_OVERRIDE = os.environ.get("SELLADOMX_FREE_TSA_URL")

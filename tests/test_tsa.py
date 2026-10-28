@@ -158,15 +158,15 @@ class TestFailoverTimeStamper:
 
 
 class TestTSAClient:
-    def test_default_providers_are_https_first(self):
+    def test_default_providers_start_over_https_and_end_with_freetsa(self):
         client = TSAClient()
         assert client.primary_url == config.TSA_FREE_PROVIDERS[0]
         assert client.providers == config.TSA_FREE_PROVIDERS
-        first_http = next(
-            i for i, u in enumerate(client.providers) if u.startswith("http:")
+        assert client.providers[0].startswith("https:")
+        freetsa = [i for i, u in enumerate(client.providers) if "freetsa" in u]
+        assert freetsa == list(
+            range(len(client.providers) - len(freetsa), len(client.providers))
         )
-        assert all(u.startswith("https:") for u in client.providers[:first_http])
-        assert all(u.startswith("http:") for u in client.providers[first_http:])
 
     def test_custom_url_goes_first(self):
         client = TSAClient(tsa_url="https://example.com/tsa")
