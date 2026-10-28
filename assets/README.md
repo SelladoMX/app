@@ -12,6 +12,3 @@ Regenerate the platform icons from `icon.png` with `python scripts/generate-icon
 
 ## Desktop Entry
 - `selladomx.desktop` - Linux desktop entry; the Flatpak manifest installs it as `com.selladomx.SelladoMX.desktop`
-
-## Documentation
-- `README-Windows.txt` - Spanish readme for the portable zip; CI copies it into the zip as `README.txt` (the installer leaves it out)

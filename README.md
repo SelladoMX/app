@@ -91,10 +91,6 @@ Para verificar el origen del archivo (requiere [GitHub CLI](https://cli.github.c
 gh attestation verify SelladoMX-Windows-Setup.exe --repo SelladoMX/app
 ```
 
-### Versión portable (solo 0.4.3)
-
-La versión 0.4.3 también se publica como `SelladoMX-Windows.zip`, que se usa sin instalar. Es la última versión que se publica así.
-
 ### Desarrollo
 
 La documentación para desarrolladores está en [docs/developer/](docs/developer/): [desarrollo](docs/developer/development.md), [arquitectura](docs/developer/architecture.md) y [empaquetado](docs/developer/packaging.md). Los enlaces `selladomx://` se describen en [docs/URL_SCHEME_REGISTRATION.md](docs/URL_SCHEME_REGISTRATION.md).

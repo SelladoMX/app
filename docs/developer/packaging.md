@@ -38,10 +38,6 @@ El exe no se comprime con UPX y lleva un recurso de versión (empresa, producto 
 
 Con la app instalada, la copia instalada siempre toma el handler de `selladomx://`; una copia portable solo lo toma si el exe registrado ya no existe (`should_update_url_handler()` en `platform_helpers.py`).
 
-### Zip portable (solo 0.4.3)
-
-CI copia `assets/README-Windows.txt` como `dist/selladomx/README.txt` y comprime `dist/selladomx/` en `SelladoMX-Windows.zip`. Se publica por última vez en 0.4.3 y se elimina en 0.4.4.
-
 ## Linux (Flatpak)
 
 Runtime: `org.kde.Platform//6.11` / `org.kde.Sdk//6.11` (Freedesktop 25.08, Python 3.13). PySide6 no usa el Qt del runtime: el wheel trae su propio Qt. El build es offline: las dependencias y el wheel de la app deben estar en `flatpak-python-deps/`, y `requirements.txt` debe existir en la raíz (ambos se generan a partir de `poetry.lock`, igual que en CI):
@@ -73,7 +69,6 @@ flatpak build-bundle repo SelladoMX-dev.flatpak com.selladomx.SelladoMX \
 `.github/workflows/build.yml` se ejecuta al publicar un tag `v*` o manualmente (Actions → Build Executables → Run workflow). Corre los tests sin red (`-m "not network"`) en Linux y en Windows; si alguno falla no se genera nada. Después genera:
 
 - `SelladoMX-Windows-Setup.exe` (instalador; ISCC recibe `/DAppVersion` del tag, o de `__version__` en ejecuciones manuales; en tags el job falla si no coinciden)
-- `SelladoMX-Windows.zip` (portable, solo 0.4.3)
 - `SelladoMX-macOS.dmg`
 - `SelladoMX-<versión>.flatpak` (`SelladoMX-dev.flatpak` en ejecuciones manuales)
 - `SHA256SUMS.txt`

@@ -178,8 +178,8 @@ jobs:
         include:
           - os: windows-latest
             platform: windows
-            artifact_name: SelladoMX-Windows
-            artifact_file: SelladoMX-Windows.zip
+            artifact_name: SelladoMX-Windows-Setup
+            artifact_file: SelladoMX-Windows-Setup.exe
           - os: macos-latest
             platform: macos
             artifact_name: SelladoMX-macOS
@@ -249,19 +249,6 @@ jobs:
           & $iscc "/DAppVersion=$version" installer\selladomx.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Add README to Windows build
-        if: matrix.platform == 'windows'
-        run: |
-          copy assets\README-Windows.txt dist\selladomx\README.txt
-        shell: cmd
-
-      - name: Create archive (Windows)
-        if: matrix.platform == 'windows'
-        run: |
-          cd dist
-          7z a -tzip ${{ matrix.artifact_name }}.zip selladomx
-        shell: bash
-
       - name: Create DMG (macOS)
         if: matrix.platform == 'macos'
         run: |
@@ -306,26 +293,6 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
-
-      - name: Upload installer artifact (Windows)
-        if: matrix.platform == 'windows'
-        uses: actions/upload-artifact@v7
-        with:
-          name: SelladoMX-Windows-Setup
-          path: dist/SelladoMX-Windows-Setup.exe
-
-      - name: Attest installer build provenance (Windows)
-        if: matrix.platform == 'windows'
-        uses: actions/attest-build-provenance@v4
-        with:
-          subject-path: dist/SelladoMX-Windows-Setup.exe
-
-      - name: Upload installer to Release (Windows)
-        if: matrix.platform == 'windows' && startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          files: dist/SelladoMX-Windows-Setup.exe
 
   build-flatpak:
     name: Build Flatpak
@@ -435,7 +402,7 @@ jobs:
       - name: Generate SHA256 checksums
         run: |
           cd artifacts
-          find . -type f \( -name "*.flatpak" -o -name "*.zip" -o -name "*.dmg" -o -name "*.exe" \) \
+          find . -type f \( -name "*.flatpak" -o -name "*.dmg" -o -name "*.exe" \) \
             -exec sha256sum {} \; | sed 's|  \./[^/]*/|  |' > ../SHA256SUMS.txt
           cat ../SHA256SUMS.txt
 
