@@ -39,14 +39,18 @@ def create_app_mutex():
     import ctypes
     from ctypes import wintypes
 
-    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-    kernel32.CreateMutexW.argtypes = [
-        wintypes.LPVOID,
-        wintypes.BOOL,
-        wintypes.LPCWSTR,
-    ]
-    kernel32.CreateMutexW.restype = wintypes.HANDLE
-    handle = kernel32.CreateMutexW(None, False, WINDOWS_APP_MUTEX)
+    try:
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.CreateMutexW.argtypes = [
+            wintypes.LPVOID,
+            wintypes.BOOL,
+            wintypes.LPCWSTR,
+        ]
+        kernel32.CreateMutexW.restype = wintypes.HANDLE
+        handle = kernel32.CreateMutexW(None, False, WINDOWS_APP_MUTEX)
+    except (OSError, AttributeError) as e:
+        logger.warning(f"Could not create the app mutex: {e}")
+        return None
     if not handle:
         logger.warning(f"CreateMutexW failed: error {ctypes.get_last_error()}")
         return None

@@ -222,3 +222,16 @@ def test_frozen_exe_path_is_registered(fake_windows, monkeypatch):
     # On a non-Windows test host abspath() prefixes the cwd to a C:\ path
     assert registry[COMMAND_KEY][""].endswith(f'{PORTABLE}" "%1"')
     assert ph.is_url_scheme_registered_windows() is True
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="needs the real Windows API")
+def test_app_mutex_is_visible_to_other_processes():
+    import ctypes
+
+    assert ph.create_app_mutex()
+    synchronize = 0x00100000
+    kernel32 = ctypes.WinDLL("kernel32")
+    kernel32.OpenMutexW.restype = ctypes.c_void_p
+    handle = kernel32.OpenMutexW(synchronize, False, ph.WINDOWS_APP_MUTEX)
+    assert handle
+    kernel32.CloseHandle(ctypes.c_void_p(handle))
