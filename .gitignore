@@ -53,3 +53,6 @@ build-dir/
 repo/
 .flatpak-builder/
 *.flatpak
+
+# Claude Code agent worktrees
+.claude/worktrees/
