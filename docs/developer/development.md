@@ -4,7 +4,7 @@
 
 ### Requisitos
 
-- Python ≥ 3.11, < 3.14
+- Python ≥ 3.11, < 3.15
 - Poetry (gestor de dependencias)
 
 ### Instalar Dependencias
