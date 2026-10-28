@@ -27,7 +27,8 @@ logger = logging.getLogger(__name__)
 
 # Hex characters reserved for the CMS in /Contents (2 per DER byte). Passing it
 # makes pyhanko skip its size estimation, which would request a throwaway
-# timestamp over the network. Measured CMS with an RSA-2048 SAT-like cert
+# timestamp over the network. A validation_context in PdfSignatureMetadata
+# would request one anyway, to validate the TSA. Measured CMS with an RSA-2048 SAT-like cert
 # (1.8 KB): 7.9 KB (freetsa), 9.3 KB (DigiCert), 9.4 KB (Certum), 9.9 KB
 # (Sectigo). 20 KB is twice the largest, because overflowing after the
 # professional timestamp is issued would waste the credit.
