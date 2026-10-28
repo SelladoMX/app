@@ -93,12 +93,13 @@ hidden_imports = [
     # Other dependencies
     'cryptography',
     'requests',
-    'qrcode',
-    'PIL',
 ]
 
-# Additional submodules
-hidden_imports += collect_submodules('pyhanko')
+# pyhanko is a namespace package. pyhanko.generated.etsi needs the optional
+# xsdata dependency (pyhanko[etsi]), which the app doesn't use.
+hidden_imports += collect_submodules(
+    'pyhanko', filter=lambda name: not name.startswith('pyhanko.generated.etsi')
+)
 hidden_imports += collect_submodules('pyhanko_certvalidator')
 
 a = Analysis(
