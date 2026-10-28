@@ -26,7 +26,8 @@ SelladoMX attempts registration once, on first launch; the attempt is recorded i
 
 ### Linux
 - The Flatpak exports `com.selladomx.SelladoMX.desktop` (with `MimeType=x-scheme-handler/selladomx`) to `/var/lib/flatpak/exports/share/applications/` (system install) or `~/.local/share/flatpak/exports/share/applications/` (user install)
-- On first launch the app also writes `~/.local/share/applications/selladomx.desktop` and runs `xdg-mime default selladomx.desktop x-scheme-handler/selladomx`
+- Inside the Flatpak (`FLATPAK_ID` set) the app relies on that export and writes nothing
+- Run outside the Flatpak (e.g. from source), on first launch the app writes `~/.local/share/applications/selladomx.desktop` and runs `xdg-mime default selladomx.desktop x-scheme-handler/selladomx`
 
 ### macOS
 - Registration handled by `CFBundleURLTypes` in the .app bundle's `Info.plist`, set in `selladomx.spec`
