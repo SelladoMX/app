@@ -6,6 +6,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+env:
+  POETRY_VERSION: '2.1.4'
+
 jobs:
   test:
     name: Run tests
@@ -21,9 +24,9 @@ jobs:
           python-version: '3.12'
 
       - name: Install Poetry
-        uses: snok/install-poetry@v1
+        uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263 # v1.4.2
         with:
-          version: latest
+          version: ${{ env.POETRY_VERSION }}
           virtualenvs-create: true
           virtualenvs-in-project: true
 
@@ -57,11 +60,65 @@ jobs:
       - name: Run tests
         env:
           QT_QPA_PLATFORM: offscreen
-        run: poetry run pytest -v --tb=short
+        run: poetry run pytest -v --tb=short -m "not network"
 
       - name: Run linter (optional)
         run: poetry run black --check src/ || true
         continue-on-error: true
+
+  network-tests:
+    name: Run network tests (non-blocking)
+    # Public TSAs can be down or slow; their failures must not block a release.
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.12
+        id: setup-python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263 # v1.4.2
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Cache dependencies
+        uses: actions/cache@v5
+        with:
+          path: .venv
+          key: test-${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('poetry.lock') }}
+
+      - name: Install system dependencies for Qt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1 \
+            libxkbcommon-x11-0 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-randr0 \
+            libxcb-render-util0 \
+            libxcb-xinerama0 \
+            libxcb-xfixes0 \
+            libxcb-shape0 \
+            libegl1 \
+            libdbus-1-3 \
+            libfontconfig1
+
+      - name: Install dependencies
+        run: poetry install --with dev
+
+      - name: Run tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: poetry run pytest -v --tb=short -m network
 
   build:
     name: Build on ${{ matrix.os }}
@@ -97,7 +154,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          pip install poetry
+          pip install "poetry==${{ env.POETRY_VERSION }}"
           poetry config virtualenvs.create true
           poetry config virtualenvs.in-project true
           echo "Poetry installed via pip"
@@ -105,9 +162,9 @@ jobs:
 
       - name: Install Poetry (Unix)
         if: runner.os != 'Windows'
-        uses: snok/install-poetry@v1
+        uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263 # v1.4.2
         with:
-          version: latest
+          version: ${{ env.POETRY_VERSION }}
           virtualenvs-create: true
           virtualenvs-in-project: true
 
@@ -176,7 +233,7 @@ jobs:
 
       - name: Upload to Release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
@@ -204,20 +261,21 @@ jobs:
           python-version: '3.12'
 
       - name: Install Poetry
-        uses: snok/install-poetry@v1
+        uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263 # v1.4.2
         with:
-          version: latest
+          version: ${{ env.POETRY_VERSION }}
 
       - name: Export dependencies and download wheels
         run: |
-          poetry self add poetry-plugin-export
+          poetry self add "poetry-plugin-export==1.10.1"
 
-          # Export from poetry.lock (single source of truth)
-          poetry export -f requirements.txt --without-hashes --output requirements.txt
+          # Export from poetry.lock (single source of truth). The hashes are
+          # also checked by the pip install inside the Flatpak build.
+          poetry export -f requirements.txt --output requirements.txt
 
           # Download all wheels for offline Flatpak build
           mkdir -p flatpak-python-deps
-          pip download -r requirements.txt -d flatpak-python-deps
+          pip download --require-hashes -r requirements.txt -d flatpak-python-deps
 
           # Build our app wheel (so flatpak doesn't need poetry-core)
           poetry build
@@ -268,7 +326,7 @@ jobs:
 
       - name: Upload to Release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           files: SelladoMX-*.flatpak
@@ -301,7 +359,7 @@ jobs:
 
       - name: Upload checksums to Release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           files: SHA256SUMS.txt
