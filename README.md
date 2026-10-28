@@ -1,139 +1,104 @@
 # SelladoMX
 
-[![Build](https://github.com/SelladoMX/app/actions/workflows/build.yml/badge.svg)](https://github.com/SelladoMX/app/actions/workflows/build.yml)
-[![CodeQL](https://github.com/SelladoMX/app/actions/workflows/codeql.yml/badge.svg)](https://github.com/SelladoMX/app/actions/workflows/codeql.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+Firma tus documentos PDF con tu e.firma del SAT desde tu computadora.
 
-Firma documentos PDF con tu e.firma del SAT directamente desde tu computadora.
+## Qué es
 
-## Características
+SelladoMX es un programa gratuito para Windows, macOS y Linux que firma PDFs con tu e.firma (tus archivos `.cer` y `.key`) y les agrega un sello de tiempo, que demuestra la fecha y hora en que firmaste.
 
-- **Firma PAdES** compatible con Adobe Reader y validadores oficiales
-- **Sellado de tiempo (TSA)** básico o profesional con validez legal
-- **100% local** - tus documentos nunca salen de tu equipo
-- **Validación de vigencia** de certificados
-- **Firma por lotes** - procesa múltiples PDFs a la vez
-- **Token management** - comparte acceso con tu equipo
+- La firma es compatible con Adobe Reader y con los validadores oficiales.
+- Tus documentos, tu certificado y tu contraseña nunca salen de tu computadora.
+- Puedes firmar varios PDFs a la vez. Los firmados se guardan con el sufijo `_firmado.pdf`.
+- El sello de tiempo básico es gratuito. El sello profesional (cumple la NOM-151-SCFI-2016 y la norma europea eIDAS) cuesta un crédito por documento; los créditos se compran en [www.selladomx.com](https://www.selladomx.com).
 
-## Seguridad
+## Descargar e instalar en Windows
 
-No guardamos tus documentos, certificados ni contraseñas. Todo el proceso de firma ocurre en tu computadora. Solo nos conectamos a servidores externos para:
+Necesitas Windows 10 u 11 de 64 bits. No se necesita ser administrador.
 
-- Verificación de actualizaciones (GitHub Releases)
-- Sellado de tiempo TSA (opcional)
-- Gestión de créditos (solo si usas TSA profesional)
+1. Descarga el instalador: [SelladoMX-Windows-Setup.exe](https://github.com/SelladoMX/app/releases/latest/download/SelladoMX-Windows-Setup.exe).
+2. Ábrelo. Como SelladoMX todavía no tiene firma de código, Windows puede mostrar **"Windows protegió tu PC"**. Haz clic en **"Más información"** y después en **"Ejecutar de todas formas"**.
+3. Sigue los pasos del instalador. Al terminar tendrás SelladoMX en el menú Inicio y, si dejas marcada la casilla, en el escritorio.
 
-Para reportar vulnerabilidades, consulta [SECURITY.md](SECURITY.md).
+Para actualizar, descarga el instalador de la versión nueva y ábrelo; se instala encima de la anterior y tu configuración y tu token se conservan. Si SelladoMX está abierto, el instalador te pedirá cerrarlo.
 
-## Instalación
+**Windows 11 y el "Control inteligente de aplicaciones".** Si lo tienes activado, Windows puede bloquear el instalador sin darte la opción "Ejecutar de todas formas", porque SelladoMX todavía no tiene firma de código. La única forma de continuar es desactivarlo en *Seguridad de Windows → Control de aplicaciones y navegador → Configuración de Control inteligente de aplicaciones*. Ten en cuenta que, en algunas versiones de Windows, una vez desactivado ya no se puede volver a activar sin reinstalar Windows. Si prefieres no hacerlo, escríbenos.
 
-### Linux
+**Antivirus.** Algunos antivirus revisan las conexiones seguras (opciones como "protección web", "análisis de HTTPS" o "inspección de tráfico cifrado") y pueden bloquear la conexión con los servidores de sello de tiempo. Si SelladoMX no logra obtener el sello de tiempo, agrega SelladoMX a las excepciones de esa función de tu antivirus.
 
-Descarga `SelladoMX-<versión>.flatpak` desde [GitHub Releases](https://github.com/SelladoMX/app/releases):
+## Si ya usabas la versión ZIP
+
+Hasta la versión 0.4.2, SelladoMX para Windows se descargaba como ZIP.
+
+1. Instala SelladoMX con el instalador, como se explica arriba.
+2. Abre SelladoMX instalado una vez. Tu configuración y tu token siguen ahí, porque se guardan en tu usuario de Windows y no en la carpeta del ZIP.
+3. Borra la carpeta donde descomprimiste el ZIP.
+
+Desde ese momento, los enlaces que te enviamos por correo vuelven a abrir SelladoMX.
+
+## macOS y Linux
+
+**macOS:** descarga [SelladoMX-macOS.dmg](https://github.com/SelladoMX/app/releases/latest/download/SelladoMX-macOS.dmg), ábrelo y arrastra SelladoMX a la carpeta Aplicaciones. La primera vez que lo abras, macOS dirá que no puede verificar al desarrollador: haz clic derecho en SelladoMX → **Abrir** y confirma. En versiones recientes de macOS, ve a *Configuración del Sistema → Privacidad y seguridad* y haz clic en **"Abrir de todas formas"**.
+
+**Linux:** descarga el archivo `SelladoMX-<versión>.flatpak` de la [página de descargas](https://github.com/SelladoMX/app/releases/latest) e instálalo:
 
 ```bash
 flatpak install --user SelladoMX-<versión>.flatpak
 flatpak run com.selladomx.SelladoMX
 ```
 
-### macOS
+## Desinstalar
 
-Descarga `SelladoMX-macOS.dmg` desde [GitHub Releases](https://github.com/SelladoMX/app/releases).
+**Windows:** abre *Configuración → Aplicaciones → Aplicaciones instaladas*, busca SelladoMX y elige **Desinstalar**. Se te preguntará **"¿Eliminar también tu configuración y token?"**:
 
-### Windows
+- **No** (recomendado si vas a volver a instalarlo): se conservan tu configuración y tu token.
+- **Sí**: se borran.
 
-Descarga `SelladoMX-Windows.zip` desde [GitHub Releases](https://github.com/SelladoMX/app/releases).
+En ambos casos se borran los registros de diagnóstico (logs). Tus PDFs y tus archivos `.cer` y `.key` nunca se borran.
 
-### Verificación de descargas
+**macOS:** arrastra SelladoMX de Aplicaciones a la papelera.
 
-Cada release incluye un archivo `SHA256SUMS.txt` y attestations de GitHub para verificar la integridad de tu descarga:
+**Linux:** `flatpak uninstall com.selladomx.SelladoMX`
 
-```bash
-# Verificar checksum
-sha256sum -c SHA256SUMS.txt
+## Ayuda
 
-# Verificar procedencia del build (requiere GitHub CLI)
-gh attestation verify <archivo-descargado> --repo SelladoMX/app
+- Correo: [soporte@selladomx.com](mailto:soporte@selladomx.com)
+- Sitio web: [www.selladomx.com](https://www.selladomx.com)
+
+Para reportar un problema de seguridad, consulta [SECURITY.md](SECURITY.md).
+
+## Avanzado
+
+### Verificar la descarga
+
+Cada versión publica un archivo `SHA256SUMS.txt` con la huella de cada descarga, y una constancia de que los archivos se generaron en GitHub Actions a partir de este código.
+
+En Windows (PowerShell), compara el resultado con la línea correspondiente de `SHA256SUMS.txt`:
+
+```powershell
+Get-FileHash SelladoMX-Windows-Setup.exe -Algorithm SHA256
 ```
 
-## Uso Rápido
-
-1. **Selecciona PDFs** - arrastra o busca los documentos a firmar
-2. **Carga tu certificado** - archivo `.cer` y `.key` de tu e.firma
-3. **Firma** - elige TSA básico o profesional y procesa
-
-Los archivos firmados se guardan con el sufijo `_firmado.pdf`.
-
-## TSA Profesional
-
-El TSA básico funciona bien para uso personal. Si necesitas validez legal certificada para trámites oficiales o juicios, usa TSA Profesional:
-
-- Certificación oficial RFC 3161
-- Cumplimiento NOM-151-SCFI-2016 y normas europeas eIDAS
-- Proveedor europeo certificado
-- Evidencia admisible en procesos legales
-- Desde $7 MXN por documento
-
-Configura tu token desde **Configuración** o usa un magic link desde tu email.
-
-## Para Desarrolladores
+En macOS o Linux, con `SHA256SUMS.txt` en la misma carpeta que la descarga:
 
 ```bash
-# Clonar e instalar
-git clone https://github.com/SelladoMX/app.git
-cd app
-poetry install
-
-# Ejecutar en desarrollo
-poetry run python run.py
-
-# Ejecutar tests
-poetry run pytest
-
-# Construir ejecutables
-./scripts/build.sh
+sha256sum -c SHA256SUMS.txt --ignore-missing   # Linux
+shasum -a 256 -c SHA256SUMS.txt --ignore-missing  # macOS
 ```
 
-Requiere Python 3.11+ y Poetry.
+Para verificar el origen del archivo (requiere [GitHub CLI](https://cli.github.com)):
 
-### Configuración de Entorno
-
-**Desarrollo local (por defecto):**
 ```bash
-poetry run python run.py
-```
-Usa automáticamente `.env.development` con `http://localhost:8787`
-
-**Para override personalizado:**
-```bash
-# Crea tu propio .env (opcional)
-echo "SELLADOMX_API_URL=http://localhost:3000" > .env
+gh attestation verify SelladoMX-Windows-Setup.exe --repo SelladoMX/app
 ```
 
-**Builds/Producción:**
-Los ejecutables usan los valores hardcodeados con `https://www.selladomx.com`
+### Versión portable (solo 0.4.3)
 
-**Variables disponibles:**
-- `SELLADOMX_API_URL` - URL de la API
-- `SELLADOMX_DEBUG` - Logging detallado (0 o 1)
+La versión 0.4.3 también se publica como `SelladoMX-Windows.zip`, que se usa sin instalar. Es la última versión que se publica así.
 
-## Tecnologías
+### Desarrollo
 
-- **UI**: PySide6 (Qt 6) con QML
-- **Firma PDF**: pyhanko
-- **Criptografía**: cryptography
-- **Validación**: pyhanko-certvalidator
-- **TSA básico**: DigiCert/Sectigo/FreeTSA
-- **TSA profesional**: Certum eIDAS
-
-## Documentación
-
-- [URL Scheme Registration](docs/URL_SCHEME_REGISTRATION.md) - Deep links y magic links
+La documentación para desarrolladores está en [docs/developer/](docs/developer/): [desarrollo](docs/developer/development.md), [arquitectura](docs/developer/architecture.md) y [empaquetado](docs/developer/packaging.md). Los enlaces `selladomx://` se describen en [docs/URL_SCHEME_REGISTRATION.md](docs/URL_SCHEME_REGISTRATION.md).
 
 ## Licencia
 
-[MIT](LICENSE) - usa, modifica y distribuye libremente.
-
----
-
-**¿Dudas?** Abre un [issue](https://github.com/SelladoMX/app/issues) o escribe a soporte@selladomx.com
+[MIT](LICENSE)

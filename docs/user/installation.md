@@ -5,7 +5,7 @@
 Descarga desde [GitHub Releases](https://github.com/SelladoMX/app/releases/latest):
 
 - **macOS**: `SelladoMX-macOS.dmg`
-- **Windows**: `SelladoMX-Windows.zip`
+- **Windows**: `SelladoMX-Windows-Setup.exe` (instalador)
 - **Linux**: `SelladoMX-<versión>.flatpak`
 
 ## Primera Ejecución
@@ -20,6 +20,9 @@ Como la aplicación no está firmada, verás advertencias de seguridad la primer
 **Windows:**
 1. Clic en "Más información"
 2. Clic en "Ejecutar de todas formas"
+3. Sigue los pasos del instalador
+
+Consulta el [README](../../README.md#descargar-e-instalar-en-windows) si Windows 11 bloquea el instalador o si tu antivirus bloquea el sello de tiempo.
 
 **Linux:**
 ```bash
