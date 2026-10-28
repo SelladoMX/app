@@ -1,6 +1,6 @@
 # SelladoMX client
 
-Desktop app that signs PDFs (PAdES) with a SAT e.firma (`.cer` + `.key`) and adds an RFC 3161 timestamp. Python 3.11–3.13, PySide6 with a QML UI, pyhanko for signing.
+Desktop app that signs PDFs (PAdES) with a SAT e.firma (`.cer` + `.key`) and adds an RFC 3161 timestamp. Python 3.11–3.14, PySide6 with a QML UI, pyhanko for signing.
 
 ## Commands
 
@@ -33,7 +33,7 @@ make reset-onboarding              # show the first-run onboarding again
 - The `COLOR_*` constants in `config.py` must match `DesignTokens.qml`.
 - The version appears in `pyproject.toml`, `src/selladomx/__init__.py`, `selladomx.spec` (`CFBundle*Version`, read from `__init__.py`) and the newest `<release>` in `com.selladomx.SelladoMX.metainfo.xml`. `tests/test_version_consistency.py` fails if they differ, so a version bump means editing `pyproject.toml` and `__init__.py` and adding a `<release>` entry. The release checklist is in `docs/developer/packaging.md`.
 - User-facing strings are in Spanish; log messages are in English. The docs are in Spanish.
-- CI (`.github/workflows/build.yml`) runs on `v*` tags and manual dispatch. It builds the Windows zip, the macOS DMG and the Flatpak bundle, with build-provenance attestations.
+- CI (`.github/workflows/build.yml`) runs on `v*` tags and manual dispatch. It runs the tests on Linux and Windows, then builds the Windows installer (Inno Setup, `installer/selladomx.iss`), the macOS DMG and the Flatpak bundle, with build-provenance attestations.
 
 ## Commits
 

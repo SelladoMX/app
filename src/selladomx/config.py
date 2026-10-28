@@ -91,11 +91,6 @@ BUY_CREDITS_URL: Final[str] = f"{API_BASE_URL}/precios"
 # Hardcoded: update when prices change; takes effect only in a new build.
 CREDIT_PRICE_DISPLAY: Final[str] = "desde $7 MXN"  # Minimum price (100-credit package)
 
-# Validación
-OCSP_TIMEOUT: Final[int] = 10
-CRL_TIMEOUT: Final[int] = 15
-ENABLE_CRL_FALLBACK: Final[bool] = True
-
 # Archivos
 SIGNED_SUFFIX: Final[str] = "_firmado"
 
