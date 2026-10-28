@@ -1,4 +1,5 @@
 """HTTP client for SelladoMX API."""
+
 import logging
 from typing import Optional
 
@@ -74,7 +75,7 @@ class SelladoMXAPIClient:
             APIError: For other API errors
         """
         if require_auth and not self.api_key:
-            raise AuthenticationError("API key is required for this operation")
+            raise AuthenticationError("Se requiere un token para esta operación")
 
         url = f"{self.base_url}{endpoint}"
 
@@ -85,43 +86,41 @@ class SelladoMXAPIClient:
             )
 
             if response.status_code == 401:
-                error_data = response.json() if response.content else {}
-                error_type = error_data.get("error", "")
-
-                if error_type == "token_expired":
-                    raise TokenExpiredError("Token has expired")
-                elif error_type == "token_revoked":
-                    raise TokenRevokedError("Token has been revoked")
+                error_type = self._error_field(response)
+                if error_type == "Token has expired":
+                    raise TokenExpiredError("El token expiró", status_code=401)
+                elif error_type == "Token is inactive":
+                    raise TokenRevokedError(
+                        "El token está desactivado", status_code=401
+                    )
                 else:
                     raise AuthenticationError(
                         "API key inválido o expirado", status_code=401
                     )
+            elif response.status_code == 402 or (
+                response.status_code == 403
+                and self._error_field(response) == "insufficient_credits"
+            ):
+                raise InsufficientCreditsError(
+                    credits_remaining=self._json_body(response).get(
+                        "credits_remaining", 0
+                    )
+                )
             elif response.status_code == 403:
-                try:
-                    error_data = response.json()
-                    if error_data.get("error") == "insufficient_credits":
-                        raise InsufficientCreditsError(
-                            error_data.get("message", "Sin créditos disponibles"),
-                            available_credits=error_data.get("available_credits", 0),
-                        )
-                    elif "primary token" in error_data.get("error", "").lower():
-                        raise PrimaryTokenRequiredError("Se requiere token primario")
-                except ValueError:
-                    pass  # Not JSON response
-
+                if "primary token" in self._error_field(response).lower():
+                    raise PrimaryTokenRequiredError(
+                        "Se requiere token primario", status_code=403
+                    )
                 raise APIError(
                     "No tienes permisos para esta operación", status_code=403
                 )
             elif response.status_code >= 400:
-                try:
-                    error_data = response.json()
-                    error_msg = error_data.get(
-                        "error", error_data.get("message", "Error desconocido")
-                    )
-                except ValueError:
-                    error_msg = response.text or "Error desconocido"
-
-                raise APIError(error_msg, status_code=response.status_code)
+                error_data = self._json_body(response)
+                error_msg = error_data.get("error") or error_data.get("message")
+                raise APIError(
+                    error_msg or f"Error del servidor (HTTP {response.status_code})",
+                    status_code=response.status_code,
+                )
 
             return response.json()
 
@@ -134,6 +133,19 @@ class SelladoMXAPIClient:
         except requests.exceptions.RequestException as e:
             logger.error(f"Request error: {e}")
             raise NetworkError(f"Error de red: {e}")
+
+    @staticmethod
+    def _json_body(response: requests.Response) -> dict:
+        try:
+            body = response.json()
+        except ValueError:
+            return {}
+        return body if isinstance(body, dict) else {}
+
+    @classmethod
+    def _error_field(cls, response: requests.Response) -> str:
+        error = cls._json_body(response).get("error", "")
+        return error if isinstance(error, str) else ""
 
     def get_balance(self) -> dict:
         """Get available credits balance with token info.
@@ -316,7 +328,7 @@ class SelladoMXAPIClient:
         try:
             response = self._request(
                 "GET",
-                f"/api/v1/verify/by-hash?hash={document_hash}",
+                f"/api/v1/verify/by-hash/{document_hash}",
                 require_auth=False,
             )
             return response
