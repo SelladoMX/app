@@ -4,10 +4,24 @@ PyInstaller spec file for SelladoMX
 Configures packaging for macOS, Windows, and Linux
 """
 
+import ast
 import sys
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 block_cipher = None
+
+
+def read_app_version():
+    tree = ast.parse(open('src/selladomx/__init__.py', encoding='utf-8').read())
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(
+            getattr(target, 'id', None) == '__version__' for target in node.targets
+        ):
+            return ast.literal_eval(node.value)
+    raise SystemExit('__version__ not found in src/selladomx/__init__.py')
+
+
+APP_VERSION = read_app_version()
 
 pyhanko_datas = collect_data_files('pyhanko')
 pyhanko_certvalidator_datas = collect_data_files('pyhanko_certvalidator')
@@ -36,8 +50,6 @@ hidden_imports = [
     'PySide6.QtQml',
     'PySide6.QtQuick',
     'PySide6.QtQuickControls2',
-    'PySide6.QtQuickLayouts',
-    'PySide6.QtQuickTemplates2',
 
     # PDF signing
     'pyhanko',
@@ -129,8 +141,8 @@ if sys.platform == 'darwin':
             'NSHighResolutionCapable': 'True',
             'CFBundleName': 'SelladoMX',
             'CFBundleDisplayName': 'SelladoMX',
-            'CFBundleVersion': '0.2.0',
-            'CFBundleShortVersionString': '0.2.0',
+            'CFBundleVersion': APP_VERSION,
+            'CFBundleShortVersionString': APP_VERSION,
             'LSMinimumSystemVersion': '10.13',
             'NSRequiresAquaSystemAppearance': 'False',
             # URL scheme handler for magic links
