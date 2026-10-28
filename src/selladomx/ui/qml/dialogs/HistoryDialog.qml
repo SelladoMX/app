@@ -128,6 +128,7 @@ Dialog {
 
                         Text {
                             text: modelData.filename || "Sin nombre"
+                            textFormat: Text.PlainText
                             font.pixelSize: DesignTokens.fontBase
                             font.weight: DesignTokens.weightSemiBold
                             color: DesignTokens.textPrimary
@@ -156,6 +157,7 @@ Dialog {
 
                         Text {
                             text: "Firmado por: " + (modelData.signer_cn || "Sin información del firmante")
+                            textFormat: Text.PlainText
                             font.pixelSize: DesignTokens.fontSm
                             color: DesignTokens.textTertiary
                             elide: Text.ElideRight
@@ -164,22 +166,16 @@ Dialog {
                         }
 
                         Text {
-                            visible: modelData.verification_token !== undefined && modelData.verification_token !== ""
-                            property string verifyUrl: "https://www.selladomx.com/verify/" + modelData.verification_token
-                            text: "<a href='" + verifyUrl + "'>Ver certificado de validez</a>"
-                            textFormat: Text.RichText
+                            visible: modelData.verification_token !== undefined && modelData.verification_token !== null && modelData.verification_token !== ""
+                            text: "Ver certificado de validez"
                             font.pixelSize: DesignTokens.fontSm
+                            font.underline: true
                             color: DesignTokens.info
-                            Layout.fillWidth: true
-
-                            onLinkActivated: function(link) {
-                                Qt.openUrlExternally(link)
-                            }
 
                             MouseArea {
                                 anchors.fill: parent
-                                cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                acceptedButtons: Qt.NoButton
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: mainViewModel.openVerificationPage(String(modelData.verification_token))
                             }
                         }
                     }

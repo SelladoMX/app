@@ -92,6 +92,10 @@ Window {
             deepLinkBanner.show()
         }
 
+        function onDeepLinkTokenConfirmationRequested(info) {
+            deepLinkTokenDialog.showFor(info)
+        }
+
         function onFormReset() {
             mainScrollView.contentItem.contentY = 0
         }
@@ -117,7 +121,7 @@ Window {
         Text {
             id: bannerText
             anchors.centerIn: parent
-            text: "Token configurado automáticamente"
+            text: "Token configurado"
             font.pixelSize: DesignTokens.fontBase
             font.weight: DesignTokens.weightSemiBold
             color: DesignTokens.bgPrimary
@@ -186,6 +190,11 @@ Window {
 
     HistoryDialog {
         id: historyDialog
+        anchors.centerIn: parent
+    }
+
+    DeepLinkTokenDialog {
+        id: deepLinkTokenDialog
         anchors.centerIn: parent
     }
 

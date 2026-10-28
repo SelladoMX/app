@@ -28,6 +28,11 @@ Dialog {
     property string revokeTokenId: ""
     property string revokeTokenAlias: ""
 
+    onClosed: {
+        newTokenValue = ""
+        newTokenAlias = ""
+    }
+
     onOpened: {
         newTokenValue = ""
         newTokenAlias = ""
@@ -85,6 +90,7 @@ Dialog {
                 anchors.fill: parent
                 anchors.margins: DesignTokens.md
                 text: errorMessage
+                textFormat: Text.PlainText
                 font.pixelSize: DesignTokens.fontSm
                 color: DesignTokens.error
                 wrapMode: Text.WordWrap
@@ -177,6 +183,7 @@ Dialog {
 
                 Text {
                     text: "Subtoken creado: " + newTokenAlias
+                    textFormat: Text.PlainText
                     font.pixelSize: DesignTokens.fontBase
                     font.weight: DesignTokens.weightSemiBold
                     color: DesignTokens.success
@@ -203,6 +210,7 @@ Dialog {
                             clipboardHelper.text = newTokenValue
                             clipboardHelper.selectAll()
                             clipboardHelper.copy()
+                            clipboardHelper.text = ""
                         }
                     }
                 }
@@ -263,6 +271,7 @@ Dialog {
 
                             Text {
                                 text: modelData.alias || "Sin nombre"
+                                textFormat: Text.PlainText
                                 font.pixelSize: DesignTokens.fontBase
                                 font.weight: DesignTokens.weightSemiBold
                                 color: DesignTokens.textPrimary
@@ -270,13 +279,11 @@ Dialog {
                                 Layout.fillWidth: true
                             }
 
+                            // The list endpoint only returns a masked preview, never the token
                             Text {
-                                text: {
-                                    var token = modelData.token || ""
-                                    if (token.length > 12)
-                                        return token.substring(0, 8) + "..." + token.substring(token.length - 4)
-                                    return token
-                                }
+                                visible: text !== ""
+                                text: modelData.token_preview || ""
+                                textFormat: Text.PlainText
                                 font.pixelSize: DesignTokens.fontXs
                                 font.family: DesignTokens.fontFamilyMono
                                 color: DesignTokens.textTertiary
@@ -367,6 +374,7 @@ Dialog {
 
             Text {
                 text: "¿Revocar subtoken \"" + revokeTokenAlias + "\"?"
+                textFormat: Text.PlainText
                 font.pixelSize: DesignTokens.fontLg
                 font.weight: DesignTokens.weightSemiBold
                 color: DesignTokens.textPrimary

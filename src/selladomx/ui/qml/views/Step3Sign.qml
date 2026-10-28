@@ -288,6 +288,10 @@ StepIndicator {
             signingSuccessDialog.verificationUrls = urls
         }
 
+        function onFailedFilesReady(failed) {
+            signingSuccessDialog.failedFiles = failed
+        }
+
         function onSigningCompleted(successCount, totalCount, usedProfessionalTSA) {
             signingSuccessDialog.signedCount = successCount
             signingSuccessDialog.totalCount = totalCount
