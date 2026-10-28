@@ -29,6 +29,7 @@ from .utils.logging_setup import (
     log_startup_info,
     setup_logging,
 )
+from .utils.platform_helpers import create_app_mutex
 
 logger = logging.getLogger(__name__)
 
@@ -122,6 +123,7 @@ def main():
     install_excepthook()
     install_qt_message_handler()
     log_startup_info(__version__, log_file)
+    create_app_mutex()
 
     # Imported after setup_logging() so config's import-time log lines are kept
     from .ui.qml_bridge.main_view_model import MainViewModel
@@ -150,9 +152,8 @@ def main():
 
     settings_manager = SettingsManager()
 
-    # On Windows the handler stores this exe's path, so check it on every launch:
-    # a user who extracts a new version elsewhere would otherwise keep opening
-    # links in the old copy.
+    # On Windows the handler stores an exe path, so it is checked on every
+    # launch; see should_update_url_handler() for which copy gets the links.
     if (
         sys.platform == "win32"
         or not settings_manager.has_attempted_url_scheme_registration()

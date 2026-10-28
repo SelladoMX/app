@@ -124,6 +124,14 @@ Genera: `dist/SelladoMX-macOS.dmg`
 
 Constantes y variables de entorno: `src/selladomx/config.py`.
 
+Al ejecutar desde el código fuente se carga `.env` si existe y, si no, `.env.development` (API en `http://localhost:8787`, logging detallado). Los ejecutables empaquetados no leen ninguno de los dos archivos; sin variables de entorno usan `https://www.selladomx.com`.
+
+```bash
+echo "SELLADOMX_API_URL=http://localhost:3000" > .env
+```
+
+Variables principales: `SELLADOMX_API_URL` (URL de la API; solo `https`, o `http` en localhost) y `SELLADOMX_DEBUG` (`1` para logging detallado).
+
 `make help` lista todos los comandos.
 
 ## Troubleshooting

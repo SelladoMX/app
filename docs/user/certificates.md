@@ -73,4 +73,4 @@ Para problemas con tu certificado e.firma del SAT:
 - Portal: https://www.sat.gob.mx
 
 Para problemas con SelladoMX:
-- Abre un [issue](https://github.com/SelladoMX/app/issues) en el repositorio del proyecto
+- Escribe a soporte@selladomx.com

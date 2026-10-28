@@ -1,24 +1,152 @@
 """Platform-specific helpers for URL scheme registration and other OS operations."""
 
-import sys
-import os
 import logging
+import ntpath
+import os
+import sys
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 
-def _windows_handler_command() -> str:
-    """Return the registry command that opens ``selladomx://`` links in this copy."""
+# Must match AppId in installer/selladomx.iss.
+WINDOWS_APP_ID = "{4285FAC5-53B6-436F-89B4-A58266D49505}"
+WINDOWS_APP_MUTEX = "SelladoMXAppMutex"
+
+_URL_KEY = r"Software\Classes\selladomx"
+_COMMAND_KEY = rf"{_URL_KEY}\shell\open\command"
+_UNINSTALL_KEY = (
+    rf"Software\Microsoft\Windows\CurrentVersion\Uninstall\{WINDOWS_APP_ID}_is1"
+)
+_EXE_NAME = "selladomx.exe"
+
+_app_mutex = None
+
+
+def create_app_mutex():
+    """Create the named mutex the installer checks to detect a running app.
+
+    The handle is kept in a module global so it lives as long as the process;
+    Windows releases it when the process exits.
+
+    Returns:
+        The mutex handle, or None when not on Windows or on failure
+    """
+    global _app_mutex
+    if sys.platform != "win32" or _app_mutex:
+        return _app_mutex
+
+    import ctypes
+    from ctypes import wintypes
+
+    try:
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.CreateMutexW.argtypes = [
+            wintypes.LPVOID,
+            wintypes.BOOL,
+            wintypes.LPCWSTR,
+        ]
+        kernel32.CreateMutexW.restype = wintypes.HANDLE
+        handle = kernel32.CreateMutexW(None, False, WINDOWS_APP_MUTEX)
+    except (OSError, AttributeError) as e:
+        logger.warning(f"Could not create the app mutex: {e}")
+        return None
+    if not handle:
+        logger.warning(f"CreateMutexW failed: error {ctypes.get_last_error()}")
+        return None
+    _app_mutex = handle
+    return handle
+
+
+def _current_exe() -> str:
     if getattr(sys, "frozen", False):
-        exe_path = sys.executable
-    else:
-        exe_path = sys.argv[0]
-    return f'"{os.path.abspath(exe_path)}" "%1"'
+        return os.path.abspath(sys.executable)
+    return os.path.abspath(sys.argv[0])
+
+
+def _windows_handler_command(exe_path: str) -> str:
+    """Return the registry command that opens ``selladomx://`` links in exe_path."""
+    return f'"{exe_path}" "%1"'
+
+
+def _same_path(a: str, b: str) -> bool:
+    return ntpath.normcase(ntpath.normpath(a)) == ntpath.normcase(ntpath.normpath(b))
+
+
+def _exe_exists(path: str) -> bool:
+    return os.path.isfile(path)
+
+
+def _command_exe(command: str) -> str | None:
+    """Extract the executable path from a ``shell\\open\\command`` value."""
+    command = command.strip()
+    if command.startswith('"'):
+        end = command.find('"', 1)
+        return command[1:end] if end > 1 else None
+    return command.split(" ", 1)[0] or None
+
+
+def should_update_url_handler(
+    current_exe: str,
+    registered_command: str | None,
+    installed_exe: str | None,
+) -> bool:
+    """Decide whether this copy should write the ``selladomx://`` handler.
+
+    The installed copy always takes the handler. A portable copy (an extracted
+    zip, or a dev run) only takes it when nothing usable is registered, so it
+    never steals links from a valid installed copy or another portable copy.
+
+    Args:
+        current_exe: Absolute path of the running executable
+        registered_command: Current ``shell\\open\\command`` value, or None
+        installed_exe: ``selladomx.exe`` under the installer's InstallLocation,
+            or None when the app isn't installed
+
+    Returns:
+        True if the handler should be (re)written for current_exe
+    """
+    if registered_command is None:
+        return True
+    if registered_command.strip().lower() == (
+        _windows_handler_command(current_exe).lower()
+    ):
+        return False
+    if installed_exe and _same_path(current_exe, installed_exe):
+        return True
+    registered_exe = _command_exe(registered_command)
+    return not registered_exe or not _exe_exists(registered_exe)
+
+
+def _read_registered_command() -> str | None:
+    import winreg
+
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, _COMMAND_KEY) as key:
+            value, _ = winreg.QueryValueEx(key, "")
+    except OSError:
+        return None
+    return value if isinstance(value, str) else None
+
+
+def _installed_exe() -> str | None:
+    """Return selladomx.exe in the installer's InstallLocation, if installed."""
+    import winreg
+
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, _UNINSTALL_KEY) as key:
+            location, _ = winreg.QueryValueEx(key, "InstallLocation")
+    except OSError:
+        return None
+    if not isinstance(location, str) or not location:
+        return None
+    return ntpath.join(location, _EXE_NAME)
 
 
 def register_url_scheme_windows():
-    """Register selladomx:// URL scheme on Windows.
+    """Register selladomx:// URL scheme on Windows for this executable.
+
+    Writes the same values as the installer's [Registry] section.
 
     Returns:
         bool: True if registration succeeded, False otherwise
@@ -26,35 +154,30 @@ def register_url_scheme_windows():
     if sys.platform != "win32":
         return False
 
+    import winreg
+
+    exe = _current_exe()
     try:
-        import winreg
-
-        command = _windows_handler_command()
-
         # HKEY_CURRENT_USER doesn't require admin
-        key_path = r"Software\Classes\selladomx"
-
-        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path) as key:
-            winreg.SetValue(key, "", winreg.REG_SZ, "URL:SelladoMX Protocol")
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, _URL_KEY) as key:
+            winreg.SetValueEx(key, "", 0, winreg.REG_SZ, "URL:SelladoMX Protocol")
             winreg.SetValueEx(key, "URL Protocol", 0, winreg.REG_SZ, "")
-
-        command_path = rf"{key_path}\shell\open\command"
-        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, command_path) as key:
-            winreg.SetValue(key, "", winreg.REG_SZ, command)
-
-        logger.info("URL scheme registered for this executable")
-        return True
-
-    except Exception as e:
+        with winreg.CreateKey(
+            winreg.HKEY_CURRENT_USER, rf"{_URL_KEY}\DefaultIcon"
+        ) as key:
+            winreg.SetValueEx(key, "", 0, winreg.REG_SZ, f"{exe},0")
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, _COMMAND_KEY) as key:
+            winreg.SetValueEx(key, "", 0, winreg.REG_SZ, _windows_handler_command(exe))
+    except OSError as e:
         logger.error(f"Failed to register URL scheme on Windows: {e}")
         return False
+
+    logger.info("URL scheme registered for this executable")
+    return True
 
 
 def is_url_scheme_registered_windows():
     """Check if selladomx:// links on Windows open this copy of the app.
-
-    A handler left by a copy in another folder (e.g. an older extracted zip)
-    counts as not registered.
 
     Returns:
         bool: True if registered for this executable, False otherwise
@@ -62,15 +185,29 @@ def is_url_scheme_registered_windows():
     if sys.platform != "win32":
         return False
 
-    try:
-        import winreg
+    command = _read_registered_command()
+    return command is not None and (
+        command.strip().lower() == _windows_handler_command(_current_exe()).lower()
+    )
 
-        key_path = r"Software\Classes\selladomx\shell\open\command"
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path) as key:
-            value = winreg.QueryValue(key, "")
-    except OSError:
+
+def ensure_url_scheme_windows():
+    """Write the selladomx:// handler if should_update_url_handler() says so.
+
+    Returns:
+        bool: True if the handler is usable (already set or written), False if
+        writing it failed
+    """
+    if sys.platform != "win32":
         return False
-    return value.lower() == _windows_handler_command().lower()
+
+    current = _current_exe()
+    installed = _installed_exe()
+    registered = _read_registered_command()
+    if not should_update_url_handler(current, registered, installed):
+        logger.info("URL handler left as is")
+        return True
+    return register_url_scheme_windows()
 
 
 _DESKTOP_EXEC_RESERVED = set(" \t\n\"'\\><~|&;$*?#()`")
@@ -218,10 +355,7 @@ def register_url_scheme():
         bool: True if registration succeeded or was already registered, False otherwise
     """
     if sys.platform == "win32":
-        if is_url_scheme_registered_windows():
-            logger.info("URL scheme already registered on Windows")
-            return True
-        return register_url_scheme_windows()
+        return ensure_url_scheme_windows()
     elif sys.platform == "linux":
         if is_url_scheme_registered_linux():
             logger.info("URL scheme already registered on Linux")

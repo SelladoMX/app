@@ -20,9 +20,12 @@ This will:
 On Linux, SelladoMX attempts registration once, on first launch; the attempt is recorded in QSettings (`system/url_scheme_registered`) whether or not it succeeded. On Windows it checks on every launch.
 
 ### Windows
-- Registers in `HKEY_CURRENT_USER\Software\Classes\selladomx`
+- Registers in `HKEY_CURRENT_USER\Software\Classes\selladomx` (default value, `URL Protocol`, `DefaultIcon`, `shell\open\command`)
 - No administrator rights required
-- Stores the path of the running `selladomx.exe`; on every launch the app rewrites the handler if it points at a different exe (e.g. a copy extracted to another folder)
+- The installer (`installer/selladomx.iss`) writes the handler for the installed `selladomx.exe` and deletes the key on uninstall
+- The handler stores an exe path, so the app checks it on every launch (`should_update_url_handler()`):
+  - The installed copy (the exe under `InstallLocation` in `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\{4285FAC5-53B6-436F-89B4-A58266D49505}_is1`) rewrites the handler whenever it points elsewhere
+  - A portable copy (extracted zip, or a run from source) writes it only if nothing is registered or the registered exe no longer exists, so it never takes links from a valid installed copy
 
 ### Linux
 - The Flatpak exports `com.selladomx.SelladoMX.desktop` (with `MimeType=x-scheme-handler/selladomx`) to `/var/lib/flatpak/exports/share/applications/` (system install) or `~/.local/share/flatpak/exports/share/applications/` (user install)
@@ -53,7 +56,9 @@ open "selladomx://auth?token=smx_test123"         # macOS
 If automatic registration fails, you can register manually:
 
 ### Windows
-Copy `scripts\register-url-scheme-windows.bat` next to `selladomx.exe` (it registers the exe in its own folder) and run it.
+With the installer, running the installer again rewrites the handler.
+
+For a portable copy, copy `scripts\register-url-scheme-windows.bat` next to `selladomx.exe` (it registers the exe in its own folder) and run it.
 
 Or import the registry manually by creating a `.reg` file with:
 ```registry
@@ -85,7 +90,7 @@ update-desktop-database ~/.local/share/applications/
    reg query "HKEY_CURRENT_USER\Software\Classes\selladomx"
    ```
 2. Verify executable path in registry is correct
-3. Re-run `register-url-scheme-windows.bat`
+3. Reinstall, or for a portable copy re-run `register-url-scheme-windows.bat`
 
 ### Linux: Links don't open the app
 1. Verify MIME type association:
@@ -115,7 +120,8 @@ update-desktop-database ~/.local/share/applications/
 
 - `src/selladomx/utils/platform_helpers.py`: per-platform registration and checks
 - `src/selladomx/utils/deep_link_handler.py`: URL parsing and token validation
-- `src/selladomx/main.py`: first-launch registration; links passed as `argv[1]`, via macOS `FileOpen` events, or forwarded from a second instance to the running one over `QLocalServer`
+- `installer/selladomx.iss`: Windows installer `[Registry]` entries
+- `src/selladomx/main.py`: registration at startup (every launch on Windows, first launch on Linux); links passed as `argv[1]`, via macOS `FileOpen` events, or forwarded from a second instance to the running one over `QLocalServer`
 
 ## For Developers
 

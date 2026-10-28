@@ -94,6 +94,44 @@ def _blank_pdf(path):
     return path
 
 
+def _hybrid_xref_pdf(path):
+    """Write a PDF whose classic xref trailer also points at an xref stream.
+
+    Word and other Office exporters produce this "hybrid" layout.
+    """
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>",
+    ]
+    out = bytearray(b"%PDF-1.5\n")
+    offsets = []
+    for number, body in enumerate(objects, 1):
+        offsets.append(len(out))
+        out += b"%d 0 obj\n%s\nendobj\n" % (number, body)
+
+    xref_stream_offset = len(out)
+    rows = b"\x00\x00\x00\x00\x00\xff\xff"
+    for offset in offsets + [xref_stream_offset]:
+        rows += b"\x01" + offset.to_bytes(4, "big") + b"\x00\x00"
+    out += (
+        b"4 0 obj\n<< /Type /XRef /Size 5 /W [1 4 2] /Index [0 5] "
+        b"/Root 1 0 R /Length %d >>\nstream\n" % len(rows)
+    )
+    out += rows + b"\nendstream\nendobj\n"
+
+    table_offset = len(out)
+    out += b"xref\n0 4\n0000000000 65535 f \n"
+    for offset in offsets:
+        out += b"%010d 00000 n \n" % offset
+    out += (
+        b"trailer\n<< /Size 5 /Root 1 0 R /XRefStm %d >>\n"
+        b"startxref\n%d\n%%%%EOF\n" % (xref_stream_offset, table_offset)
+    )
+    path.write_bytes(bytes(out))
+    return path
+
+
 @pytest.fixture
 def pdf(tmp_path):
     return _blank_pdf(tmp_path / "contrato.pdf")
@@ -181,6 +219,18 @@ class TestSigning:
         with pytest.raises(TSAUnavailableError):
             _signer(signer_identity, tsa_client=tsa_client).sign_pdf(pdf)
         assert not (pdf.parent / "contrato_firmado.pdf").exists()
+
+    def test_signs_pdf_with_hybrid_xref(self, signer_identity, tsa_identity, tmp_path):
+        pdf = _hybrid_xref_pdf(tmp_path / "exportado_de_word.pdf")
+        assert PdfFileReader(
+            BytesIO(pdf.read_bytes()), strict=False
+        ).xrefs.hybrid_xrefs_present
+
+        output = _signer(
+            signer_identity, timestamper=OfflineTSA(tsa_identity)
+        ).sign_pdf(pdf)
+
+        assert PDFSigner.verify_signature(output) is True
 
     def test_unwritable_output_fails_before_spending_a_credit(
         self, signer_identity, pdf, tmp_path

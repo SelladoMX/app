@@ -23,6 +23,35 @@ def read_app_version():
 
 APP_VERSION = read_app_version()
 
+# Version resource for the Windows exe; unsigned exes without one look more
+# suspicious to antivirus heuristics.
+windows_version_info = None
+if sys.platform == 'win32':
+    from PyInstaller.utils.win32.versioninfo import (
+        FixedFileInfo, StringFileInfo, StringStruct, StringTable,
+        VarFileInfo, VarStruct, VSVersionInfo,
+    )
+
+    version_tuple = tuple(int(part) for part in APP_VERSION.split('.')) + (0,)
+    windows_version_info = VSVersionInfo(
+        ffi=FixedFileInfo(filevers=version_tuple, prodvers=version_tuple),
+        kids=[
+            StringFileInfo([
+                StringTable('080A04B0', [
+                    StringStruct('CompanyName', 'SelladoMX'),
+                    StringStruct('FileDescription', 'SelladoMX'),
+                    StringStruct('FileVersion', APP_VERSION),
+                    StringStruct('InternalName', 'selladomx'),
+                    StringStruct('LegalCopyright', 'Licencia MIT'),
+                    StringStruct('OriginalFilename', 'selladomx.exe'),
+                    StringStruct('ProductName', 'SelladoMX'),
+                    StringStruct('ProductVersion', APP_VERSION),
+                ]),
+            ]),
+            VarFileInfo([VarStruct('Translation', [0x080A, 1200])]),
+        ],
+    )
+
 pyhanko_datas = collect_data_files('pyhanko')
 pyhanko_certvalidator_datas = collect_data_files('pyhanko_certvalidator')
 
@@ -108,13 +137,14 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    version=windows_version_info,
     icon='assets/selladomx.ico' if sys.platform == 'win32' else 'assets/selladomx.icns' if sys.platform == 'darwin' else 'assets/selladomx.png',
 )
 
@@ -124,7 +154,7 @@ coll = COLLECT(
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name='selladomx',
 )

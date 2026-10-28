@@ -66,7 +66,9 @@ Dialog {
         }
 
         Text {
-            text: "Se recomienda actualizar para obtener las últimas mejoras y correcciones."
+            text: Qt.platform.os === "windows"
+                  ? "Descarga e instala la nueva versión encima de la actual; tu configuración se conserva."
+                  : "Descarga la nueva versión e instálala; tu configuración se conserva."
             font.pixelSize: DesignTokens.fontBase
             color: DesignTokens.textSecondary
             wrapMode: Text.WordWrap

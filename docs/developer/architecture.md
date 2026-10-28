@@ -21,7 +21,7 @@
 └─────────────────────────────────────────┘
 ```
 
-`main.py` crea la aplicación (instancia única vía `QLocalServer`), registra el URL scheme en el primer arranque, expone los view models a QML y carga `ui/qml/main.qml`.
+`main.py` crea la aplicación (instancia única vía `QLocalServer`), registra el URL scheme (en Windows lo revisa en cada arranque; en Linux, solo en el primero), expone los view models a QML y carga `ui/qml/main.qml`.
 
 `signing/` no importa PySide6, excepto `worker.py` (`SigningWorker` es un `QThread`).
 
