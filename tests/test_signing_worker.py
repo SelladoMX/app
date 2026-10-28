@@ -1,4 +1,5 @@
 """Tests for SigningWorker error handling - no silent fallback to free TSA."""
+
 import hashlib
 from pathlib import Path
 from unittest.mock import MagicMock, patch, PropertyMock
@@ -11,7 +12,22 @@ from selladomx.api.exceptions import (
     InsufficientCreditsError,
     NetworkError,
     APIError,
+    TokenExpiredError,
 )
+from selladomx.errors import SigningError, TSAResponseError, TSAUnavailableError
+
+
+@pytest.fixture(autouse=True)
+def fixed_output_path():
+    """Keep the worker from probing the filesystem for a free output name.
+
+    The tests patch Path.stat, which would make every candidate name "exist".
+    """
+    with patch(
+        "selladomx.signing.worker.signed_output_path",
+        side_effect=lambda pdf, out_dir=None: pdf.with_name(f"{pdf.stem}_firmado.pdf"),
+    ) as mock:
+        yield mock
 
 
 @pytest.fixture
@@ -233,3 +249,79 @@ class TestSigningWorkerNoFallback:
         _, success, _, url = completed_calls[0]
         assert success is True
         assert url == ""
+
+
+class TestSigningWorkerTSAFailures:
+    """Free-TSA failures: stop the batch on network-wide errors, with the real text."""
+
+    def _run(self, side_effect, paths=("a.pdf", "b.pdf", "c.pdf")):
+        worker = SigningWorker(
+            pdf_paths=[Path("/tmp") / p for p in paths],
+            cert=MagicMock(),
+            private_key=MagicMock(),
+            tsa_client=MagicMock(),
+        )
+        completed, finished = [], []
+        worker.file_completed.connect(lambda *args: completed.append(args))
+        worker.finished.connect(lambda errs: finished.extend(errs))
+        with patch("selladomx.signing.worker.PDFSigner") as mock_signer_cls:
+            mock_signer_cls.return_value.sign_pdf.side_effect = side_effect
+            worker.run()
+            return completed, finished, mock_signer_cls.return_value.sign_pdf
+
+    def test_unreachable_tsa_stops_batch_with_specific_message(self):
+        completed, finished, sign_pdf = self._run(TSAUnavailableError())
+
+        assert sign_pdf.call_count == 1
+        assert len(completed) == 1
+        _, success, message, _ = completed[0]
+        assert success is False
+        assert message.startswith(TSAUnavailableError.default_message)
+        assert "2 documento(s)" in message
+        assert len(finished) == 1
+
+    def test_rejected_tsa_response_stops_batch(self):
+        completed, _, sign_pdf = self._run(TSAResponseError())
+
+        assert sign_pdf.call_count == 1
+        assert TSAResponseError.default_message in completed[0][2]
+
+    def test_per_file_signing_error_continues_with_next_file(self):
+        def sign(pdf_path, output_path):
+            if pdf_path.name == "a.pdf":
+                raise SigningError("No se pudo firmar el PDF: dañado")
+            return output_path
+
+        completed, finished, _ = self._run(sign)
+
+        assert [c[1] for c in completed] == [False, True, True]
+        assert completed[0][2] == "No se pudo firmar el PDF: dañado"
+        assert completed[1][2] == "Firmado: b_firmado.pdf"
+        assert len(finished) == 1
+
+    def test_single_file_failure_has_no_pending_note(self):
+        completed, _, _ = self._run(TSAUnavailableError(), paths=("a.pdf",))
+
+        assert completed[0][2] == TSAUnavailableError.default_message
+
+
+@patch("selladomx.signing.worker.SelladoMXAPIClient")
+@patch("selladomx.signing.worker.PDFSigner")
+def test_expired_token_message(mock_signer_cls, mock_api_cls):
+    mock_signer_cls.return_value.sign_pdf.side_effect = TokenExpiredError(
+        "El token expiró"
+    )
+    worker = SigningWorker(
+        pdf_paths=[Path("/tmp/test.pdf")],
+        cert=MagicMock(),
+        private_key=MagicMock(),
+        use_professional_tsa=True,
+        api_key="test-key",
+    )
+    completed = []
+    worker.file_completed.connect(lambda *args: completed.append(args))
+
+    with patch.object(Path, "stat", return_value=MagicMock(st_size=100)):
+        worker.run()
+
+    assert "expiró" in completed[0][2]

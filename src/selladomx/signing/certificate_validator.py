@@ -1,13 +1,16 @@
 """Validación de certificados e.firma"""
+
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Tuple
+from typing import Optional, Tuple
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, ec
+from cryptography.hazmat.primitives.serialization import pkcs12
+from asn1crypto import keys as asn1_keys
 from pyhanko_certvalidator import ValidationContext
 from pyhanko_certvalidator.errors import PathValidationError, RevokedError
 
@@ -15,6 +18,8 @@ from ..config import ENABLE_CRL_FALLBACK, LOG_SENSITIVE_DATA
 from ..errors import (
     CertificateError,
     CertificateExpiredError,
+    CertificateKeyMismatchError,
+    CertificatePasswordError,
     CertificateRevokedError,
     CertificateValidationError,
 )
@@ -22,6 +27,26 @@ from ..errors import (
 logger = logging.getLogger(__name__)
 
 PrivateKey = rsa.RSAPrivateKey | ec.EllipticCurvePrivateKey
+
+
+def _is_password_error(error: ValueError) -> bool:
+    message = str(error).lower()
+    return "password" in message or "decrypt" in message
+
+
+def _is_encrypted_pkcs8(key_data: bytes) -> bool:
+    """SAT .key files are DER EncryptedPrivateKeyInfo."""
+    try:
+        info = asn1_keys.EncryptedPrivateKeyInfo.load(key_data, strict=True)
+        info["encryption_algorithm"]["algorithm"].native
+        return True
+    except Exception:
+        return False
+
+
+def _common_name(cert: x509.Certificate) -> str:
+    attrs = cert.subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)
+    return attrs[0].value if attrs else "?"
 
 
 class CertificateValidator:
@@ -60,10 +85,12 @@ class CertificateValidator:
             CertificateValidationError: Si falla la validación
         """
         cert = self._load_certificate()
-        logger.info(f"Certificate loaded: {cert.subject.rfc4514_string()}")
+        logger.info(f"Certificate loaded: CN={_common_name(cert)}")
 
         private_key = self._load_private_key()
         logger.info("Private key loaded successfully")
+
+        self._validate_key_matches(cert, private_key)
 
         self._validate_validity(cert)
 
@@ -94,7 +121,7 @@ class CertificateValidator:
             raise CertificateError(f"No se pudo cargar el certificado: {e}")
 
     def _load_private_key(self) -> PrivateKey:
-        """Carga la clave privada desde el archivo .key"""
+        """Carga la clave privada desde el archivo .key (DER, PEM o PKCS#12)"""
         if not self.key_path.exists():
             raise CertificateError(
                 f"Archivo de clave privada no encontrado: {self.key_path}"
@@ -103,55 +130,86 @@ class CertificateValidator:
         try:
             with open(self.key_path, "rb") as f:
                 key_data = f.read()
+        except OSError as e:
+            logger.error(f"Error reading private key file: {e.strerror}")
+            raise CertificateError(f"No se pudo leer la clave privada: {e.strerror}")
 
-            # Los archivos .key del SAT pueden estar en varios formatos
-            # DER primero (más común en e.firma)
+        password_rejected = False
+        missing_password = False
+        for loader in (self._load_der_key, self._load_pem_key, self._load_pkcs12_key):
             try:
-                return serialization.load_der_private_key(
-                    key_data, password=self.password, backend=default_backend()
-                )
-            except Exception as der_error:
-                logger.debug(f"DER loading failed: {der_error}")
+                private_key = loader(key_data, self.password)
+            except TypeError as e:
+                if "not given" in str(e).lower():
+                    missing_password = True
+                    logger.debug(f"{loader.__name__}: key is encrypted")
+                    continue
+                # Unencrypted key but the user typed a password anyway
+                try:
+                    private_key = loader(key_data, None)
+                except Exception as retry_error:
+                    logger.debug(f"{loader.__name__} failed: {retry_error}")
+                    continue
+            except ValueError as e:
+                if _is_password_error(e):
+                    password_rejected = True
+                logger.debug(f"{loader.__name__} failed: {e}")
+                continue
+            except Exception as e:
+                logger.debug(f"{loader.__name__} failed: {e}")
+                continue
+            if private_key is not None:
+                return private_key
 
-            try:
-                return serialization.load_pem_private_key(
-                    key_data, password=self.password, backend=default_backend()
-                )
-            except Exception as pem_error:
-                logger.debug(f"PEM loading failed: {pem_error}")
+        if missing_password:
+            raise CertificatePasswordError(
+                "La clave privada está protegida. Escribe su contraseña."
+            )
+        if password_rejected or _is_encrypted_pkcs8(key_data):
+            raise CertificatePasswordError(
+                "Contraseña incorrecta. Verifica la contraseña de tu clave "
+                "privada (.key)."
+            )
+        raise CertificateError(
+            "No se pudo cargar la clave privada. Verifica que el archivo .key "
+            "sea correcto y esté en un formato compatible (DER, PEM o PKCS#12)."
+        )
 
-            try:
-                from cryptography.hazmat.primitives.serialization import pkcs12
+    @staticmethod
+    def _load_der_key(key_data: bytes, password: Optional[bytes]):
+        return serialization.load_der_private_key(
+            key_data, password=password, backend=default_backend()
+        )
 
-                # Algunos certificados del SAT usan PKCS#12
-                private_key, _, _ = pkcs12.load_key_and_certificates(
-                    key_data, self.password, backend=default_backend()
-                )
-                if private_key:
-                    return private_key
-            except Exception as pkcs12_error:
-                logger.debug(f"PKCS#12 loading failed: {pkcs12_error}")
+    @staticmethod
+    def _load_pem_key(key_data: bytes, password: Optional[bytes]):
+        return serialization.load_pem_private_key(
+            key_data, password=password, backend=default_backend()
+        )
 
-            raise CertificateError(
-                "No se pudo cargar la clave privada. Verifique que:\n"
-                "1. El archivo .key sea correcto\n"
-                "2. La contraseña sea correcta\n"
-                "3. El formato del archivo sea compatible (DER, PEM, o PKCS#12)"
+    @staticmethod
+    def _load_pkcs12_key(key_data: bytes, password: Optional[bytes]):
+        private_key, _, _ = pkcs12.load_key_and_certificates(
+            key_data, password, backend=default_backend()
+        )
+        return private_key
+
+    @staticmethod
+    def _validate_key_matches(cert: x509.Certificate, private_key: PrivateKey):
+        """Verifica que la clave privada corresponda al certificado"""
+
+        def spki(public_key) -> bytes:
+            return public_key.public_bytes(
+                serialization.Encoding.DER,
+                serialization.PublicFormat.SubjectPublicKeyInfo,
             )
 
-        except CertificateError:
-            raise
-        except ValueError as e:
-            if (
-                "password" in str(e).lower()
-                or "decrypt" in str(e).lower()
-                or "incorrect" in str(e).lower()
-            ):
-                raise CertificateError("Contraseña incorrecta")
-            raise CertificateError(f"Error de formato en la clave privada: {e}")
-        except Exception as e:
-            logger.error(f"Error loading private key: {e}")
-            raise CertificateError(f"No se pudo cargar la clave privada: {e}")
+        if spki(cert.public_key()) != spki(private_key.public_key()):
+            logger.error("Private key does not match the certificate")
+            raise CertificateKeyMismatchError(
+                "La clave privada (.key) no corresponde al certificado (.cer). "
+                "Verifica que ambos archivos sean de la misma e.firma."
+            )
 
     def _validate_validity(self, cert: x509.Certificate) -> None:
         """Valida que el certificado esté dentro de su período de vigencia"""

@@ -56,15 +56,24 @@ logger.info(f"Using API base URL: {API_BASE_URL}")
 # TSA CONFIGURATION
 # ============================================================================
 
-# Free tier, in fallback order
-_DEFAULT_FREE_TSA = "http://timestamp.digicert.com"
-TSA_FREE_PROVIDERS: Final[list[str]] = [
-    os.environ.get("SELLADOMX_FREE_TSA_URL", _DEFAULT_FREE_TSA),
-    "http://timestamp.sectigo.com",
+# Free tier, in fallback order. Plain http is a last resort for networks that
+# block TLS to these hosts; DigiCert refuses connections on port 443, so it only
+# appears over http.
+_DEFAULT_FREE_TSA_PROVIDERS = [
+    "https://timestamp.sectigo.com",
     "https://freetsa.org/tsr",
+    "http://timestamp.digicert.com",
+    "http://timestamp.sectigo.com",
+    "http://freetsa.org/tsr",
 ]
+_FREE_TSA_OVERRIDE = os.environ.get("SELLADOMX_FREE_TSA_URL")
+TSA_FREE_PROVIDERS: Final[list[str]] = (
+    [_FREE_TSA_OVERRIDE] if _FREE_TSA_OVERRIDE else []
+) + [url for url in _DEFAULT_FREE_TSA_PROVIDERS if url != _FREE_TSA_OVERRIDE]
 TSA_URL: Final[str] = TSA_FREE_PROVIDERS[0]
-TSA_TIMEOUT: Final[int] = 30
+# Seconds per provider attempt, and for all attempts of one timestamp combined
+TSA_TIMEOUT: Final[int] = 10
+TSA_TOTAL_TIMEOUT: Final[int] = 30
 
 # Paid tier
 PAID_TSA_PROVIDER: Final[str] = os.environ.get(
