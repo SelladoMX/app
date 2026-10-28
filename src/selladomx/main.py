@@ -1,38 +1,53 @@
 """Punto de entrada de la aplicación SelladoMX - QML UI"""
-import sys
-import os
+
+import getpass
+import hashlib
 import logging
+import os
+import sys
 from pathlib import Path
 
-# Load environment variables BEFORE importing config (which reads env vars at module level)
 from dotenv import load_dotenv
 
-if not load_dotenv():
-    load_dotenv(".env.development")
+# config.py reads env vars at import time, so .env must be loaded before
+# anything that imports it. Frozen builds skip .env entirely: a stray .env in
+# the working directory could otherwise redirect the API, and the user's token.
+if not getattr(sys, "frozen", False):
+    _PROJECT_ROOT = Path(__file__).resolve().parents[2]
+    if not load_dotenv(_PROJECT_ROOT / ".env"):
+        load_dotenv(_PROJECT_ROOT / ".env.development")
 
 from PySide6.QtCore import QUrl, QEvent, Signal
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
-from PySide6.QtQml import QQmlApplicationEngine
 
-from .ui.qml_bridge.main_view_model import MainViewModel
-from .ui.qml_bridge.signing_coordinator import SigningCoordinator
-from .ui.qml_bridge.settings_bridge import SettingsBridge
-from .utils.settings_manager import SettingsManager
-from .utils.deep_link_handler import DeepLinkHandler
-from .utils.update_checker import UpdateChecker
 from . import __version__
-from .config import (
-    ONBOARDING_VERSION,
-    COLOR_SUCCESS,
-    COLOR_ERROR,
-    BUY_CREDITS_URL,
-    CREDIT_PRICE_DISPLAY,
+from .utils.deep_link_handler import describe_deep_link
+from .utils.logging_setup import (
+    install_excepthook,
+    install_qt_message_handler,
+    log_startup_info,
+    setup_logging,
 )
 
 logger = logging.getLogger(__name__)
 
-_SINGLE_INSTANCE_KEY = "selladomx-single-instance"
+
+def single_instance_server_name() -> str:
+    """Return the per-user name of the single-instance local server.
+
+    On macOS and Linux the name becomes a socket file in a shared temp
+    directory, so it must differ between users of the same machine.
+
+    Returns:
+        ``selladomx-single-instance-<hash of the user name>``
+    """
+    try:
+        user = getpass.getuser()
+    except Exception:
+        user = str(Path.home())
+    digest = hashlib.sha256(user.encode("utf-8")).hexdigest()[:16]
+    return f"selladomx-single-instance-{digest}"
 
 
 class SelladoMXApplication(QGuiApplication):
@@ -65,8 +80,9 @@ class SelladoMXApplication(QGuiApplication):
         Returns:
             True if this is the first instance, False if another instance is running.
         """
+        server_name = single_instance_server_name()
         socket = QLocalSocket(self)
-        socket.connectToServer(_SINGLE_INSTANCE_KEY)
+        socket.connectToServer(server_name)
         if socket.waitForConnected(500):
             if len(sys.argv) > 1 and sys.argv[1].startswith("selladomx://"):
                 socket.write(sys.argv[1].encode("utf-8"))
@@ -76,9 +92,10 @@ class SelladoMXApplication(QGuiApplication):
             return False
 
         self._local_server = QLocalServer(self)
+        self._local_server.setSocketOptions(QLocalServer.UserAccessOption)
         # Clean up stale socket file from previous crash
-        QLocalServer.removeServer(_SINGLE_INSTANCE_KEY)
-        if not self._local_server.listen(_SINGLE_INSTANCE_KEY):
+        QLocalServer.removeServer(server_name)
+        if not self._local_server.listen(server_name):
             logger.warning(
                 f"Failed to create local server: {self._local_server.errorString()}"
             )
@@ -92,67 +109,33 @@ class SelladoMXApplication(QGuiApplication):
         socket = self._local_server.nextPendingConnection()
         if socket:
             socket.waitForReadyRead(1000)
-            data = socket.readAll().data().decode("utf-8")
+            data = socket.readAll().data().decode("utf-8", errors="replace")
             socket.disconnectFromServer()
             if data:
                 logger.info("Received deep link from second instance")
                 self.deepLinkReceived.emit(data)
 
 
-def setup_logging():
-    """Configura el sistema de logging"""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[logging.StreamHandler(sys.stdout)],
-    )
-
-
-def _handle_deep_link_token(
-    token: str, settings_manager: SettingsManager, view_model: MainViewModel
-):
-    """Handle token received via deep link.
-
-    Args:
-        token: Token string from magic link
-        settings_manager: Settings manager instance
-        view_model: Main view model instance
-    """
-    from .api.client import SelladoMXAPIClient
-    from .api.exceptions import APIError
-
-    logger = logging.getLogger(__name__)
-
-    try:
-        client = SelladoMXAPIClient(api_key=token)
-        balance_response = client.get_balance()
-
-        settings_manager.set_token(token)
-        settings_manager.set_token_info(balance_response["token_info"])
-        settings_manager.set_last_credit_balance(balance_response["credits_remaining"])
-
-        view_model._refresh_credit_balance()
-
-        view_model._append_status_log(
-            f"✅ Token configurado exitosamente - {balance_response['credits_remaining']} créditos disponibles",
-            COLOR_SUCCESS,
-        )
-
-        view_model.tokenConfiguredViaDeepLink.emit()
-
-        logger.info("Token configured successfully via deep link")
-
-    except APIError as e:
-        view_model._append_status_log(
-            f"❌ Error al configurar token: {e.message}", COLOR_ERROR
-        )
-        logger.error(f"Failed to configure token via deep link: {e}")
-
-
 def main():
     """Función principal de la aplicación"""
-    setup_logging()
-    logger.info("Starting SelladoMX with QML UI")
+    log_file = setup_logging()
+    install_excepthook()
+    install_qt_message_handler()
+    log_startup_info(__version__, log_file)
+
+    # Imported after setup_logging() so config's import-time log lines are kept
+    from .ui.qml_bridge.main_view_model import MainViewModel
+    from .ui.qml_bridge.signing_coordinator import SigningCoordinator
+    from .ui.qml_bridge.settings_bridge import SettingsBridge
+    from .utils.settings_manager import SettingsManager
+    from .utils.deep_link_handler import DeepLinkHandler
+    from .utils.update_checker import UpdateChecker
+    from .config import (
+        ONBOARDING_VERSION,
+        BUY_CREDITS_URL,
+        CREDIT_PRICE_DISPLAY,
+    )
+    from PySide6.QtQml import QQmlApplicationEngine
 
     # Set QML style to avoid native style warnings (must be before QGuiApplication)
     os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
@@ -184,7 +167,9 @@ def main():
 
     if len(sys.argv) > 1 and sys.argv[1].startswith("selladomx://"):
         deep_link_url = sys.argv[1]
-        logger.info(f"Received deep link on startup: {deep_link_url}")
+        logger.info(
+            f"Received deep link on startup: {describe_deep_link(deep_link_url)}"
+        )
 
     coordinator = SigningCoordinator()
     view_model = MainViewModel(settings_manager, coordinator)
@@ -209,9 +194,7 @@ def main():
     update_checker = UpdateChecker(__version__)
     context.setContextProperty("updateChecker", update_checker)
 
-    deep_link_handler.token_received.connect(
-        lambda token: _handle_deep_link_token(token, settings_manager, view_model)
-    )
+    deep_link_handler.token_received.connect(view_model.handleDeepLinkToken)
 
     # Connect app-level deep link signal (FileOpen events + second instance messages)
     app.deepLinkReceived.connect(deep_link_handler.handle_url)
@@ -251,6 +234,11 @@ def main():
 
     logger.info("Application started successfully with QML UI")
     exit_code = app.exec()
+
+    # Destroy the QML engine while the context-property objects still exist;
+    # otherwise bindings re-evaluate against null view models during teardown
+    # and flood the log with TypeErrors.
+    del engine
 
     logger.info(f"Application exiting with code {exit_code}")
     sys.exit(exit_code)
