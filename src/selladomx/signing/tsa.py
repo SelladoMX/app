@@ -14,7 +14,12 @@ from pyhanko.sign.timestamps.common_utils import (
     handle_tsp_response,
 )
 
-from ..config import TSA_FREE_PROVIDERS, TSA_TIMEOUT, TSA_TOTAL_TIMEOUT
+from ..config import (
+    TSA_CONNECT_TIMEOUT,
+    TSA_FREE_PROVIDERS,
+    TSA_TIMEOUT,
+    TSA_TOTAL_TIMEOUT,
+)
 from ..errors import (
     TSAError,
     TSAResponseError,
@@ -51,7 +56,8 @@ def _post_timestamp_request(url: str, body: bytes, timeout: float) -> tsp.TimeSt
             "Content-Type": "application/timestamp-query",
             "Accept": "application/timestamp-reply",
         },
-        timeout=timeout,
+        # A short connect timeout moves past hosts whose packets are dropped
+        timeout=(min(TSA_CONNECT_TIMEOUT, timeout), timeout),
     )
     if response.status_code != 200:
         raise _BadTSAResponse(f"HTTP {response.status_code}")

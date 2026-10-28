@@ -182,6 +182,17 @@ class TestSigning:
             _signer(signer_identity, tsa_client=tsa_client).sign_pdf(pdf)
         assert not (pdf.parent / "contrato_firmado.pdf").exists()
 
+    def test_unwritable_output_fails_before_spending_a_credit(
+        self, signer_identity, pdf, tmp_path
+    ):
+        api_client = MagicMock()
+        stamper = APITimeStamper(api_client, pdf.name, 1)
+        output = tmp_path / "no-existe" / "contrato_firmado.pdf"
+
+        with pytest.raises(PDFError, match="No se pudo guardar"):
+            _signer(signer_identity, timestamper=stamper).sign_pdf(pdf, output)
+        api_client.request_tsa_sign.assert_not_called()
+
     def test_does_not_overwrite_existing_signed_copy(
         self, signer_identity, tsa_identity, pdf
     ):

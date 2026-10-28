@@ -8,6 +8,15 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
+def _windows_handler_command() -> str:
+    """Return the registry command that opens ``selladomx://`` links in this copy."""
+    if getattr(sys, "frozen", False):
+        exe_path = sys.executable
+    else:
+        exe_path = sys.argv[0]
+    return f'"{os.path.abspath(exe_path)}" "%1"'
+
+
 def register_url_scheme_windows():
     """Register selladomx:// URL scheme on Windows.
 
@@ -20,16 +29,9 @@ def register_url_scheme_windows():
     try:
         import winreg
 
-        if getattr(sys, "frozen", False):
-            # Running as compiled executable
-            exe_path = sys.executable
-        else:
-            # Running as script (development)
-            exe_path = sys.argv[0]
+        command = _windows_handler_command()
 
-        exe_path = os.path.abspath(exe_path)
-
-        # Register URL scheme in HKEY_CURRENT_USER (doesn't require admin)
+        # HKEY_CURRENT_USER doesn't require admin
         key_path = r"Software\Classes\selladomx"
 
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path) as key:
@@ -38,9 +40,9 @@ def register_url_scheme_windows():
 
         command_path = rf"{key_path}\shell\open\command"
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, command_path) as key:
-            winreg.SetValue(key, "", winreg.REG_SZ, f'"{exe_path}" "%1"')
+            winreg.SetValue(key, "", winreg.REG_SZ, command)
 
-        logger.info(f"URL scheme registered for {exe_path}")
+        logger.info("URL scheme registered for this executable")
         return True
 
     except Exception as e:
@@ -49,10 +51,13 @@ def register_url_scheme_windows():
 
 
 def is_url_scheme_registered_windows():
-    """Check if URL scheme is already registered on Windows.
+    """Check if selladomx:// links on Windows open this copy of the app.
+
+    A handler left by a copy in another folder (e.g. an older extracted zip)
+    counts as not registered.
 
     Returns:
-        bool: True if registered, False otherwise
+        bool: True if registered for this executable, False otherwise
     """
     if sys.platform != "win32":
         return False
@@ -63,9 +68,9 @@ def is_url_scheme_registered_windows():
         key_path = r"Software\Classes\selladomx\shell\open\command"
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path) as key:
             value, _ = winreg.QueryValue(key, "")
-            return bool(value)
-    except:
+    except OSError:
         return False
+    return value.lower() == _windows_handler_command().lower()
 
 
 _DESKTOP_EXEC_RESERVED = set(" \t\n\"'\\><~|&;$*?#()`")

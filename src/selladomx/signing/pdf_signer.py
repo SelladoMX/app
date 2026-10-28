@@ -119,6 +119,37 @@ class PDFSigner:
 
         logger.info(f"Signing PDF: {pdf_path.name}")
 
+        # Created before signing so that an unwritable folder fails before a
+        # professional timestamp spends a credit
+        try:
+            output_file = open(output_path, "xb")
+        except OSError as e:
+            logger.error(f"Could not create {output_path.name}: {e.strerror}")
+            raise PDFError(
+                f"No se pudo guardar {output_path.name}. Revisa que la carpeta "
+                "permita escribir y que el archivo no esté abierto en otro programa."
+            ) from e
+
+        try:
+            with output_file:
+                out = self._sign_to_buffer(pdf_path)
+                output_file.write(out.getbuffer())
+        except OSError as e:
+            output_path.unlink(missing_ok=True)
+            logger.error(f"Could not write {output_path.name}: {e.strerror}")
+            raise PDFError(
+                f"No se pudo guardar {output_path.name}. Revisa que la carpeta "
+                "permita escribir y que el archivo no esté abierto en otro programa."
+            ) from e
+        except BaseException:
+            output_path.unlink(missing_ok=True)
+            raise
+
+        logger.info(f"PDF signed successfully: {output_path.name}")
+        return output_path
+
+    def _sign_to_buffer(self, pdf_path: Path) -> BytesIO:
+        """Firma ``pdf_path`` y devuelve el PDF firmado en memoria."""
         try:
             with open(pdf_path, "rb") as f:
                 pdf_data = BytesIO(f.read())
@@ -182,18 +213,7 @@ class PDFSigner:
             logger.error(f"Error signing {pdf_path.name}: {e!r}")
             raise SigningError(f"No se pudo firmar el PDF: {e}") from e
 
-        try:
-            with open(output_path, "wb") as f:
-                f.write(out.getbuffer())
-        except OSError as e:
-            logger.error(f"Could not write {output_path.name}: {e.strerror}")
-            raise PDFError(
-                f"No se pudo guardar {output_path.name}. Revisa que la carpeta "
-                "permita escribir y que el archivo no esté abierto en otro programa."
-            ) from e
-
-        logger.info(f"PDF signed successfully: {output_path.name}")
-        return output_path
+        return out
 
     def _get_signer_name(self) -> str:
         """Extrae el nombre del firmante del certificado"""

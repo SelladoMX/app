@@ -71,9 +71,11 @@ TSA_FREE_PROVIDERS: Final[list[str]] = (
     [_FREE_TSA_OVERRIDE] if _FREE_TSA_OVERRIDE else []
 ) + [url for url in _DEFAULT_FREE_TSA_PROVIDERS if url != _FREE_TSA_OVERRIDE]
 TSA_URL: Final[str] = TSA_FREE_PROVIDERS[0]
-# Seconds per provider attempt, and for all attempts of one timestamp combined
+# Seconds to connect, per provider attempt, and for all attempts of one
+# timestamp combined
+TSA_CONNECT_TIMEOUT: Final[int] = 5
 TSA_TIMEOUT: Final[int] = 10
-TSA_TOTAL_TIMEOUT: Final[int] = 30
+TSA_TOTAL_TIMEOUT: Final[int] = 45
 
 # Paid tier
 PAID_TSA_PROVIDER: Final[str] = os.environ.get(

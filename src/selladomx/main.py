@@ -150,8 +150,14 @@ def main():
 
     settings_manager = SettingsManager()
 
-    if not settings_manager.has_attempted_url_scheme_registration():
-        logger.info("First launch detected, registering URL scheme...")
+    # On Windows the handler stores this exe's path, so check it on every launch:
+    # a user who extracts a new version elsewhere would otherwise keep opening
+    # links in the old copy.
+    if (
+        sys.platform == "win32"
+        or not settings_manager.has_attempted_url_scheme_registration()
+    ):
+        logger.info("Checking URL scheme registration...")
         from .utils.platform_helpers import register_url_scheme
 
         success = register_url_scheme()
